@@ -1,0 +1,28 @@
+[124,342]
+124,342
+["124","342"]
+
+
+SELECT 
+    peserta
+FROM
+    kegiatans
+WHERE
+    FIND_IN_SET('342', REPLACE(REPLACE(REPLACE(peserta, '[', '' ) ,'"',''),']','' );
+
+
+ $kegiatans =
+             kegiatan::whereRaw('FIND_IN_SET("Muhammad Rizal Karim", REPLACE(REPLACE(REPLACE(peserta, "[", "" ),\'"\',""),"]","" ))' )
+            ->get();
+
+$cities = DB::table("users_jabatan")
+        ->join('users','users.id','=','users_jabatan.id_users')
+        ->leftJoin('kegiatans','users_jabatan.id_users','=',DB::raw("kegiatans.peserta AND kegiatans.start BETWEEN '$a' AND '$b' "))
+        ->where("kegiatans.peserta",NULL)
+        ->where("users_jabatan.id_satker",7400)
+        ->where("id_organisasi",$request->id_organisasi)
+        
+        ->groupBy('users_jabatan.id_users')
+        ->groupBy('users.nama_lengkap')
+        
+        ->pluck("nama_lengkap","nama_lengkap");
