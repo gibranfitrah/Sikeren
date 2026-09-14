@@ -107,7 +107,6 @@ class SubKegiatanController extends Controller
                     ->first();
                 if ($userAnggota && $userAnggota->id !== Auth::id()) {
                     DB::table('notifications')->insert([
-                        'id'              => (string) Str::uuid(),
                         'type'            => 'App\Notifications\PenugasanSubKegiatanNotification',
                         'notifiable_type' => 'App\User',
                         'notifiable_id'   => $userAnggota->id,

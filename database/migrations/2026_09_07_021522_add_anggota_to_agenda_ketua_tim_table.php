@@ -8,9 +8,11 @@ class AddAnggotaToAgendaKetuaTimTable extends Migration
 {
     public function up()
     {
-        Schema::table('agenda_ketua_tim', function (Blueprint $table) {
-            $table->text('anggota')->nullable()->after('tujuan');
-        });
+        if (!Schema::hasColumn('agenda_ketua_tim', 'anggota')) {
+            Schema::table('agenda_ketua_tim', function (Blueprint $table) {
+                $table->text('anggota')->nullable()->after('tujuan');
+            });
+        }
     }
 
     public function down()
