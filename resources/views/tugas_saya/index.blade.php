@@ -36,12 +36,13 @@
 
     {{-- STATS CARDS --}}
     @php
-        $totalKegiatanAll = count($myTasks) + count($mySubKegiatans);
+        $totalBooking = isset($myBookings) ? count($myBookings) : 0;
+        $totalKegiatanAll = count($myTasks) + count($mySubKegiatans) + $totalBooking;
         $totalKegiatan = count($myTasks);
         $totalSub = count($mySubKegiatans);
     @endphp
 
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs flex items-center justify-between">
             <div>
                 <p class="text-xs font-medium text-gray-500">Total Kegiatan Saya</p>
@@ -75,6 +76,19 @@
             <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs flex items-center justify-between">
+            <div>
+                <p class="text-xs font-medium text-gray-500">Booking Ruangan Saya</p>
+                <h3 class="text-2xl font-bold text-amber-600 mt-1">{{ $totalBooking }}</h3>
+                <span class="text-[10px] text-amber-600 font-semibold bg-amber-50 px-2 py-0.5 rounded">Jadwal Ruangan / Zoom</span>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
             </div>
         </div>
@@ -224,6 +238,84 @@
                     <tr>
                         <td colspan="5" class="px-6 py-8 text-center text-gray-400 text-xs">
                             Belum ada kegiatan atau rapat utama yang terdaftar untuk Anda.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {{-- SECTION 3: JADWAL BOOKING RUANGAN SAYA --}}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                <h3 class="font-bold text-gray-900 text-sm">Jadwal Booking Ruangan Saya</h3>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700">
+                    {{ isset($myBookings) ? count($myBookings) : 0 }} Jadwal
+                </span>
+                <a href="{{ route('booking-ruangan.index') }}" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold rounded-xl transition">
+                    + Booking Baru
+                </a>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
+                <thead class="bg-gray-50 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                    <tr>
+                        <th class="px-6 py-3.5">Acara / Agenda</th>
+                        <th class="px-6 py-3.5">Ruangan / Zoom</th>
+                        <th class="px-6 py-3.5">Waktu Pelaksanaan</th>
+                        <th class="px-6 py-3.5">Status</th>
+                        <th class="px-6 py-3.5 text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    @forelse($myBookings ?? [] as $booking)
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ $booking->tipe_pertemuan === 'online' ? 'bg-sky-50 text-sky-700' : ($booking->tipe_pertemuan === 'hybrid' ? 'bg-purple-50 text-purple-700' : 'bg-amber-50 text-amber-700') }} border inline-block mb-1">
+                                {{ ucfirst($booking->tipe_pertemuan) }}
+                            </span>
+                            <span class="font-bold text-gray-900 text-sm block">{{ $booking->nama_acara }}</span>
+                            <span class="text-[11px] text-gray-400">PJ: {{ $booking->penyelenggara ?: '-' }}</span>
+                            @if($booking->task)
+                                <a href="{{ url('/daftarkegiatan/' . $booking->task->id) }}" class="block text-[11px] text-blue-600 hover:underline mt-0.5">
+                                    Terkait: {{ $booking->task->text }}
+                                </a>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-600 font-medium">
+                            <span class="block">{{ $booking->nama_ruangan ?: 'Online (Tanpa Ruangan)' }}</span>
+                            @if($booking->zoom_link)
+                                <a href="{{ $booking->zoom_link }}" target="_blank" class="text-[11px] text-blue-600 hover:underline font-bold">Link Zoom</a>
+                            @elseif(in_array($booking->zoom_account, ['zoom_1', 'zoom_2']))
+                                <span class="text-[11px] text-gray-400">{{ $booking->zoom_account === 'zoom_1' ? 'Zoom 1' : 'Zoom 2' }}</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-600 font-medium">
+                            {{ $booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date)->translatedFormat('d M Y') : '-' }}
+                            <span class="block text-[11px] text-gray-500 font-mono">{{ substr($booking->start_time, 0, 5) }} - {{ substr($booking->end_time, 0, 5) }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold {{ $booking->status === 'Disetujui' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-gray-100 text-gray-700 border' }}">
+                                {{ $booking->status }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <a href="{{ route('booking-ruangan.index', ['date' => $booking->booking_date]) }}" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl border border-blue-200 text-xs transition">
+                                Lihat Jadwal
+                            </a>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-gray-400 text-xs">
+                            Belum ada jadwal booking ruangan dari Anda. <a href="{{ route('booking-ruangan.index') }}" class="text-blue-600 font-bold hover:underline">Buat booking sekarang</a>.
                         </td>
                     </tr>
                     @endforelse

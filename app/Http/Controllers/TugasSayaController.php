@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Task;
 use App\SubKegiatan;
+use App\RoomBooking;
 use App\penugasan;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class TugasSayaController extends Controller
 {
@@ -73,12 +75,37 @@ class TugasSayaController extends Controller
 
         $mySubKegiatans = $subQuery->orderBy('end_date', 'asc')->get();
 
+        // 4. Booking ruangan yang dibuat / diselenggarakan oleh user
+        // Termasuk booking standalone (tanpa task_id) agar jadwal dari
+        // halaman Booking Ruangan ikut muncul di tabel Kegiatan Saya.
+        $bookingQuery = RoomBooking::with(['venue', 'task'])
+            ->where(function ($q) use ($user, $nama, $username) {
+                $q->where('created_by', $user->id)
+                  ->orWhere('penyelenggara', 'LIKE', '%' . $nama . '%');
+                if (!empty($username)) {
+                    $q->orWhere('penyelenggara', 'LIKE', '%' . $username . '%');
+                }
+            })
+            ->where('status', '!=', 'Dibatalkan');
+
+        if ($filterStatus === 'selesai') {
+            $bookingQuery->where('booking_date', '<', Carbon::today()->format('Y-m-d'));
+        } elseif ($filterStatus === 'berjalan') {
+            $bookingQuery->where('booking_date', '>=', Carbon::today()->format('Y-m-d'));
+        }
+
+        $myBookings = $bookingQuery
+            ->orderBy('booking_date', 'desc')
+            ->orderBy('start_time', 'desc')
+            ->get();
+
         $notifications = Auth::user()->notifications()->latest()->take(5)->get();
         $jumlah_notif = Auth::user()->unreadNotifications()->count();
 
         return view('tugas_saya.index', compact(
             'myTasks',
             'mySubKegiatans',
+            'myBookings',
             'filterStatus',
             'notifications',
             'jumlah_notif'
