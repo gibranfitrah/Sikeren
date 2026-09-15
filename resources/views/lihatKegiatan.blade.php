@@ -38,8 +38,8 @@
 <style>
     /* Scoped Styles for Detail Rapat Layout */
     .approval-container {
-        padding: 18px 22px !important;
-        border-radius: 16px !important;
+        padding: 20px 24px !important;
+        border-radius: 18px !important;
         border: 1px solid !important;
         display: flex !important;
         flex-direction: row !important;
@@ -47,6 +47,7 @@
         justify-content: space-between !important;
         gap: 16px !important;
         flex-wrap: wrap !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03) !important;
     }
     .approval-waiting {
         background-color: #fffbeb !important;
@@ -87,10 +88,14 @@
         border-color: #fecaca !important;
     }
     .stage-card-panel {
-        padding: 20px 22px !important;
-        border-radius: 16px !important;
-        background-color: #f8fafc !important;
+        padding: 24px !important;
+        border-radius: 20px !important;
+        background-color: #ffffff !important;
         border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
     }
     .ui-icon-xs {
         width: 14px !important;
@@ -397,60 +402,169 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
                 {{-- PANEL TAHAP 3: PRESENSI QR CODE --}}
-                <div id="presensi-qr" class="stage-card-panel space-y-4">
-                    <div class="flex items-center justify-between pb-3 border-b border-gray-200">
-                        <div class="flex items-center gap-2.5">
-                            <span class="w-6 h-6 rounded-lg bg-blue-600 text-white text-[11px] font-black flex items-center justify-center flex-shrink-0">3</span>
-                            <h4 class="text-xs font-bold uppercase tracking-wider text-gray-800 ml-3">Tahap Presensi QR Rapat</h4>
+                <div id="presensi-qr" class="stage-card-panel">
+                    <div>
+                        <div class="flex items-center justify-between pb-4 border-b border-gray-100 mb-5">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-7 h-7 rounded-xl bg-blue-600 text-white text-xs font-black flex items-center justify-center flex-shrink-0 shadow-xs">3</span>
+                                <div>
+                                    <h4 class="text-xs font-bold uppercase tracking-wider text-gray-800">Tahap Presensi QR Rapat</h4>
+                                    <p class="text-[11px] text-gray-400">Pindai QR lewat HP peserta</p>
+                                </div>
+                            </div>
+                            <span class="text-[11px] font-bold {{ $rapatSetuju == 1 ? 'text-blue-700 bg-blue-50 border border-blue-200' : 'text-gray-500 bg-gray-100 border border-gray-200' }} px-3 py-1 rounded-full">
+                                {{ $rapatSetuju == 1 ? 'QR Siap & Aktif' : 'Terkunci' }}
+                            </span>
                         </div>
-                        <span class="text-[11px] font-bold {{ $rapatSetuju == 1 ? 'text-blue-700 bg-blue-100 border border-blue-200' : 'text-gray-500 bg-gray-200 border border-gray-300' }} px-2.5 py-0.5 rounded-full">
-                            {{ $rapatSetuju == 1 ? 'QR Siap' : 'Terkunci' }}
-                        </span>
+
+                        @if($rapatSetuju == 1)
+                            <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+                                <div class="p-3 bg-white rounded-2xl border-2 border-slate-100 shadow-sm flex-shrink-0 flex flex-col items-center">
+                                    {!! QrCode::size(120)->generate($qrUrlHadir ?? url('/daftarhadir/' . $rapatId)) !!}
+                                    <span class="text-[10px] text-slate-400 font-mono mt-1.5 font-bold">SCAN DARI HP</span>
+                                </div>
+                                <div class="space-y-3 text-xs text-gray-600 flex-1 w-full">
+                                    <div>
+                                        <p class="font-bold text-gray-900 text-sm">QR Code Presensi Peserta</p>
+                                        <p class="text-xs text-gray-500 leading-relaxed mt-1">Peserta rapat (seperti <strong class="text-gray-800">St. Rasnani Manafi</strong>) memindai kode QR ini dari HP untuk memilih status: <strong>Hadir</strong>, <strong>Sedang Ada Kegiatan Lain</strong>, atau <strong>Tidak Hadir</strong>.</p>
+                                    </div>
+                                    
+                                    <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-mono text-slate-700 break-all flex items-center justify-between gap-2">
+                                        <span class="truncate select-all">{{ $qrUrlHadir ?? url('/daftarhadir/' . $rapatId) }}</span>
+                                        <button type="button" onclick="navigator.clipboard.writeText('{{ $qrUrlHadir ?? url('/daftarhadir/' . $rapatId) }}'); alert('Tautan presensi berhasil disalin!');" class="text-blue-600 hover:text-blue-800 font-bold shrink-0 font-sans px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 transition">
+                                            Salin
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        @else
+                            <div class="p-8 text-center text-xs text-gray-400">
+                                <svg class="ui-icon-lg mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                Presensi QR Code akan otomatis aktif setelah rapat disetujui oleh Pemimpin Rapat.
+                            </div>
+                        @endif
                     </div>
 
                     @if($rapatSetuju == 1)
-                        <div class="flex flex-col sm:flex-row items-center gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-xs">
-                            <div class="p-2 bg-white rounded-xl border border-gray-200 shadow-xs flex-shrink-0">
-                                {!! QrCode::size(110)->generate($qrUrlHadir ?? url('/daftarhadir/' . $rapatId)) !!}
-                            </div>
-                            <div class="space-y-2 text-xs text-gray-600">
-                                <p class="font-bold text-gray-900">QR Code Presensi Peserta</p>
-                                <p class="text-[11px] text-gray-500 leading-relaxed">Peserta rapat dapat melakukan presensi kehadiran dengan memindai kode QR ini atau melalui tautan daftar hadir.</p>
-                                <div class="pt-1 flex items-center gap-2 flex-wrap">
-                                    <a target="_blank" href="{{ url('/qrcode/' . $rapatId) }}" class="btn-primary-action">
-                                        <svg class="ui-icon-xs text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
-                                        Layar Penuh
-                                    </a>
-                                    <a target="_blank" href="{{ $qrUrlHadir ?? url('/daftarhadir/' . $rapatId) }}" class="btn-secondary-action ml-3">
-                                        Buka Link Hadir
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    @else
-                        <div class="p-6 text-center text-xs text-gray-400 bg-white rounded-xl border border-gray-200">
-                            <svg class="ui-icon-lg mx-auto text-gray-300 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                            Presensi QR Code akan otomatis aktif setelah rapat disetujui oleh Pemimpin Rapat.
+                        <div class="pt-4 mt-5 border-t border-gray-100 flex items-center gap-2 flex-wrap">
+                            <a target="_blank" href="{{ url('/qrcode/' . $rapatId) }}" class="btn-primary-action">
+                                <svg class="ui-icon-xs text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                                Layar Penuh
+                            </a>
+                            <a target="_blank" href="{{ $qrUrlHadir ?? url('/daftarhadir/' . $rapatId) }}" class="btn-secondary-action">
+                                Buka Link Hadir
+                            </a>
                         </div>
                     @endif
                 </div>
 
                 {{-- PANEL TAHAP 4: NOTULEN & DOKUMENTASI --}}
-                <div id="notulen" class="stage-card-panel space-y-4">
-                    <div class="flex items-center justify-between pb-3 border-b border-gray-200">
-                        <div class="flex items-center gap-2.5">
-                            <span class="w-6 h-6 rounded-lg bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center flex-shrink-0">4</span>
-                            <h4 class="text-xs font-bold uppercase tracking-wider text-gray-800">Tahap Notulen & Foto Dokumentasi</h4>
+                <div id="notulen" class="stage-card-panel">
+                    <div>
+                        <div class="flex items-center justify-between pb-4 border-b border-gray-100 mb-5">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-7 h-7 rounded-xl bg-emerald-600 text-white text-xs font-black flex items-center justify-center flex-shrink-0 shadow-xs">4</span>
+                                <div>
+                                    <h4 class="text-xs font-bold uppercase tracking-wider text-gray-800">Tahap Notulen & Foto Dokumentasi</h4>
+                                    <p class="text-[11px] text-gray-400">Ringkasan hasil, materi & foto</p>
+                                </div>
+                            </div>
+                            <span class="text-[11px] font-bold {{ !empty($rapatNotulen) ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-amber-700 bg-amber-50 border border-amber-200' }} px-3 py-1 rounded-full">
+                                {{ !empty($rapatNotulen) ? '✓ Selesai (100%)' : 'Menunggu Notulen' }}
+                            </span>
                         </div>
-                        <span class="text-[11px] font-bold {{ !empty($rapatNotulen) ? 'text-emerald-700 bg-emerald-100 border border-emerald-200' : 'text-amber-700 bg-amber-100 border border-amber-200' }} px-2.5 py-0.5 rounded-full">
-                            {{ !empty($rapatNotulen) ? 'Notulen Terisi' : 'Menunggu Notulen' }}
-                        </span>
-                    </div>
 
-                    <div class="bg-white p-4 rounded-xl border border-gray-200 space-y-3 shadow-xs">
                         @if($rapatSetuju == 1)
-                            @if(empty($rapatNotulen) || $isNotulis)
-                                {{-- Form Pengisian Notulen (Aktif jika Notulis atau belum diisi) --}}
+                            @if(!empty($rapatNotulen))
+                                {{-- TAMPILAN VIEW NOTULEN & DOKUMENTASI (SELESAI) --}}
+                                <div id="view-notulen-container" class="space-y-4">
+                                    <div class="flex items-center justify-between gap-2 flex-wrap">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                            <h5 class="text-xs font-bold text-gray-900 uppercase tracking-wide">Hasil Notulen & Kesimpulan:</h5>
+                                        </div>
+                                        @if($isNotulis)
+                                            <button type="button" onclick="toggleEditNotulen(true)" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-bold transition">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                                <span>Ubah / Edit Notulen</span>
+                                            </button>
+                                        @endif
+                                    </div>
+
+                                    {{-- BOX HASIL NOTULEN --}}
+                                    <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 whitespace-pre-line leading-relaxed max-h-48 overflow-y-auto">
+                                        {{ $rapatNotulen }}
+                                    </div>
+
+                                    {{-- ATTACHMENT CARDS & LINKS --}}
+                                    <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                                        @if($rapatMateriLink)
+                                            <a target="_blank" href="{{ $rapatMateriLink }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-bold transition shadow-2xs">
+                                                <span>📁</span>
+                                                <span>Buka Materi (Drive)</span>
+                                                <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                            </a>
+                                        @endif
+
+                                        @if($rapatFotoLink)
+                                            <a target="_blank" href="{{ $rapatFotoLink }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 text-xs font-bold transition shadow-2xs">
+                                                <span>📷</span>
+                                                <span>Buka Foto Dokumentasi</span>
+                                                <svg class="w-3 h-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                            </a>
+                                        @endif
+
+                                        <a target="_blank" href="{{ url('employee/pdf_kegiatan/' . $rapatId) }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 text-xs font-bold transition shadow-2xs">
+                                            <span>📄</span>
+                                            <span>Unduh PDF Risalah</span>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                {{-- FORM EDIT NOTULEN --}}
+                                @if($isNotulis)
+                                    <div id="form-notulen-container" class="hidden space-y-4">
+                                        <div class="flex items-center justify-between pb-2 border-b border-gray-100">
+                                            <h5 class="text-xs font-bold text-gray-900">Ubah Notulen & Dokumentasi Rapat</h5>
+                                            <button type="button" onclick="toggleEditNotulen(false)" class="text-xs font-bold text-gray-500 hover:text-gray-700 px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 transition">
+                                                ✕ Batal
+                                            </button>
+                                        </div>
+
+                                        <form action="{{ route('update_notulen') }}" method="POST" class="space-y-3">
+                                            @csrf
+                                            <input type="hidden" name="id" value="{{ $rapatId }}">
+                                            <div>
+                                                <label for="notulenTextarea" class="block text-xs font-bold text-gray-700 mb-1">
+                                                    Notulen Hasil Pembahasan Rapat
+                                                </label>
+                                                <textarea id="notulenTextarea" name="notulen" rows="4" placeholder="Tuliskan ringkasan hasil rapat, keputusan, dan tindak lanjut..." class="w-full text-xs border-gray-300 rounded-xl p-3 bg-gray-50 focus:bg-white text-gray-800 focus:ring-blue-500 focus:border-blue-500 border">{{ $rapatNotulen }}</textarea>
+                                            </div>
+
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                                <div>
+                                                    <label class="block text-[11px] font-bold text-gray-600 mb-1">Tautan Bahan / Materi (Drive):</label>
+                                                    <input type="url" name="materi_link" value="{{ $rapatMateriLink }}" placeholder="https://drive.google.com/..." class="w-full text-xs border-gray-300 rounded-xl p-2.5 bg-gray-50 focus:bg-white text-gray-800 border">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[11px] font-bold text-gray-600 mb-1">Tautan Foto Dokumentasi:</label>
+                                                    <input type="url" name="foto_link" value="{{ $rapatFotoLink }}" placeholder="https://photos.app.goo.gl/..." class="w-full text-xs border-gray-300 rounded-xl p-2.5 bg-gray-50 focus:bg-white text-gray-800 border">
+                                                </div>
+                                            </div>
+
+                                            <div class="flex items-center justify-end gap-2 pt-2">
+                                                <button type="button" onclick="toggleEditNotulen(false)" class="btn-secondary-action">
+                                                    Batal
+                                                </button>
+                                                <button type="submit" class="btn-primary-action">
+                                                    Simpan Perubahan Notulen
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                @endif
+                            @else
+                                {{-- FORM PENGISIAN AWAL NOTULEN --}}
                                 <form action="{{ route('update_notulen') }}" method="POST" class="space-y-3">
                                     @csrf
                                     <input type="hidden" name="id" value="{{ $rapatId }}">
@@ -458,54 +572,48 @@
                                         <label for="notulenTextarea" class="block text-xs font-bold text-gray-700 mb-1">
                                             Notulen Hasil Pembahasan Rapat
                                         </label>
-                                        <textarea id="notulenTextarea" name="notulen" rows="4" placeholder="Tuliskan ringkasan hasil rapat, keputusan, dan tindak lanjut..." class="w-full text-xs border-gray-300 rounded-lg p-2.5 bg-gray-50 focus:bg-white text-gray-800 focus:ring-blue-500 focus:border-blue-500 border">{{ $rapatNotulen }}</textarea>
+                                        <textarea id="notulenTextarea" name="notulen" rows="4" placeholder="Tuliskan ringkasan hasil rapat, keputusan, dan tindak lanjut..." class="w-full text-xs border-gray-300 rounded-xl p-3 bg-gray-50 focus:bg-white text-gray-800 focus:ring-blue-500 focus:border-blue-500 border">{{ $rapatNotulen }}</textarea>
                                     </div>
 
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                         <div>
-                                            <input type="url" name="materi_link" value="{{ $rapatMateriLink }}" placeholder="Tautan Bahan / Materi (Drive)" class="w-full text-xs border-gray-300 rounded-lg p-2 bg-gray-50 focus:bg-white text-gray-800 border">
+                                            <label class="block text-[11px] font-bold text-gray-600 mb-1">Tautan Bahan / Materi (Drive):</label>
+                                            <input type="url" name="materi_link" value="{{ $rapatMateriLink }}" placeholder="https://drive.google.com/..." class="w-full text-xs border-gray-300 rounded-xl p-2.5 bg-gray-50 focus:bg-white text-gray-800 border">
                                         </div>
                                         <div>
-                                            <input type="url" name="foto_link" value="{{ $rapatFotoLink }}" placeholder="Tautan Foto Dokumentasi" class="w-full text-xs border-gray-300 rounded-lg p-2 bg-gray-50 focus:bg-white text-gray-800 border ml-3">
+                                            <label class="block text-[11px] font-bold text-gray-600 mb-1">Tautan Foto Dokumentasi:</label>
+                                            <input type="url" name="foto_link" value="{{ $rapatFotoLink }}" placeholder="https://photos.app.goo.gl/..." class="w-full text-xs border-gray-300 rounded-xl p-2.5 bg-gray-50 focus:bg-white text-gray-800 border">
                                         </div>
                                     </div>
 
-                                    <div class="flex justify-end mt-3">
+                                    <div class="flex justify-end pt-2">
                                         <button type="submit" class="btn-primary-action">
                                             Simpan Notulen & Dokumentasi
                                         </button>
                                     </div>
                                 </form>
-                            @else
-                                {{-- Tampilan Read-Only Notulen --}}
-                                <div class="space-y-2 text-xs">
-                                    <h5 class="font-bold text-gray-800">Catatan Notulen:</h5>
-                                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-200 whitespace-pre-line text-gray-700 leading-relaxed">
-                                        {{ $rapatNotulen }}
-                                    </div>
-                                    @if($rapatMateriLink || $rapatFotoLink)
-                                    <div class="pt-2 flex items-center gap-3 flex-wrap">
-                                        @if($rapatMateriLink)
-                                            <a target="_blank" href="{{ $rapatMateriLink }}" class="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1">
-                                                📁 Buka Materi Rapat
-                                            </a>
-                                        @endif
-                                        @if($rapatFotoLink)
-                                            <a target="_blank" href="{{ $rapatFotoLink }}" class="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1">
-                                                📷 Buka Foto Dokumentasi
-                                            </a>
-                                        @endif
-                                    </div>
-                                    @endif
-                                </div>
                             @endif
                         @else
-                            <div class="p-6 text-center text-xs text-gray-400">
+                            <div class="p-8 text-center text-xs text-gray-400">
                                 Form notulen akan terbuka setelah rapat disetujui.
                             </div>
                         @endif
                     </div>
                 </div>
+
+                <script>
+                function toggleEditNotulen(isEdit) {
+                    const viewContainer = document.getElementById('view-notulen-container');
+                    const formContainer = document.getElementById('form-notulen-container');
+                    if (isEdit) {
+                        if (viewContainer) viewContainer.classList.add('hidden');
+                        if (formContainer) formContainer.classList.remove('hidden');
+                    } else {
+                        if (viewContainer) viewContainer.classList.remove('hidden');
+                        if (formContainer) formContainer.classList.add('hidden');
+                    }
+                }
+                </script>
 
             </div>
 
@@ -561,53 +669,198 @@
         </div>
 
         {{-- KOLOM KANAN: DAFTAR PESERTA RAPAT --}}
-        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-                <h3 class="text-sm font-bold text-gray-800">Daftar Peserta Rapat ({{ count($kegiatans) }})</h3>
-                <span class="text-xs text-gray-500">Daftar pegawai yang ditugaskan</span>
-            </div>
+        @php
+            $countHadir = $kegiatans->where('status_kehadiran', 'Hadir')->count();
+            $countTidak = $kegiatans->where('status_kehadiran', 'Tidak Hadir')->count();
+            $countLain  = $kegiatans->where('status_kehadiran', 'Sedang Ada Kegiatan Lain')->count();
+            $countBelum = $kegiatans->where('status_kehadiran', 'Belum Hadir')->count();
+        @endphp
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col justify-between">
+            <div>
+                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-sm font-bold text-gray-900">
+                                Daftar Peserta Rapat (<span id="total-count">{{ count($kegiatans) }}</span>)
+                            </h3>
+                            <button type="button" id="btn-refresh-presensi" onclick="refreshPresensi()" class="p-1 rounded-lg hover:bg-gray-200 text-gray-500 hover:text-blue-600 transition" title="Segarkan Data Presensi">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-gray-500 mt-0.5">Pemantauan status kehadiran peserta secara langsung (real-time)</p>
+                    </div>
 
-            <div class="overflow-x-auto max-h-[360px] overflow-y-auto">
-                <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
-                    <thead class="bg-gray-50 text-[11px] font-bold text-gray-500 uppercase tracking-wider sticky top-0">
-                        <tr>
-                            <th class="px-5 py-2.5">No</th>
-                            <th class="px-5 py-2.5">Nama Peserta</th>
-                            <th class="px-5 py-2.5">NIP</th>
-                            <th class="px-5 py-2.5 text-right">Status Kehadiran</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 bg-white">
-                        @forelse($kegiatans as $idx => $pesertaItem)
-                        <tr class="hover:bg-gray-50/50 transition-colors">
-                            <td class="px-5 py-3 text-gray-400">{{ $idx + 1 }}</td>
-                            <td class="px-5 py-3 font-semibold text-gray-800">{{ $pesertaItem->abc }}</td>
-                            <td class="px-5 py-3 text-gray-500 font-mono">{{ $pesertaItem->nipbaru ?? $pesertaItem->def }}</td>
-                            <td class="px-5 py-3 text-right">
-                                @if(($pesertaItem->status_hadir ?? 0) == 1)
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                                        ✓ Hadir
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600">
-                                        Belum Hadir
-                                    </span>
-                                @endif
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="4" class="px-5 py-6 text-center text-gray-400">
-                                Tidak ada data peserta.
-                            </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                    {{-- Summary Pills --}}
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            <span>Hadir: <strong id="count-hadir">{{ $countHadir }}</strong></span>
+                        </span>
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                            <span>Lain: <strong id="count-lain">{{ $countLain }}</strong></span>
+                        </span>
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                            <span>Tidak: <strong id="count-tidak">{{ $countTidak }}</strong></span>
+                        </span>
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                            <span>Belum: <strong id="count-belum">{{ $countBelum }}</strong></span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto max-h-[380px] overflow-y-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
+                        <thead class="bg-gray-50 text-[11px] font-bold text-gray-500 uppercase tracking-wider sticky top-0 z-10">
+                            <tr>
+                                <th class="px-5 py-2.5 w-10">No</th>
+                                <th class="px-5 py-2.5">Nama Peserta</th>
+                                <th class="px-5 py-2.5">NIP</th>
+                                <th class="px-5 py-2.5 text-right">Status Kehadiran</th>
+                            </tr>
+                        </thead>
+                        <tbody id="presensi-table-body" class="divide-y divide-gray-100 bg-white">
+                            @forelse($kegiatans as $idx => $pesertaItem)
+                            @php
+                                $st = $pesertaItem->status_kehadiran ?? 'Belum Hadir';
+                            @endphp
+                            <tr class="hover:bg-gray-50/50 transition-colors">
+                                <td class="px-5 py-3 text-gray-400 font-medium">{{ $idx + 1 }}</td>
+                                <td class="px-5 py-3">
+                                    <span class="font-bold text-gray-900 block text-xs">{{ $pesertaItem->abc }}</span>
+                                    @if(!empty($pesertaItem->keterangan))
+                                        <span class="text-[10px] text-amber-700 font-medium block truncate max-w-xs">Ket: {{ $pesertaItem->keterangan }}</span>
+                                    @endif
+                                </td>
+                                <td class="px-5 py-3 text-gray-500 font-mono text-xs">{{ $pesertaItem->nipbaru ?? $pesertaItem->def }}</td>
+                                <td class="px-5 py-3 text-right">
+                                    @if($st === 'Hadir')
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                            <span>✓ Hadir</span>
+                                            @if(!empty($pesertaItem->waktu_kehadiran))
+                                                <span class="text-[9px] text-emerald-600 font-mono ml-0.5 font-normal">({{ \Carbon\Carbon::parse($pesertaItem->waktu_kehadiran)->format('H:i') }})</span>
+                                            @endif
+                                        </span>
+                                    @elseif($st === 'Sedang Ada Kegiatan Lain')
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                            <span>💼 Kegiatan Lain</span>
+                                            @if(!empty($pesertaItem->waktu_kehadiran))
+                                                <span class="text-[9px] text-amber-600 font-mono ml-0.5 font-normal">({{ \Carbon\Carbon::parse($pesertaItem->waktu_kehadiran)->format('H:i') }})</span>
+                                            @endif
+                                        </span>
+                                    @elseif($st === 'Tidak Hadir')
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                            <span>✕ Tidak Hadir</span>
+                                            @if(!empty($pesertaItem->waktu_kehadiran))
+                                                <span class="text-[9px] text-rose-600 font-mono ml-0.5 font-normal">({{ \Carbon\Carbon::parse($pesertaItem->waktu_kehadiran)->format('H:i') }})</span>
+                                            @endif
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                                            <span>Belum Hadir</span>
+                                        </span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="4" class="px-5 py-6 text-center text-gray-400">
+                                    Tidak ada data peserta penugasan.
+                                </td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="px-6 py-2.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
+                <span class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Pembaruan otomatis aktif (tiap 5 detik)</span>
+                </span>
+                <span class="font-mono text-[10px]">ID Rapat: #{{ $rapatId }}</span>
             </div>
         </div>
 
     </div>
 
 </div>
+
+<script>
+function refreshPresensi() {
+    const btn = document.getElementById('btn-refresh-presensi');
+    if (btn) btn.classList.add('animate-spin');
+
+    fetch('{{ route("api.presensi.status", $rapatId) }}')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Update summary counters
+                document.getElementById('count-hadir').innerText = data.summary.hadir;
+                document.getElementById('count-lain').innerText = data.summary.kegiatan_lain;
+                document.getElementById('count-tidak').innerText = data.summary.tidak_hadir;
+                document.getElementById('count-belum').innerText = data.summary.belum_hadir;
+                document.getElementById('total-count').innerText = data.summary.total;
+
+                // Update table rows
+                const tbody = document.getElementById('presensi-table-body');
+                if (tbody && data.peserta && data.peserta.length > 0) {
+                    let html = '';
+                    data.peserta.forEach((p, idx) => {
+                        let statusBadge = '';
+                        if (p.status_kehadiran === 'Hadir') {
+                            statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                <span>✓ Hadir</span>
+                                ${p.waktu ? `<span class="text-[9px] text-emerald-600 font-mono ml-0.5 font-normal">(${p.waktu})</span>` : ''}
+                            </span>`;
+                        } else if (p.status_kehadiran === 'Sedang Ada Kegiatan Lain') {
+                            statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                <span>💼 Kegiatan Lain</span>
+                                ${p.waktu ? `<span class="text-[9px] text-amber-600 font-mono ml-0.5 font-normal">(${p.waktu})</span>` : ''}
+                            </span>`;
+                        } else if (p.status_kehadiran === 'Tidak Hadir') {
+                            statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                <span>✕ Tidak Hadir</span>
+                                ${p.waktu ? `<span class="text-[9px] text-rose-600 font-mono ml-0.5 font-normal">(${p.waktu})</span>` : ''}
+                            </span>`;
+                        } else {
+                            statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                                <span>Belum Hadir</span>
+                            </span>`;
+                        }
+
+                        html += `<tr class="hover:bg-gray-50/50 transition-colors">
+                            <td class="px-5 py-3 text-gray-400 font-medium">${idx + 1}</td>
+                            <td class="px-5 py-3">
+                                <span class="font-bold text-gray-900 block text-xs">${p.nama}</span>
+                                ${p.keterangan ? `<span class="text-[10px] text-amber-700 font-medium block truncate max-w-xs">Ket: ${p.keterangan}</span>` : ''}
+                            </td>
+                            <td class="px-5 py-3 text-gray-500 font-mono text-xs">${p.nipbaru || p.nip}</td>
+                            <td class="px-5 py-3 text-right">${statusBadge}</td>
+                        </tr>`;
+                    });
+                    tbody.innerHTML = html;
+                }
+            }
+        })
+        .catch(err => console.log('Presensi poll err:', err))
+        .finally(() => {
+            if (btn) btn.classList.remove('animate-spin');
+        });
+}
+
+// Auto refresh polling every 5 seconds
+setInterval(refreshPresensi, 5000);
+</script>
 @endsection

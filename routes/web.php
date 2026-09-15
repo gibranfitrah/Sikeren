@@ -79,6 +79,7 @@ Route::post('/color6/{id}/',  [BMNController::class, 'edit6'])->name('color.edit
 
 Route::get('daftarhadir/{id}', [KegiatanController::class, 'daftarHadir'])->where('id','(.*)');
 Route::post('daftarhadir/submit', [KegiatanController::class, 'submitDaftarHadir'])->name('daftarhadir.submit');
+Route::get('/api/presensi-rapat/{id}', [KegiatanController::class, 'apiStatusPresensi'])->name('api.presensi.status');
 
 Route::group(['middleware' => 'auth'], function () {
     
