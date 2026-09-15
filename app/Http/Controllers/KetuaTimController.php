@@ -134,7 +134,6 @@ class KetuaTimController extends Controller
             // Kirim notifikasi ke user yang ditugaskan
             if ($user && $user->id !== Auth::id()) {
                 DB::table('notifications')->insert([
-                    'id'              => (string) Str::uuid(),
                     'type'            => 'App\Notifications\PenugasanKegiatanNotification',
                     'notifiable_type' => 'App\User',
                     'notifiable_id'   => $user->id,

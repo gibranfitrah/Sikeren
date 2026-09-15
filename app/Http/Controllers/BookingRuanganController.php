@@ -187,6 +187,14 @@ class BookingRuanganController extends Controller
         $venueId = $request->venue_id ?: null;
         $zoomAccount = $request->zoom_account ?: 'none';
 
+        // Normalisasi sesuai tipe: radio yang disembunyikan (x-show) tetap ter-submit,
+        // jadi abaikan zoom untuk offline dan abaikan ruangan untuk online.
+        if ($request->tipe_pertemuan === 'offline') {
+            $zoomAccount = 'none';
+        } elseif ($request->tipe_pertemuan === 'online') {
+            $venueId = null;
+        }
+
         // Validasi kebutuhan ruangan/zoom berdasarkan tipe pertemuan
         if ($request->tipe_pertemuan === 'offline' && !$venueId) {
             return back()->withInput()->with('error', 'Silakan pilih Ruangan Rapat fisik untuk pertemuan Offline.');
