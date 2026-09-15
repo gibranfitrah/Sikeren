@@ -96,112 +96,124 @@ class LihatKegiatanController extends Controller
 
         $realId = $task ? $task->id : (is_numeric($id) ? $id : 0);
 
-        $kegiatans = penugasan::join('tasks', 'penugasans.id_kegiatan', '=', 'tasks.id')
-            ->join('users', 'penugasans.niplama', '=', 'users.niplama')
+        // Ambil data peserta dari tabel penugasans (termasuk yang sudah presensi)
+        $existingPenugasans = penugasan::leftJoin('users', 'penugasans.niplama', '=', 'users.niplama')
+            ->where('penugasans.id_kegiatan', $realId)
             ->select(
-                'tasks.text',
                 'users.nama_lengkap as abc',
                 'users.niplama as def',
                 'users.nipbaru',
                 'penugasans.id as id_penugasan',
-                'tasks.agenda',
-                'tasks.tempat',
-                'tasks.start_date',
-                'tasks.date_akhir',
-                'tasks.setuju_rapat',
-                'tasks.id as id',
-                'tasks.start_jam',
-                'tasks.end_jam',
-                'tasks.pemimpin',
-                'tasks.notulis',
-                'tasks.tim_dokumentasi',
-                'tasks.surat',
-                'tasks.notulen',
-                'tasks.materi_link',
-                'tasks.foto_link',
-                'tasks.notulen_selesai',
-                'tasks.created_at',
-                'penugasans.id_kegiatan as id_keg'
+                'penugasans.peserta as custom_peserta',
+                'penugasans.status_kehadiran',
+                'penugasans.keterangan',
+                'penugasans.waktu_kehadiran',
+                'penugasans.updated_at as waktu_update',
+                'penugasans.created_at as waktu_create'
             )
-            ->where('tasks.id', $realId)
             ->get();
 
-        // Fallback jika data penugasan kosong namun task memiliki data owners
-        if ($kegiatans->isEmpty() && $task && !empty($task->owners)) {
-            $rawOwners = $task->owners;
-            $ownerList = [];
-            if (is_array($rawOwners)) {
-                $ownerList = $rawOwners;
-            } elseif (is_string($rawOwners) && !empty($rawOwners)) {
-                $decoded = json_decode($rawOwners, true);
-                if (is_array($decoded)) {
-                    $ownerList = $decoded;
-                } else {
-                    $ownerList = array_filter(array_map('trim', explode(',', $rawOwners)));
-                }
+        // Ambil list penugasan dari task->owners jika ada
+        $rawOwners = $task ? $task->owners : null;
+        $ownerList = [];
+        if (is_array($rawOwners)) {
+            $ownerList = $rawOwners;
+        } elseif (is_string($rawOwners) && !empty($rawOwners)) {
+            $decoded = json_decode($rawOwners, true);
+            if (is_array($decoded)) {
+                $ownerList = $decoded;
+            } else {
+                $ownerList = array_filter(array_map('trim', explode(',', $rawOwners)));
             }
+        }
 
-            if (!empty($ownerList)) {
-                $users = User::whereIn('niplama', $ownerList)
-                    ->orWhereIn('nama_lengkap', $ownerList)
-                    ->get();
+        $kegiatans = collect();
+        $seen = [];
 
-                if ($users->isNotEmpty()) {
-                    $kegiatans = $users->map(function ($u) use ($task) {
-                        return (object)[
-                            'text'            => $task->text,
-                            'abc'             => $u->nama_lengkap,
-                            'def'             => $u->niplama,
-                            'nipbaru'         => $u->nipbaru,
-                            'id_penugasan'    => null,
-                            'agenda'          => $task->agenda,
-                            'tempat'          => $task->tempat,
-                            'start_date'      => $task->start_date,
-                            'date_akhir'      => $task->date_akhir,
-                            'setuju_rapat'    => $task->setuju_rapat,
-                            'id'              => $task->id,
-                            'start_jam'       => $task->start_jam,
-                            'end_jam'         => $task->end_jam,
-                            'pemimpin'        => $task->pemimpin,
-                            'notulis'         => $task->notulis,
-                            'tim_dokumentasi' => $task->tim_dokumentasi,
-                            'surat'           => $task->surat,
-                            'notulen'         => $task->notulen,
-                            'materi_link'     => $task->materi_link,
-                            'foto_link'       => $task->foto_link,
-                            'notulen_selesai' => $task->notulen_selesai,
-                            'created_at'      => $task->created_at,
-                            'id_keg'          => $task->id,
-                        ];
-                    });
-                } else {
-                    $kegiatans = collect($ownerList)->map(function ($nameOrNip) use ($task) {
-                        return (object)[
-                            'text'            => $task->text,
-                            'abc'             => (string)$nameOrNip,
-                            'def'             => (string)$nameOrNip,
-                            'nipbaru'         => '-',
-                            'id_penugasan'    => null,
-                            'agenda'          => $task->agenda,
-                            'tempat'          => $task->tempat,
-                            'start_date'      => $task->start_date,
-                            'date_akhir'      => $task->date_akhir,
-                            'setuju_rapat'    => $task->setuju_rapat,
-                            'id'              => $task->id,
-                            'start_jam'       => $task->start_jam,
-                            'end_jam'         => $task->end_jam,
-                            'pemimpin'        => $task->pemimpin,
-                            'notulis'         => $task->notulis,
-                            'tim_dokumentasi' => $task->tim_dokumentasi,
-                            'surat'           => $task->surat,
-                            'notulen'         => $task->notulen,
-                            'materi_link'     => $task->materi_link,
-                            'foto_link'       => $task->foto_link,
-                            'notulen_selesai' => $task->notulen_selesai,
-                            'created_at'      => $task->created_at,
-                            'id_keg'          => $task->id,
-                        ];
-                    });
+        foreach ($existingPenugasans as $p) {
+            $nama = $p->abc ?: ($p->custom_peserta ?: $p->def);
+            $nip  = $p->def ?: ($p->nipbaru ?: '-');
+            $status = $p->status_kehadiran ?: 'Belum Hadir';
+
+            $seen[] = $nip;
+            $seen[] = $nama;
+
+            $kegiatans->push((object)[
+                'text'             => $task ? $task->text : '',
+                'abc'              => $nama,
+                'def'              => $nip,
+                'nipbaru'          => $p->nipbaru ?: '-',
+                'id_penugasan'     => $p->id_penugasan,
+                'agenda'           => $task ? $task->agenda : '',
+                'tempat'           => $task ? $task->tempat : '',
+                'start_date'       => $task ? $task->start_date : '',
+                'date_akhir'       => $task ? $task->date_akhir : '',
+                'setuju_rapat'     => $task ? $task->setuju_rapat : 0,
+                'id'               => $task ? $task->id : $realId,
+                'start_jam'        => $task ? $task->start_jam : '',
+                'end_jam'          => $task ? $task->end_jam : '',
+                'pemimpin'         => $task ? $task->pemimpin : '',
+                'notulis'          => $task ? $task->notulis : '',
+                'tim_dokumentasi'  => $task ? $task->tim_dokumentasi : '',
+                'surat'            => $task ? $task->surat : '',
+                'notulen'          => $task ? $task->notulen : '',
+                'materi_link'      => $task ? $task->materi_link : '',
+                'foto_link'        => $task ? $task->foto_link : '',
+                'notulen_selesai'  => $task ? $task->notulen_selesai : 0,
+                'created_at'       => $task ? $task->created_at : now(),
+                'id_keg'           => $realId,
+                'status_kehadiran' => $status,
+                'keterangan'       => $p->keterangan,
+                'waktu_kehadiran'  => ($status !== 'Belum Hadir' && !empty($p->waktu_kehadiran)) ? $p->waktu_kehadiran : null,
+            ]);
+        }
+
+        if (!empty($ownerList)) {
+            $users = User::whereIn('niplama', $ownerList)
+                ->orWhereIn('nipbaru', $ownerList)
+                ->orWhereIn('nama_lengkap', $ownerList)
+                ->get();
+
+            foreach ($ownerList as $own) {
+                $u = $users->first(function($item) use ($own) {
+                    return $item->niplama == $own || $item->nipbaru == $own || strcasecmp($item->nama_lengkap, $own) === 0;
+                });
+
+                $nama = $u ? $u->nama_lengkap : (string)$own;
+                $nip  = $u ? $u->niplama : (string)$own;
+
+                if (!in_array($nip, $seen) && !in_array($nama, $seen)) {
+                    $seen[] = $nip;
+                    $seen[] = $nama;
+
+                    $kegiatans->push((object)[
+                        'text'             => $task ? $task->text : '',
+                        'abc'              => $nama,
+                        'def'              => $nip,
+                        'nipbaru'          => $u ? $u->nipbaru : '-',
+                        'id_penugasan'     => null,
+                        'agenda'           => $task ? $task->agenda : '',
+                        'tempat'           => $task ? $task->tempat : '',
+                        'start_date'       => $task ? $task->start_date : '',
+                        'date_akhir'       => $task ? $task->date_akhir : '',
+                        'setuju_rapat'     => $task ? $task->setuju_rapat : 0,
+                        'id'               => $task ? $task->id : $realId,
+                        'start_jam'        => $task ? $task->start_jam : '',
+                        'end_jam'          => $task ? $task->end_jam : '',
+                        'pemimpin'         => $task ? $task->pemimpin : '',
+                        'notulis'          => $task ? $task->notulis : '',
+                        'tim_dokumentasi'  => $task ? $task->tim_dokumentasi : '',
+                        'surat'            => $task ? $task->surat : '',
+                        'notulen'          => $task ? $task->notulen : '',
+                        'materi_link'      => $task ? $task->materi_link : '',
+                        'foto_link'        => $task ? $task->foto_link : '',
+                        'notulen_selesai'  => $task ? $task->notulen_selesai : 0,
+                        'created_at'       => $task ? $task->created_at : now(),
+                        'id_keg'           => $realId,
+                        'status_kehadiran' => 'Belum Hadir',
+                        'keterangan'       => null,
+                        'waktu_kehadiran'  => null,
+                    ]);
                 }
             }
         }
@@ -322,9 +334,12 @@ public function updateNotulen(Request $request)
         $task->foto_link = $request->foto_link;
     }
 
+    // Ketika notulen & dokumentasi disimpan, status rapat diselesaikan
+    $task->status   = 'Selesai';
+    $task->progress = 100;
     $task->save();
 
-    return back()->with('success','Berhasil disimpan.');
+    return back()->with('success', 'Notulen & dokumentasi berhasil disimpan. Status kegiatan rapat telah Selesai.');
 }
 
 public function detailKegiatan($id)

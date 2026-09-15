@@ -124,14 +124,16 @@ class KegiatanController extends Controller
 
     public static function getQrUrl($path = '')
     {
+        $override = env('LOCAL_IP');
         $host   = request()->getHost();
         $port   = request()->getPort();
         $scheme = request()->getScheme();
 
-        // Jika diakses via localhost / 127.0.0.1, gunakan IP lokal LAN (Wi-Fi) agar HP bisa memindai & membuka halaman
-        if ($host === '127.0.0.1' || $host === 'localhost') {
+        if ($override) {
+            $host = $override;
+        } elseif ($host === '127.0.0.1' || $host === 'localhost' || $host === '0.0.0.0') {
             $localIp = gethostbyname(gethostname());
-            if ($localIp && $localIp !== '127.0.0.1') {
+            if ($localIp && $localIp !== '127.0.0.1' && !str_starts_with($localIp, '169.254.')) {
                 $host = $localIp;
             }
         }
@@ -478,8 +480,12 @@ class KegiatanController extends Controller
         return $pdf->stream('pdf.pdf', array("Attachment" => 0));
     }
 
-    public function daftarHadir($id) 
+    public function daftarHadir($id = null) 
     {
+        if ($id instanceof \Illuminate\Http\Request) {
+            $id = func_num_args() > 1 ? func_get_arg(1) : $id->route('id');
+        }
+
         $task = is_numeric($id) ? Task::find($id) : null;
         if (!$task) {
             $task = Task::where('id', $id)
@@ -491,106 +497,125 @@ class KegiatanController extends Controller
         $realId = $task ? $task->id : $id;
         $user   = Auth::user();
         
-        $pesertaList = collect();
-        if ($task) {
-            $pesertaList = penugasan::leftJoin('users', 'penugasans.niplama', '=', 'users.niplama')
-                ->where('penugasans.id_kegiatan', $realId)
-                ->select(
-                    'penugasans.id as id_penugasan',
-                    'penugasans.peserta as nama_peserta_custom',
-                    'penugasans.niplama',
-                    'penugasans.created_at as waktu_hadir',
-                    'penugasans.updated_at',
-                    'users.nama_lengkap',
-                    'users.nipbaru'
-                )
-                ->orderBy('penugasans.updated_at', 'desc')
-                ->get()
-                ->map(function ($p) {
-                    return (object)[
-                        'id_penugasan' => $p->id_penugasan,
-                        'nama_lengkap' => $p->nama_lengkap ?: $p->nama_peserta_custom,
-                        'niplama'      => $p->niplama,
-                        'nipbaru'      => $p->nipbaru,
-                        'waktu_hadir'  => $p->updated_at ?: $p->waktu_hadir,
-                    ];
-                });
+        // 1. Ambil data presensi yang sudah tercatat di penugasans
+        $existingPenugasans = penugasan::leftJoin('users', 'penugasans.niplama', '=', 'users.niplama')
+            ->where('penugasans.id_kegiatan', $realId)
+            ->select(
+                'penugasans.id as id_penugasan',
+                'penugasans.peserta as nama_peserta_custom',
+                'penugasans.niplama',
+                'penugasans.status_kehadiran',
+                'penugasans.keterangan',
+                'penugasans.waktu_kehadiran',
+                'penugasans.created_at as waktu_hadir',
+                'penugasans.updated_at',
+                'users.nama_lengkap',
+                'users.nipbaru'
+            )
+            ->orderBy('penugasans.updated_at', 'desc')
+            ->get();
 
-            if ($pesertaList->isEmpty() && !empty($task->owners)) {
-                $rawOwners = $task->owners;
-                $ownerList = [];
-                if (is_array($rawOwners)) {
-                    $ownerList = $rawOwners;
-                } elseif (is_string($rawOwners) && !empty($rawOwners)) {
-                    $decoded = json_decode($rawOwners, true);
-                    if (is_array($decoded)) {
-                        $ownerList = $decoded;
-                    } else {
-                        $ownerList = array_filter(array_map('trim', explode(',', $rawOwners)));
-                    }
+        // 2. Ambil list peserta yang ditugaskan (assigned) dari task->owners
+        $assignedParticipants = collect();
+        if ($task && !empty($task->owners)) {
+            $rawOwners = $task->owners;
+            $ownerList = [];
+            if (is_array($rawOwners)) {
+                $ownerList = $rawOwners;
+            } elseif (is_string($rawOwners) && !empty($rawOwners)) {
+                $decoded = json_decode($rawOwners, true);
+                if (is_array($decoded)) {
+                    $ownerList = $decoded;
+                } else {
+                    $ownerList = array_filter(array_map('trim', explode(',', $rawOwners)));
                 }
+            }
 
-                if (!empty($ownerList)) {
-                    $users = User::whereIn('niplama', $ownerList)
-                        ->orWhereIn('nama_lengkap', $ownerList)
-                        ->get();
+            if (!empty($ownerList)) {
+                $users = User::whereIn('niplama', $ownerList)
+                    ->orWhereIn('nipbaru', $ownerList)
+                    ->orWhereIn('nama_lengkap', $ownerList)
+                    ->get();
 
-                    if ($users->isNotEmpty()) {
-                        $pesertaList = $users->map(function($u) {
-                            return (object)[
-                                'id_penugasan' => null,
-                                'nama_lengkap' => $u->nama_lengkap,
-                                'niplama'      => $u->niplama,
-                                'nipbaru'      => $u->nipbaru,
-                                'waktu_hadir'  => null,
-                            ];
-                        });
-                    } else {
-                        $pesertaList = collect($ownerList)->map(function($nameOrNip) {
-                            return (object)[
-                                'id_penugasan' => null,
-                                'nama_lengkap' => (string)$nameOrNip,
-                                'niplama'      => (string)$nameOrNip,
-                                'nipbaru'      => '-',
-                                'waktu_hadir'  => null,
-                            ];
-                        });
-                    }
+                foreach ($ownerList as $item) {
+                    $foundUser = $users->first(function($u) use ($item) {
+                        return $u->niplama == $item || $u->nipbaru == $item || strcasecmp($u->nama_lengkap, $item) === 0;
+                    });
+
+                    $assignedParticipants->push((object)[
+                        'nama_lengkap' => $foundUser ? $foundUser->nama_lengkap : (string)$item,
+                        'niplama'      => $foundUser ? $foundUser->niplama : (string)$item,
+                        'nipbaru'      => $foundUser ? $foundUser->nipbaru : '-',
+                    ]);
                 }
             }
         }
+
+        $pesertaList = $existingPenugasans->map(function ($p) {
+            return (object)[
+                'id_penugasan'     => $p->id_penugasan,
+                'nama_lengkap'     => $p->nama_lengkap ?: $p->nama_peserta_custom,
+                'niplama'          => $p->niplama,
+                'nipbaru'          => $p->nipbaru,
+                'status_kehadiran' => $p->status_kehadiran ?: 'Hadir',
+                'keterangan'       => $p->keterangan,
+                'waktu_kehadiran'  => $p->waktu_kehadiran ?: ($p->updated_at ?: $p->waktu_hadir),
+            ];
+        });
 
         $allPegawai = User::select('niplama', 'nipbaru', 'nama_lengkap')
             ->orderBy('nama_lengkap', 'ASC')
             ->get();
 
-        return view('daftar_hadir', compact('task', 'user', 'id', 'realId', 'pesertaList', 'allPegawai'));
+        return view('daftar_hadir', compact('task', 'user', 'id', 'realId', 'pesertaList', 'assignedParticipants', 'allPegawai'));
     }
 
     public function submitDaftarHadir(Request $request)
     {
-        $idKegiatan = $request->input('id_kegiatan');
-        $niplama    = $request->input('niplama');
-        $namaManual = trim($request->input('peserta_manual', ''));
+        $idKegiatan      = $request->input('id_kegiatan');
+        $niplama         = trim($request->input('niplama', ''));
+        $namaManual      = trim($request->input('peserta_manual', ''));
+        $statusKehadiran = $request->input('status_kehadiran', 'Hadir');
+        $keterangan      = trim($request->input('keterangan', ''));
 
         if (empty($niplama) && empty($namaManual)) {
-            return redirect()->back()->with('error_presensi', 'Silakan pilih nama pegawai atau masukkan nama Anda.');
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Silakan pilih nama Anda atau masukkan nama pada form.'], 422);
+            }
+            return redirect()->back()->with('error_presensi', 'Silakan pilih nama Anda atau masukkan nama pada form.');
         }
 
         $nama = $namaManual;
+        $nipbaru = null;
         if (!empty($niplama)) {
             $u = User::where('niplama', $niplama)->orWhere('nipbaru', $niplama)->first();
             if ($u) {
                 $nama    = $u->nama_lengkap;
                 $niplama = $u->niplama;
+                $nipbaru = $u->nipbaru;
             }
         }
 
-        // Cek apakah sudah ada di penugasans untuk kegiatan ini
+        // Validasi status kehadiran yang diizinkan
+        $validStatuses = ['Hadir', 'Tidak Hadir', 'Sedang Ada Kegiatan Lain', 'Belum Hadir'];
+        if (!in_array($statusKehadiran, $validStatuses)) {
+            $statusKehadiran = 'Hadir';
+        }
+
+        // Waktu kehadiran dicatat saat aksi dilakukan jika bukan 'Belum Hadir'
+        $waktuKehadiran = ($statusKehadiran !== 'Belum Hadir') ? now() : null;
+
+        // Cari record penugasan yang sesuai
         $penugasan = penugasan::where('id_kegiatan', $idKegiatan)
-            ->where(function ($q) use ($niplama, $nama) {
+            ->where(function ($q) use ($niplama, $nipbaru, $nama) {
                 if (!empty($niplama) && $niplama !== '-') {
                     $q->where('niplama', $niplama);
+                    if ($nipbaru) {
+                        $q->orWhere('niplama', $nipbaru);
+                    }
+                    if ($nama) {
+                        $q->orWhere('peserta', $nama);
+                    }
                 } else {
                     $q->where('peserta', $nama);
                 }
@@ -598,25 +623,156 @@ class KegiatanController extends Controller
             ->first();
 
         if ($penugasan) {
-            $penugasan->updated_at = now();
+            $penugasan->status_kehadiran = $statusKehadiran;
+            $penugasan->keterangan       = $keterangan ?: null;
+            $penugasan->waktu_kehadiran  = $waktuKehadiran;
+            $penugasan->updated_at       = now();
             if ($nama && (empty($penugasan->peserta) || $penugasan->peserta === '-')) {
                 $penugasan->peserta = $nama;
             }
-            if ($niplama && empty($penugasan->niplama)) {
+            if ($niplama && (empty($penugasan->niplama) || $penugasan->niplama === '-')) {
                 $penugasan->niplama = $niplama;
             }
             $penugasan->save();
         } else {
-            penugasan::create([
-                'id_kegiatan' => $idKegiatan,
-                'niplama'     => $niplama ?: '-',
-                'peserta'     => $nama ?: 'Peserta',
-                'created_at'  => now(),
-                'updated_at'  => now(),
+            $penugasan = penugasan::create([
+                'id_kegiatan'      => $idKegiatan,
+                'niplama'          => $niplama ?: '-',
+                'peserta'          => $nama ?: 'Peserta',
+                'status_kehadiran' => $statusKehadiran,
+                'keterangan'       => $keterangan ?: null,
+                'waktu_kehadiran'  => $waktuKehadiran,
+                'created_at'       => now(),
+                'updated_at'       => now(),
             ]);
         }
 
-        return redirect()->back()->with('success_presensi', 'Presensi kehadiran berhasil dicatat! Terima kasih, ' . ($nama ?: 'Peserta') . '.');
+        $formattedTime = $waktuKehadiran ? \Carbon\Carbon::parse($waktuKehadiran)->format('H:i') . ' WITA' : '-';
+        $message = "Presensi berhasil dicatat! Status: {$statusKehadiran} untuk {$nama} (Pukul {$formattedTime}).";
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success'          => true,
+                'message'          => $message,
+                'nama'             => $nama,
+                'niplama'          => $niplama,
+                'status_kehadiran' => $statusKehadiran,
+                'keterangan'       => $keterangan,
+                'waktu'            => $formattedTime,
+            ]);
+        }
+
+        return redirect()->back()->with('success_presensi', $message);
+    }
+
+    public function apiStatusPresensi($id)
+    {
+        $task = is_numeric($id) ? Task::find($id) : null;
+        if (!$task) {
+            $task = Task::where('id', $id)
+                ->orWhere('text', $id)
+                ->orWhere('text', urldecode($id))
+                ->first();
+        }
+
+        $realId = $task ? $task->id : $id;
+
+        $existing = penugasan::leftJoin('users', 'penugasans.niplama', '=', 'users.niplama')
+            ->where('penugasans.id_kegiatan', $realId)
+            ->select(
+                'users.nama_lengkap as nama_user',
+                'users.niplama as nip_user',
+                'users.nipbaru',
+                'penugasans.peserta as custom_peserta',
+                'penugasans.niplama as custom_nip',
+                'penugasans.status_kehadiran',
+                'penugasans.keterangan',
+                'penugasans.waktu_kehadiran',
+                'penugasans.updated_at'
+            )
+            ->get();
+
+        $rawOwners = $task ? $task->owners : null;
+        $ownerList = [];
+        if (is_array($rawOwners)) {
+            $ownerList = $rawOwners;
+        } elseif (is_string($rawOwners) && !empty($rawOwners)) {
+            $decoded = json_decode($rawOwners, true);
+            if (is_array($decoded)) {
+                $ownerList = $decoded;
+            } else {
+                $ownerList = array_filter(array_map('trim', explode(',', $rawOwners)));
+            }
+        }
+
+        $list = collect();
+        $seen = [];
+
+        foreach ($existing as $p) {
+            $nama = $p->nama_user ?: ($p->custom_peserta ?: $p->custom_nip);
+            $nip = $p->nip_user ?: ($p->custom_nip ?: '-');
+            $nipbaru = $p->nipbaru ?: '-';
+            $status = $p->status_kehadiran ?: 'Belum Hadir';
+            $waktu = ($status !== 'Belum Hadir' && !empty($p->waktu_kehadiran)) 
+                ? \Carbon\Carbon::parse($p->waktu_kehadiran)->format('H:i') . ' WITA' 
+                : null;
+
+            $seen[] = $nip;
+            $seen[] = $nama;
+
+            $list->push([
+                'nama'             => $nama,
+                'nip'              => $nip,
+                'nipbaru'          => $nipbaru,
+                'status_kehadiran' => $status,
+                'keterangan'       => $p->keterangan,
+                'waktu'            => $waktu,
+            ]);
+        }
+
+        if (!empty($ownerList)) {
+            $users = User::whereIn('niplama', $ownerList)
+                ->orWhereIn('nipbaru', $ownerList)
+                ->orWhereIn('nama_lengkap', $ownerList)
+                ->get();
+
+            foreach ($ownerList as $item) {
+                $u = $users->first(function($usr) use ($item) {
+                    return $usr->niplama == $item || $usr->nipbaru == $item || strcasecmp($usr->nama_lengkap, $item) === 0;
+                });
+
+                $nama = $u ? $u->nama_lengkap : (string)$item;
+                $nip = $u ? $u->niplama : (string)$item;
+
+                if (!in_array($nip, $seen) && !in_array($nama, $seen)) {
+                    $seen[] = $nip;
+                    $seen[] = $nama;
+
+                    $list->push([
+                        'nama'             => $nama,
+                        'nip'              => $nip,
+                        'nipbaru'          => $u ? $u->nipbaru : '-',
+                        'status_kehadiran' => 'Belum Hadir',
+                        'keterangan'       => null,
+                        'waktu'            => null,
+                    ]);
+                }
+            }
+        }
+
+        $summary = [
+            'total'          => $list->count(),
+            'hadir'          => $list->where('status_kehadiran', 'Hadir')->count(),
+            'tidak_hadir'    => $list->where('status_kehadiran', 'Tidak Hadir')->count(),
+            'kegiatan_lain'  => $list->where('status_kehadiran', 'Sedang Ada Kegiatan Lain')->count(),
+            'belum_hadir'    => $list->where('status_kehadiran', 'Belum Hadir')->count(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'summary' => $summary,
+            'peserta' => $list->values(),
+        ]);
     }
 
     public function approve(Request $request, $id) 
