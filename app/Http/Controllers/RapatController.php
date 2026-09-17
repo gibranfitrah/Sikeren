@@ -57,6 +57,9 @@ class RapatController extends Controller
         $latestTask = Task::latest()->first();
         $id = $latestTask ? $latestTask->id : 0;
 
+        $allUsers = User::orderBy('nama_lengkap', 'asc')->get();
+        $eligiblePJs = User::getEligiblePJs();
+
         // 6. Notifikasi bawaan
         $notifications = Auth::user()->notifications()->latest()->take(5)->get();
         $jumlah_notif  = Auth::user()->unreadNotifications()->count();
@@ -64,6 +67,8 @@ class RapatController extends Controller
         return view('rapat', compact(
             'id',
             'peserta',
+            'allUsers',
+            'eligiblePJs',
             'kegiatans',
             'ketua_tims',
             'venues',
@@ -108,7 +113,6 @@ class RapatController extends Controller
             'text'            => 'required|string|max:255', // Topik Rapat
             'agenda'          => 'required|string',
             'start_date'      => 'required|date',
-            'date_akhir'      => 'required|date|after_or_equal:start_date',
             'start_jam'       => 'required',
             'end_jam'         => 'required',
             'tipe_tempat'     => 'required|in:online,offline,hybrid',
@@ -121,8 +125,7 @@ class RapatController extends Controller
         ], [
             'text.required'        => 'Topik rapat wajib diisi.',
             'agenda.required'      => 'Agenda pembahasan rapat wajib diisi.',
-            'start_date.required'  => 'Tanggal mulai rapat wajib diisi.',
-            'date_akhir.required'  => 'Tanggal akhir rapat wajib diisi.',
+            'start_date.required'  => 'Tanggal pelaksanaan rapat wajib diisi.',
             'start_jam.required'   => 'Jam mulai rapat wajib diisi.',
             'end_jam.required'     => 'Jam akhir rapat wajib diisi.',
             'pemimpin.required'    => 'Silakan pilih Pemimpin Rapat.',
@@ -160,10 +163,10 @@ class RapatController extends Controller
             $request->file('materi_file')->move($path, $materiName);
         }
 
-        // 4. Hitung Durasi Rapat
-        $start_time  = \Carbon\Carbon::parse($request->input('start_date'));
-        $finish_time = \Carbon\Carbon::parse($request->input('date_akhir'));
-        $durasi      = $start_time->diffInDays($finish_time, false) + 1;
+        // 4. Hitung Durasi Rapat (Tanggal tunggal pelaksanaan)
+        $startDate   = $request->input('start_date');
+        $dateAkhir   = $request->input('date_akhir', $startDate) ?: $startDate;
+        $durasi      = 1;
 
         $pegawai = $request->input('owners', []);
         $pegawaiStr = is_array($pegawai) ? implode(',', $pegawai) : (string)$pegawai;
@@ -177,8 +180,8 @@ class RapatController extends Controller
         $task->notulis           = $request->notulis;
         $task->tim_dokumentasi   = $request->tim_dokumentasi;
         $task->penanggung_jawab  = Auth::user()->nama_lengkap ?? Auth::user()->username;
-        $task->start_date        = $request->start_date;
-        $task->date_akhir        = $request->date_akhir;
+        $task->start_date        = $startDate;
+        $task->date_akhir        = $dateAkhir;
         $task->start_jam         = $request->start_jam;
         $task->end_jam           = $request->end_jam;
         $task->duration          = $durasi;
@@ -196,6 +199,8 @@ class RapatController extends Controller
 
         $taskId = $task->id;
 
+        $pjNama = $task->penanggung_jawab ?: (Auth::check() ? Auth::user()->nama_lengkap : 'Ketua Tim / PJ');
+
         // 6. Simpan Penugasan untuk seluruh peserta rapat
         $kunciFcm = [];
         foreach ($pegawai as $nip) {
@@ -210,11 +215,11 @@ class RapatController extends Controller
                 DB::table('notifications')->insert([
                     'id'              => (string) Str::uuid(),
                     'type'            => 'App\Notifications\UndanganRapatNotification',
-                    'notifiable_type' => 'App\Models\User',
+                    'notifiable_type' => 'App\User',
                     'notifiable_id'   => $user->id,
                     'data'            => json_encode([
                         'judul' => 'Undangan Rapat: ' . $request->text,
-                        'pesan' => 'Anda dijadwalkan mengikuti rapat "' . $request->text . '" pada ' . date('d M Y', strtotime($request->start_date)) . ' pukul ' . $request->start_jam . '. Tempat: ' . $tempatDesc,
+                        'pesan' => 'Anda diundang oleh ' . $pjNama . ' (Ketua Tim / PJ) untuk mengikuti rapat "' . $request->text . '" pada ' . date('d M Y', strtotime($request->start_date)) . ' pukul ' . substr($request->start_jam, 0, 5) . ' WITA. Tempat: ' . $tempatDesc,
                         'url'   => '/daftar_kegiatan',
                     ]),
                     'read_at'         => null,
@@ -234,11 +239,11 @@ class RapatController extends Controller
             DB::table('notifications')->insert([
                 'id'              => (string) Str::uuid(),
                 'type'            => 'App\Notifications\ApprovalRapatNotification',
-                'notifiable_type' => 'App\Models\User',
+                'notifiable_type' => 'App\User',
                 'notifiable_id'   => $userPemimpin->id,
                 'data'            => json_encode([
                     'judul' => 'Permohonan Persetujuan Rapat',
-                    'pesan' => 'Anda ditunjuk sebagai Pemimpin Rapat untuk "' . $request->text . '". Silakan periksa dan berikan persetujuan pelaksanaan rapat.',
+                    'pesan' => 'Anda ditunjuk sebagai Pemimpin Rapat untuk "' . $request->text . '" oleh ' . $pjNama . '. Silakan periksa dan berikan persetujuan pelaksanaan rapat.',
                     'url'   => '/daftar_kegiatan',
                 ]),
                 'read_at'         => null,
@@ -253,17 +258,38 @@ class RapatController extends Controller
             DB::table('notifications')->insert([
                 'id'              => (string) Str::uuid(),
                 'type'            => 'App\Notifications\NotulisRapatNotification',
-                'notifiable_type' => 'App\Models\User',
+                'notifiable_type' => 'App\User',
                 'notifiable_id'   => $userNotulis->id,
                 'data'            => json_encode([
                     'judul' => 'Penugasan Notulis Rapat',
-                    'pesan' => 'Anda ditugaskan sebagai Notulis pada rapat "' . $request->text . '". Mohon siapkan pencatatan jalannya rapat.',
+                    'pesan' => 'Anda ditugaskan sebagai Notulis pada rapat "' . $request->text . '" oleh ' . $pjNama . '. Mohon siapkan pencatatan jalannya rapat.',
                     'url'   => '/daftar_kegiatan',
                 ]),
                 'read_at'         => null,
                 'created_at'      => now(),
                 'updated_at'      => now(),
             ]);
+        }
+
+        // 8b. Notifikasi Khusus untuk Tim Dokumentasi
+        if (!empty($request->tim_dokumentasi)) {
+            $userDok = User::where('nama_lengkap', $request->tim_dokumentasi)->orWhere('username', $request->tim_dokumentasi)->first();
+            if ($userDok && $userDok->id !== Auth::id()) {
+                DB::table('notifications')->insert([
+                    'id'              => (string) Str::uuid(),
+                    'type'            => 'App\Notifications\PeranKhususNotification',
+                    'notifiable_type' => 'App\User',
+                    'notifiable_id'   => $userDok->id,
+                    'data'            => json_encode([
+                        'judul' => 'Penugasan Tim Dokumentasi Rapat',
+                        'pesan' => 'Anda ditugaskan sebagai Tim Dokumentasi pada rapat "' . $request->text . '" oleh ' . $pjNama . '.',
+                        'url'   => '/daftar_kegiatan',
+                    ]),
+                    'read_at'         => null,
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ]);
+            }
         }
 
         // 9. Kirim Push Notification ke Google FCM jika token tersedia

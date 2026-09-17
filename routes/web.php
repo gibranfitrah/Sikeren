@@ -87,6 +87,8 @@ Route::get('dashboard', [DashboardController::class, 'index']);
 
 Route::get('/notification/{id}', [NotificationController::class, 'read'])
     ->name('notification.read');
+Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])
+    ->name('notification.markAllRead');
 
 Route::get('kegiatan', [KegiatanController::class, 'index'])->name('kegiatan');
 Route::get('/penugasan', [KegiatanController::class, 'index_penugasan'])->name('penugasan');
@@ -155,6 +157,9 @@ Route::get('/bmn', [BMNController::class, 'index']);
 Route::get('/pemeliharaan_bmn', [BMNController::class, 'index_pemeliharaan']);
 
 Route::get('/employee/pdf_kegiatan/{id}', [KegiatanController::class, 'createPDF']);
+Route::get('/kegiatan/{id}/download-word', [KegiatanController::class, 'downloadWord'])->name('kegiatan.downloadWord');
+Route::get('/rapat/{id}/download-word', [KegiatanController::class, 'downloadWord'])->name('rapat.downloadWord');
+Route::get('/agenda/download-word', [KegiatanController::class, 'downloadAgendaWord'])->name('agenda.downloadWord');
 
 
 Route::get('fullcalender', [LihatKegiatanController::class, 'index']);

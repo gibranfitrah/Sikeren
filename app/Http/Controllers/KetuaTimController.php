@@ -51,6 +51,7 @@ class KetuaTimController extends Controller
     {
         $masterGroups = master_group::all();
         $allUsers = User::orderBy('nama_lengkap', 'asc')->get();
+        $eligiblePJs = User::getEligiblePJs();
         
         // Group employees by master group
         $usersByGroup = group::join('users', 'users.niplama', '=', 'groups.niplama')
@@ -64,6 +65,7 @@ class KetuaTimController extends Controller
         return view('ketua_tim.create', compact(
             'masterGroups',
             'allUsers',
+            'eligiblePJs',
             'usersByGroup',
             'notifications',
             'jumlah_notif'
@@ -133,14 +135,37 @@ class KetuaTimController extends Controller
 
             // Kirim notifikasi ke user yang ditugaskan
             if ($user && $user->id !== Auth::id()) {
+                $pjNama = $request->pj ?: (Auth::check() ? Auth::user()->nama_lengkap : 'Ketua Tim / PJ');
                 DB::table('notifications')->insert([
+                    'id'              => (string) \Illuminate\Support\Str::uuid(),
                     'type'            => 'App\Notifications\PenugasanKegiatanNotification',
                     'notifiable_type' => 'App\User',
                     'notifiable_id'   => $user->id,
                     'data'            => json_encode([
-                        'judul' => 'Penugasan Kegiatan Baru: ' . $request->agenda,
-                        'pesan' => 'Anda ditugaskan pada tim kegiatan "' . $request->agenda . '" oleh ' . (Auth::user()->nama_lengkap ?? Auth::user()->username),
-                        'url'   => url('/daftarkegiatan/' . $task->id),
+                        'judul' => 'Undangan Penugasan Kegiatan: ' . $request->agenda,
+                        'pesan' => 'Anda ditugaskan oleh ' . $pjNama . ' (Ketua Tim / PJ) untuk mengikuti kegiatan "' . $request->agenda . '" mulai tanggal ' . date('d M Y', strtotime($startDate)) . '.',
+                        'url'   => '/daftar_kegiatan',
+                    ]),
+                    'read_at'         => null,
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ]);
+            }
+        }
+
+        // Notifikasi khusus untuk PJ jika ditugaskan orang lain
+        if (!empty($request->pj)) {
+            $userPj = User::where('nama_lengkap', $request->pj)->orWhere('username', $request->pj)->first();
+            if ($userPj && $userPj->id !== Auth::id()) {
+                DB::table('notifications')->insert([
+                    'id'              => (string) \Illuminate\Support\Str::uuid(),
+                    'type'            => 'App\Notifications\PenugasanKegiatanNotification',
+                    'notifiable_type' => 'App\User',
+                    'notifiable_id'   => $userPj->id,
+                    'data'            => json_encode([
+                        'judul' => 'Penunjukan Penanggung Jawab (PJ): ' . $request->agenda,
+                        'pesan' => 'Anda ditunjuk sebagai Penanggung Jawab (PJ) untuk kegiatan "' . $request->agenda . '" yang dimulai pada ' . date('d M Y', strtotime($startDate)) . '.',
+                        'url'   => '/daftarkegiatan/' . $task->id,
                     ]),
                     'read_at'         => null,
                     'created_at'      => now(),

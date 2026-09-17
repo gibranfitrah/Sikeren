@@ -73,10 +73,14 @@ class SubKegiatanController extends Controller
             'nama_sub'   => 'required|string|max:255',
             'start_date' => 'nullable|date',
             'end_date'   => 'nullable|date',
-            'pj'         => 'nullable|string|max:255',
             'tim'        => 'nullable|string|max:255',
             'anggota'    => 'nullable|array',
         ]);
+
+        $task = Task::find($request->task_id);
+        $taskName = $task ? $task->text : 'Kegiatan';
+        $taskTim  = $task ? ($task->tim ?: 'Umum') : 'Umum';
+        $pjNama   = $task && !empty($task->penanggung_jawab) ? $task->penanggung_jawab : (Auth::check() ? Auth::user()->nama_lengkap : 'Ketua Tim / PJ');
 
         $anggotaJson = $request->has('anggota') && is_array($request->anggota) 
             ? json_encode($request->anggota) 
@@ -85,8 +89,8 @@ class SubKegiatanController extends Controller
         $sub = SubKegiatan::create([
             'task_id'    => $request->task_id,
             'nama_sub'   => $request->nama_sub,
-            'tim'        => $request->tim,
-            'pj'         => $request->pj,
+            'tim'        => $request->input('tim', $taskTim),
+            'pj'         => $pjNama,
             'start_date' => $request->start_date,
             'end_date'   => $request->end_date,
             'anggota'    => $anggotaJson,
@@ -95,10 +99,7 @@ class SubKegiatanController extends Controller
             'keterangan' => $request->keterangan,
         ]);
 
-        // Send notifications to PJ & members
-        $task = Task::find($request->task_id);
-        $taskName = $task ? $task->text : 'Kegiatan';
-
+        // Send notifications to members
         if ($request->has('anggota') && is_array($request->anggota)) {
             foreach ($request->anggota as $namaAnggota) {
                 $userAnggota = User::where('nama_lengkap', $namaAnggota)
@@ -107,19 +108,41 @@ class SubKegiatanController extends Controller
                     ->first();
                 if ($userAnggota && $userAnggota->id !== Auth::id()) {
                     DB::table('notifications')->insert([
+                        'id'              => (string) Str::uuid(),
                         'type'            => 'App\Notifications\PenugasanSubKegiatanNotification',
                         'notifiable_type' => 'App\User',
                         'notifiable_id'   => $userAnggota->id,
                         'data'            => json_encode([
-                            'judul' => 'Penugasan Sub Kegiatan Baru',
-                            'pesan' => 'Anda ditugaskan pada sub kegiatan: ' . $request->nama_sub . ' (' . $taskName . ')',
-                            'url'   => url('/sub-kegiatan'),
+                            'judul' => 'Penugasan Sub Kegiatan: ' . $request->nama_sub,
+                            'pesan' => 'Anda ditugaskan oleh ' . $pjNama . ' (Ketua Tim / PJ) pada sub kegiatan "' . $request->nama_sub . '" di bawah agenda ' . $taskName . '.',
+                            'url'   => '/daftar_kegiatan',
                         ]),
                         'read_at'         => null,
                         'created_at'      => now(),
                         'updated_at'      => now(),
                     ]);
                 }
+            }
+        }
+
+        // Notifikasi ke PJ Sub Kegiatan jika orang lain
+        if (!empty($request->pj)) {
+            $userPjSub = User::where('nama_lengkap', $request->pj)->orWhere('username', $request->pj)->first();
+            if ($userPjSub && $userPjSub->id !== Auth::id()) {
+                DB::table('notifications')->insert([
+                    'id'              => (string) Str::uuid(),
+                    'type'            => 'App\Notifications\PenugasanSubKegiatanNotification',
+                    'notifiable_type' => 'App\User',
+                    'notifiable_id'   => $userPjSub->id,
+                    'data'            => json_encode([
+                        'judul' => 'Penunjukan PJ Sub Kegiatan: ' . $request->nama_sub,
+                        'pesan' => 'Anda ditunjuk sebagai Penanggung Jawab untuk sub kegiatan "' . $request->nama_sub . '" (' . $taskName . ').',
+                        'url'   => '/daftar_kegiatan',
+                    ]),
+                    'read_at'         => null,
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ]);
             }
         }
 

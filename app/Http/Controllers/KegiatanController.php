@@ -21,6 +21,7 @@ use App\Notification;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\group;
 use App\master_group;
+use App\Services\WordExportService;
 
 class KegiatanController extends Controller
 {
@@ -357,6 +358,8 @@ class KegiatanController extends Controller
 
         $kunci = [];
 
+        $pjNama = $request->input('penanggung_jawab') ?: (Auth::check() ? Auth::user()->nama_lengkap : 'Ketua Tim / PJ');
+
         // Notifikasi ke seluruh peserta penugasan
         if (is_array($pegawai)) {
             foreach ($pegawai as $nip) {
@@ -366,15 +369,15 @@ class KegiatanController extends Controller
                 $tugas->save();
 
                 $user = User::where('niplama', $nip)->first();
-                if ($user) {
+                if ($user && $user->id !== Auth::id()) {
                     DB::table('notifications')->insert([
                         'id'              => (string) Str::uuid(),
                         'type'            => 'App\Notifications\PenugasanNotification',
-                        'notifiable_type' => 'App\Models\User',
+                        'notifiable_type' => 'App\User',
                         'notifiable_id'   => $user->id,
                         'data'            => json_encode([
-                            'judul' => 'Penugasan Baru',
-                            'pesan' => 'Anda mendapat penugasan: ' . ($request->text ?? $request->agenda),
+                            'judul' => 'Undangan Penugasan Kegiatan: ' . ($request->text ?? $request->agenda),
+                            'pesan' => 'Anda ditugaskan oleh ' . $pjNama . ' (Ketua Tim / PJ) untuk kegiatan: ' . ($request->text ?? $request->agenda),
                             'url'   => '/daftar_kegiatan',
                         ]),
                         'read_at'         => null,
@@ -391,24 +394,24 @@ class KegiatanController extends Controller
 
         // Notifikasi Peran Khusus
         $roles_to_notify = [
-            ['role' => 'Pemimpin Rapat', 'name' => $request->input('pemimpin'), 'msg' => 'Anda ditunjuk sebagai Pemimpin Rapat. Harap tinjau kegiatan ini.'],
-            ['role' => 'Notulis', 'name' => $request->input('notulis'), 'msg' => 'Anda ditunjuk sebagai Notulis untuk rapat ini.'],
-            ['role' => 'Tim Dokumentasi', 'name' => $request->input('tim_dokumentasi'), 'msg' => 'Anda ditunjuk sebagai Tim Dokumentasi untuk kegiatan ini.'],
+            ['role' => 'Pemimpin Rapat', 'name' => $request->input('pemimpin'), 'msg' => 'Anda ditunjuk sebagai Pemimpin Rapat oleh ' . $pjNama . '. Harap tinjau kegiatan ini.'],
+            ['role' => 'Notulis', 'name' => $request->input('notulis'), 'msg' => 'Anda ditunjuk sebagai Notulis untuk rapat ini oleh ' . $pjNama . '.'],
+            ['role' => 'Tim Dokumentasi', 'name' => $request->input('tim_dokumentasi'), 'msg' => 'Anda ditunjuk sebagai Tim Dokumentasi untuk kegiatan ini oleh ' . $pjNama . '.'],
             ['role' => 'Penanggung Jawab', 'name' => $request->input('penanggung_jawab'), 'msg' => 'Anda ditunjuk sebagai Penanggung Jawab untuk kegiatan ini.']
         ];
 
         foreach ($roles_to_notify as $role) {
             if (!empty($role['name'])) {
                 $userRole = User::where('nama_lengkap', $role['name'])->first();
-                if ($userRole) {
+                if ($userRole && $userRole->id !== Auth::id()) {
                     DB::table('notifications')->insert([
                         'id'              => (string) Str::uuid(),
                         'type'            => 'App\Notifications\PeranKhususNotification',
-                        'notifiable_type' => 'App\Models\User',
+                        'notifiable_type' => 'App\User',
                         'notifiable_id'   => $userRole->id,
                         'data'            => json_encode([
                             'judul' => 'Penugasan ' . $role['role'],
-                            'pesan' => $role['msg'] . ' Topik: ' . $request->text,
+                            'pesan' => $role['msg'] . ' Topik: ' . ($request->text ?? $request->agenda),
                             'url'   => '/daftar_kegiatan',
                         ]),
                         'read_at'         => null,
@@ -647,6 +650,37 @@ class KegiatanController extends Controller
             ]);
         }
 
+        // Notifikasi ke PJ / Ketua Tim jika peserta presensi (khususnya jika Ada Agenda Lain / Tidak Hadir / Hadir)
+        $task = is_numeric($idKegiatan) ? Task::find($idKegiatan) : Task::where('id', $idKegiatan)->orWhere('text', $idKegiatan)->first();
+        if ($task) {
+            $pjName = $task->penanggung_jawab ?? $task->pemimpin;
+            if ($pjName) {
+                $pjUser = User::where('nama_lengkap', 'LIKE', '%' . $pjName . '%')->first();
+                if ($pjUser) {
+                    $statusIcon = ($statusKehadiran === 'Hadir') ? '✅' : (($statusKehadiran === 'Sedang Ada Kegiatan Lain') ? '💼' : 'ℹ️');
+                    $ketMsg = $keterangan ? " (Ket: {$keterangan})" : "";
+                    
+                    DB::table('notifications')->insert([
+                        'id'              => (string) \Illuminate\Support\Str::uuid(),
+                        'type'            => 'App\Notifications\KegiatanNotification',
+                        'notifiable_type' => 'App\User',
+                        'notifiable_id'   => $pjUser->id,
+                        'data'            => json_encode([
+                            'judul'            => "Presensi {$nama}: {$statusKehadiran}",
+                            'pesan'            => "{$statusIcon} Peserta {$nama} mencatat status '{$statusKehadiran}' pada kegiatan '{$task->text}'{$ketMsg}.",
+                            'url'              => url('/detail_kegiatan/' . $task->id),
+                            'id_kegiatan'      => $task->id,
+                            'status_kehadiran' => $statusKehadiran,
+                            'peserta'          => $nama
+                        ]),
+                        'read_at'         => null,
+                        'created_at'       => now(),
+                        'updated_at'       => now(),
+                    ]);
+                }
+            }
+        }
+
         $formattedTime = $waktuKehadiran ? \Carbon\Carbon::parse($waktuKehadiran)->format('H:i') . ' WITA' : '-';
         $message = "Presensi berhasil dicatat! Status: {$statusKehadiran} untuk {$nama} (Pukul {$formattedTime}).";
 
@@ -781,17 +815,17 @@ class KegiatanController extends Controller
         $kegiatan->status_pemimpin = 'Disetujui';
         $kegiatan->save();
 
-        $pembuat = User::where('nama_lengkap', $kegiatan->nama_lengkap)->first();
-        if ($pembuat) {
+        $pembuat = User::where('nama_lengkap', $kegiatan->nama_lengkap)->orWhere('nama_lengkap', $kegiatan->penanggung_jawab)->first();
+        if ($pembuat && $pembuat->id !== Auth::id()) {
             DB::table('notifications')->insert([
                 'id'              => (string) Str::uuid(),
                 'type'            => 'App\Notifications\RapatStatusNotification',
-                'notifiable_type' => 'App\Models\User',
+                'notifiable_type' => 'App\User',
                 'notifiable_id'   => $pembuat->id,
                 'data'            => json_encode([
                     'judul' => 'Rapat Disetujui',
-                    'pesan' => 'Pemimpin Rapat telah menyetujui kegiatan: ' . $kegiatan->text,
-                    'url'   => '/detail_kegiatan/' . $kegiatan->id,
+                    'pesan' => 'Pemimpin Rapat telah menyetujui pelaksanaan: ' . $kegiatan->text,
+                    'url'   => '/daftarkegiatan/' . $kegiatan->id,
                 ]),
                 'read_at'         => null,
                 'created_at'      => now(),
@@ -808,17 +842,17 @@ class KegiatanController extends Controller
         $kegiatan->status_pemimpin = 'Ditolak';
         $kegiatan->save();
 
-        $pembuat = User::where('nama_lengkap', $kegiatan->nama_lengkap)->first();
-        if ($pembuat) {
+        $pembuat = User::where('nama_lengkap', $kegiatan->nama_lengkap)->orWhere('nama_lengkap', $kegiatan->penanggung_jawab)->first();
+        if ($pembuat && $pembuat->id !== Auth::id()) {
             DB::table('notifications')->insert([
                 'id'              => (string) Str::uuid(),
                 'type'            => 'App\Notifications\RapatStatusNotification',
-                'notifiable_type' => 'App\Models\User',
+                'notifiable_type' => 'App\User',
                 'notifiable_id'   => $pembuat->id,
                 'data'            => json_encode([
                     'judul' => 'Rapat Ditolak',
                     'pesan' => 'Pemimpin Rapat menolak kegiatan: ' . $kegiatan->text . '. Alasan: ' . $request->input('alasan', 'Tidak ada alasan.'),
-                    'url'   => '/detail_kegiatan/' . $kegiatan->id,
+                    'url'   => '/daftarkegiatan/' . $kegiatan->id,
                 ]),
                 'read_at'         => null,
                 'created_at'      => now(),
@@ -827,5 +861,37 @@ class KegiatanController extends Controller
         }
 
         return redirect()->back()->with('success', 'Kegiatan berhasil ditolak.');
+    }
+
+    /**
+     * Download Surat Undangan / Penugasan Kegiatan Resmi dalam format Word (.docx)
+     */
+    public function downloadWord($id)
+    {
+        $task = is_numeric($id) ? Task::find($id) : Task::where('id', $id)->orWhere('text', $id)->first();
+        if (!$task) {
+            abort(404, 'Kegiatan tidak ditemukan.');
+        }
+
+        $filePath = WordExportService::generateSuratKegiatan($task);
+        $fileName = 'Surat_Penugasan_' . Str::slug($task->text) . '.docx';
+
+        return response()->download($filePath, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ])->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Download Rekapitulasi Daftar Agenda Kegiatan & Rapat dalam format Word (.docx)
+     */
+    public function downloadAgendaWord(Request $request)
+    {
+        $kegiatans = Task::orderBy('id', 'desc')->get();
+        $filePath = WordExportService::generateDaftarAgenda($kegiatans);
+        $fileName = 'Rekapitulasi_Daftar_Agenda_' . date('Ymd_His') . '.docx';
+
+        return response()->download($filePath, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ])->deleteFileAfterSend(true);
     }
 }

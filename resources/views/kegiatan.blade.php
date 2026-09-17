@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-	<title>Sikeren | Kegiatan Saya</title>
+	<title>Sikeren | Tugas Saya</title>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
@@ -103,7 +103,7 @@
             
 
 						<li><a href="daftar_kegiatan" class=""><i class="lnr lnr-list"></i> <span>Daftar Kegiatan</span></a></li>
-						<li><a href="fullcalender" class=""><i class="lnr lnr-calendar-full"></i> <span>Kegiatan Saya</span></a></li>
+						<li><a href="fullcalender" class=""><i class="lnr lnr-calendar-full"></i> <span>Tugas Saya</span></a></li>
             <li><a href="notulis" class=""><i class="lnr lnr-book"></i> <span>Notula</span></a></li>
             <li><a href="bmn" class=""><i class="lnr lnr-laptop-phone"></i> <span>Daftar BMN</span></a></li>
 						</ul>

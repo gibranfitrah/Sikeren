@@ -166,6 +166,7 @@ class BookingRuanganController extends Controller
         $request->validate([
             'nama_acara'        => 'required|string|max:255',
             'penyelenggara'     => 'required|string|max:255',
+            'jumlah_peserta'    => 'nullable|integer|min:1',
             'tipe_pertemuan'    => 'required|in:offline,online,hybrid',
             'booking_date'      => 'required|date',
             'start_time'        => 'required',
@@ -174,6 +175,9 @@ class BookingRuanganController extends Controller
             'zoom_account'      => 'nullable|in:zoom_1,zoom_2,eksternal,none',
             'zoom_link_custom'  => 'nullable|string',
             'task_id'           => 'nullable|exists:tasks,id',
+            'mic_count'         => 'nullable|string',
+            'fasilitas_list'    => 'nullable|array',
+            'layout_meja'       => 'nullable|string',
             'keterangan'        => 'nullable|string',
         ], [
             'nama_acara.required'     => 'Nama agenda / rapat wajib diisi.',
@@ -248,14 +252,24 @@ class BookingRuanganController extends Controller
             $zoomPasscode = $request->zoom_passcode_custom ?? null;
         }
 
+        // Susun Fasilitas Terpilih (Mic + Checklist Sarpras)
+        $fasilitasList = $request->input('fasilitas_list', []);
+        if ($request->mic_count && $request->mic_count !== 'none' && $request->mic_count !== '0') {
+            array_unshift($fasilitasList, $request->mic_count . ' Mic Wireless');
+        }
+        $fasilitasString = !empty($fasilitasList) ? implode(', ', $fasilitasList) : null;
+
         // 1. Simpan ke RoomBooking
         $booking = RoomBooking::create([
             'task_id'         => $request->task_id ?: null,
             'nama_acara'      => $request->nama_acara,
             'penyelenggara'   => $request->penyelenggara,
+            'jumlah_peserta'  => $request->jumlah_peserta ?: null,
             'tipe_pertemuan'  => $request->tipe_pertemuan,
             'venue_id'        => $venueId,
             'nama_ruangan'    => $namaRuangan,
+            'fasilitas'       => $fasilitasString,
+            'layout_meja'     => $request->layout_meja ?: null,
             'zoom_account'    => $zoomAccount,
             'zoom_link'       => $zoomLink,
             'zoom_meeting_id' => $zoomMeetingId,
