@@ -757,7 +757,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
         MODAL POPUP: FORM BOOKING RUANGAN & AKUN ZOOM
     ========================================================== --}}
     <div x-show="modalOpen" x-cloak
-        class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 sm:p-6"
+        class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-6"
         x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
         x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
@@ -766,29 +766,32 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
         <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" @click="modalOpen = false"></div>
 
         {{-- Modal Content Card --}}
-        <div class="relative bg-white rounded-2xl shadow-2xl border border-gray-200 max-w-2xl w-full p-6 sm:p-7 overflow-hidden z-10 space-y-5"
+        <div class="relative bg-white rounded-2xl shadow-2xl border border-gray-200 max-w-3xl sm:max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden z-10 my-auto"
             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
             x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150"
             x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
 
-            <div class="flex items-center justify-between pb-3 border-b border-gray-100">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-                        🏛️
-                    </div>
-                    <div>
-                        <h3 class="text-base font-bold text-gray-900">Form Booking Ruangan & Zoom</h3>
-                        <p class="text-xs text-gray-500">Pilih ruangan rapat fisik, akun zoom, dan tentukan rentang
-                            waktu.</p>
-                    </div>
-                </div>
-                <button type="button" @click="modalOpen = false"
-                    class="text-gray-400 hover:text-gray-600 text-lg font-bold p-1">&times;</button>
-            </div>
-
-            <form action="{{ route('booking-ruangan.store') }}" method="POST" class="space-y-4">
+            <form action="{{ route('booking-ruangan.store') }}" method="POST" class="flex flex-col h-full max-h-[90vh]">
                 @csrf
                 <input type="hidden" name="task_id" :value="taskId">
+
+                {{-- Sticky Header --}}
+                <div class="flex items-center justify-between p-4 sm:p-5 border-b border-gray-100 shrink-0 bg-white">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base shadow-2xs">
+                            🏛️
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-gray-900">Form Booking Ruangan & Zoom</h3>
+                            <p class="text-xs text-gray-500">Pilih ruangan rapat fisik, akun zoom, dan konfigurasi kebutuhan sarpras.</p>
+                        </div>
+                    </div>
+                    <button type="button" @click="modalOpen = false"
+                        class="text-gray-400 hover:text-gray-600 text-2xl font-bold p-1 leading-none rounded-lg hover:bg-gray-100 w-8 h-8 flex items-center justify-center transition">&times;</button>
+                </div>
+
+                {{-- Scrollable Form Body --}}
+                <div class="p-5 sm:p-6 overflow-y-auto space-y-4 flex-1 overscroll-contain">
 
                 {{-- Pilih Rapat Terkait (Opsional jika bukan dari buat rapat) --}}
                 <div>
@@ -1246,15 +1249,17 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                         class="w-full px-3.5 py-2 text-xs rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
                 </div>
 
-                {{-- Tombol Aksi Modal --}}
-                <div class="pt-3 border-t border-gray-100 flex items-center justify-end gap-2.5">
+                </div>
+
+                {{-- Sticky Footer --}}
+                <div class="p-4 sm:p-5 border-t border-gray-100 shrink-0 bg-gray-50/90 flex items-center justify-end gap-2.5 rounded-b-2xl">
                     <button type="button" @click="modalOpen = false"
-                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition">
+                        class="px-4 py-2.5 bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl transition">
                         Batal
                     </button>
                     <button type="submit"
-                        class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
-                        Konfirmasi Reservasi &rarr;
+                        class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-1.5">
+                        <span>Konfirmasi Reservasi</span> &rarr;
                     </button>
                 </div>
             </form>
@@ -1267,7 +1272,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
     ========================================================== --}}
     <div x-show="detailModalOpen"
          x-cloak
-         class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 sm:p-6"
+         class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-6"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -1279,7 +1284,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
         <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" @click="detailModalOpen = false"></div>
 
         {{-- Modal Content Card --}}
-        <div class="relative bg-white rounded-2xl shadow-2xl border border-gray-200 max-w-2xl w-full p-6 sm:p-7 overflow-hidden z-10 space-y-5"
+        <div class="relative bg-white rounded-2xl shadow-2xl border border-gray-200 max-w-3xl sm:max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden z-10 my-auto"
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100"
@@ -1288,9 +1293,9 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
              x-transition:leave-end="opacity-0 scale-95">
 
             <template x-if="selectedBooking">
-                <div class="space-y-5">
-                    {{-- Header --}}
-                    <div class="flex items-start justify-between pb-3 border-b border-gray-100">
+                <div class="flex flex-col h-full max-h-[90vh]">
+                    {{-- Sticky Header --}}
+                    <div class="flex items-start justify-between p-4 sm:p-5 border-b border-gray-100 shrink-0 bg-white">
                         <div class="flex items-start gap-3">
                             <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-lg shrink-0">
                                 🏢
@@ -1304,115 +1309,118 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                 </p>
                             </div>
                         </div>
-                        <button type="button" @click="detailModalOpen = false" class="text-gray-400 hover:text-gray-600 text-xl font-bold p-1">&times;</button>
+                        <button type="button" @click="detailModalOpen = false" class="text-gray-400 hover:text-gray-600 text-2xl font-bold p-1 leading-none rounded-lg hover:bg-gray-100 w-8 h-8 flex items-center justify-center transition">&times;</button>
                     </div>
 
-                    {{-- Informasi Waktu & Lokasi --}}
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-gray-50 p-3.5 rounded-xl border border-gray-200 text-xs">
-                        <div class="space-y-1">
-                            <span class="text-gray-400 font-medium text-[11px]">📅 Tanggal & Waktu:</span>
-                            <p class="font-bold text-gray-800" x-text="selectedBooking.booking_date"></p>
-                            <p class="text-blue-600 font-bold" x-text="'⏰ ' + selectedBooking.start_time + ' - ' + selectedBooking.end_time + ' WITA'"></p>
-                        </div>
-                        <div class="space-y-1">
-                            <span class="text-gray-400 font-medium text-[11px]">📍 Ruangan / Venue:</span>
-                            <p class="font-bold text-gray-800" x-text="selectedBooking.nama_ruangan"></p>
-                            <p class="text-gray-600" x-text="'👥 ' + (selectedBooking.jumlah_peserta ? selectedBooking.jumlah_peserta + ' Peserta' : 'Jumlah peserta disesuaikan')"></p>
-                        </div>
-                    </div>
-
-                    {{-- Zoom Info (Jika ada) --}}
-                    <template x-if="selectedBooking.zoom_link">
-                        <div class="p-3 bg-indigo-50/70 border border-indigo-200 rounded-xl space-y-1.5 text-xs">
-                            <div class="flex items-center justify-between">
-                                <span class="font-bold text-indigo-900">💻 Akses Zoom Meeting:</span>
-                                <span class="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded" x-text="selectedBooking.zoom_account === 'zoom_1' ? 'Akun Zoom 1' : (selectedBooking.zoom_account === 'zoom_2' ? 'Akun Zoom 2' : 'Zoom Eksternal')"></span>
-                            </div>
-                            <div class="flex items-center justify-between text-[11px] pt-1 border-t border-indigo-100">
-                                <a :href="selectedBooking.zoom_link" target="_blank" class="text-blue-600 font-bold hover:underline truncate" x-text="selectedBooking.zoom_link"></a>
-                                <button type="button"
-                                        @click="copyToClipboard(selectedBooking.zoom_link, 'Zoom')"
-                                        class="px-2 py-0.5 bg-white border border-indigo-200 rounded text-[10px] font-bold text-indigo-700 hover:bg-indigo-50 shrink-0">
-                                    Salin Link
-                                </button>
-                            </div>
-                        </div>
-                    </template>
-
-                    {{-- RINCIAN SARPRAS LENGKAP: A, B, C --}}
-                    <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
-                        <h4 class="font-bold text-slate-800 uppercase tracking-wider text-[11px] pb-1.5 border-b border-slate-200 flex items-center justify-between">
-                            <span>🏛️ Rincian Manajemen Ruangan & Sarpras</span>
-                            <span class="text-blue-600 text-[10px] font-bold">Terverifikasi</span>
-                        </h4>
-
-                        {{-- Section A --}}
-                        <div class="flex items-start gap-2">
-                            <span class="w-5 h-5 rounded bg-blue-100 text-blue-700 font-bold text-[10px] flex items-center justify-center shrink-0">A</span>
-                            <div>
-                                <span class="text-slate-500 font-medium">Set Up Ruangan (Layout):</span>
-                                <p class="font-bold text-slate-900" x-text="selectedBooking.layout_meja || 'Classroom (Default)'"></p>
-                            </div>
-                        </div>
-
-                        {{-- Section B --}}
-                        <div class="flex items-start gap-2 pt-2 border-t border-slate-200/60">
-                            <span class="w-5 h-5 rounded bg-blue-100 text-blue-700 font-bold text-[10px] flex items-center justify-center shrink-0">B</span>
+                    {{-- Scrollable Body --}}
+                    <div class="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1 overscroll-contain">
+                        {{-- Informasi Waktu & Lokasi --}}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-gray-50 p-3.5 rounded-xl border border-gray-200 text-xs">
                             <div class="space-y-1">
-                                <span class="text-slate-500 font-medium">Set Up Podium & Panggung:</span>
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="font-bold text-slate-900" x-text="(selectedBooking.setup_podium && selectedBooking.setup_podium.tipe) ? selectedBooking.setup_podium.tipe : 'Podium Standar'"></span>
-                                    <template x-if="selectedBooking.setup_podium && selectedBooking.setup_podium.jumlah_kursi > 0">
-                                        <span class="px-1.5 py-0.5 bg-white rounded border border-slate-200 text-[10px] font-semibold text-slate-700"
-                                              x-text="selectedBooking.setup_podium.jumlah_kursi + ' Kursi/Sofa Panggung'"></span>
-                                    </template>
-                                    <template x-if="selectedBooking.setup_podium && selectedBooking.setup_podium.pasang_spanduk">
-                                        <span class="px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded text-[10px] font-bold">
-                                            🚩 Pasang Spanduk <span x-show="selectedBooking.setup_podium.keterangan_spanduk" x-text="'(' + selectedBooking.setup_podium.keterangan_spanduk + ')'"></span>
-                                        </span>
+                                <span class="text-gray-400 font-medium text-[11px]">📅 Tanggal & Waktu:</span>
+                                <p class="font-bold text-gray-800" x-text="selectedBooking.booking_date"></p>
+                                <p class="text-blue-600 font-bold" x-text="'⏰ ' + selectedBooking.start_time + ' - ' + selectedBooking.end_time + ' WITA'"></p>
+                            </div>
+                            <div class="space-y-1">
+                                <span class="text-gray-400 font-medium text-[11px]">📍 Ruangan / Venue:</span>
+                                <p class="font-bold text-gray-800" x-text="selectedBooking.nama_ruangan"></p>
+                                <p class="text-gray-600" x-text="'👥 ' + (selectedBooking.jumlah_peserta ? selectedBooking.jumlah_peserta + ' Peserta' : 'Jumlah peserta disesuaikan')"></p>
+                            </div>
+                        </div>
+
+                        {{-- Zoom Info (Jika ada) --}}
+                        <template x-if="selectedBooking.zoom_link">
+                            <div class="p-3 bg-indigo-50/70 border border-indigo-200 rounded-xl space-y-1.5 text-xs">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-indigo-900">💻 Akses Zoom Meeting:</span>
+                                    <span class="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded" x-text="selectedBooking.zoom_account === 'zoom_1' ? 'Akun Zoom 1' : (selectedBooking.zoom_account === 'zoom_2' ? 'Akun Zoom 2' : 'Zoom Eksternal')"></span>
+                                </div>
+                                <div class="flex items-center justify-between text-[11px] pt-1 border-t border-indigo-100">
+                                    <a :href="selectedBooking.zoom_link" target="_blank" class="text-blue-600 font-bold hover:underline truncate" x-text="selectedBooking.zoom_link"></a>
+                                    <button type="button"
+                                            @click="copyToClipboard(selectedBooking.zoom_link, 'Zoom')"
+                                            class="px-2 py-0.5 bg-white border border-indigo-200 rounded text-[10px] font-bold text-indigo-700 hover:bg-indigo-50 shrink-0">
+                                        Salin Link
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- RINCIAN SARPRAS LENGKAP: A, B, C --}}
+                        <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
+                            <h4 class="font-bold text-slate-800 uppercase tracking-wider text-[11px] pb-1.5 border-b border-slate-200 flex items-center justify-between">
+                                <span>🏛️ Rincian Manajemen Ruangan & Sarpras</span>
+                                <span class="text-blue-600 text-[10px] font-bold">Terverifikasi</span>
+                            </h4>
+
+                            {{-- Section A --}}
+                            <div class="flex items-start gap-2">
+                                <span class="w-5 h-5 rounded bg-blue-100 text-blue-700 font-bold text-[10px] flex items-center justify-center shrink-0">A</span>
+                                <div>
+                                    <span class="text-slate-500 font-medium">Set Up Ruangan (Layout):</span>
+                                    <p class="font-bold text-slate-900" x-text="selectedBooking.layout_meja || 'Classroom (Default)'"></p>
+                                </div>
+                            </div>
+
+                            {{-- Section B --}}
+                            <div class="flex items-start gap-2 pt-2 border-t border-slate-200/60">
+                                <span class="w-5 h-5 rounded bg-blue-100 text-blue-700 font-bold text-[10px] flex items-center justify-center shrink-0">B</span>
+                                <div class="space-y-1">
+                                    <span class="text-slate-500 font-medium">Set Up Podium & Panggung:</span>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="font-bold text-slate-900" x-text="(selectedBooking.setup_podium && selectedBooking.setup_podium.tipe) ? selectedBooking.setup_podium.tipe : 'Podium Standar'"></span>
+                                        <template x-if="selectedBooking.setup_podium && selectedBooking.setup_podium.jumlah_kursi > 0">
+                                            <span class="px-1.5 py-0.5 bg-white rounded border border-slate-200 text-[10px] font-semibold text-slate-700"
+                                                  x-text="selectedBooking.setup_podium.jumlah_kursi + ' Kursi/Sofa Panggung'"></span>
+                                        </template>
+                                        <template x-if="selectedBooking.setup_podium && selectedBooking.setup_podium.pasang_spanduk">
+                                            <span class="px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded text-[10px] font-bold">
+                                                🚩 Pasang Spanduk <span x-show="selectedBooking.setup_podium.keterangan_spanduk" x-text="'(' + selectedBooking.setup_podium.keterangan_spanduk + ')'"></span>
+                                            </span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Section C --}}
+                            <div class="flex items-start gap-2 pt-2 border-t border-slate-200/60">
+                                <span class="w-5 h-5 rounded bg-blue-100 text-blue-700 font-bold text-[10px] flex items-center justify-center shrink-0">C</span>
+                                <div class="space-y-1.5 w-full">
+                                    <span class="text-slate-500 font-medium">Special Request (Permintaan Khusus):</span>
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <template x-if="selectedBooking.special_requests && selectedBooking.special_requests.items && selectedBooking.special_requests.items.length > 0">
+                                            <template x-for="(reqItem, idx) in selectedBooking.special_requests.items" :key="idx">
+                                                <span class="px-2 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-semibold text-slate-800 shadow-2xs"
+                                                      x-text="reqItem"></span>
+                                            </template>
+                                        </template>
+                                        <template x-if="!selectedBooking.special_requests || !selectedBooking.special_requests.items || selectedBooking.special_requests.items.length === 0">
+                                            <span class="text-slate-400 italic text-[11px]">Standar perlengkapan ruangan</span>
+                                        </template>
+                                    </div>
+                                    <template x-if="selectedBooking.special_requests && selectedBooking.special_requests.lainnya">
+                                        <p class="text-[11px] text-slate-600 bg-white p-2 rounded-lg border border-slate-200 mt-1">
+                                            <strong>Catatan Tambahan:</strong> <span x-text="selectedBooking.special_requests.lainnya"></span>
+                                        </p>
                                     </template>
                                 </div>
                             </div>
                         </div>
 
-                        {{-- Section C --}}
-                        <div class="flex items-start gap-2 pt-2 border-t border-slate-200/60">
-                            <span class="w-5 h-5 rounded bg-blue-100 text-blue-700 font-bold text-[10px] flex items-center justify-center shrink-0">C</span>
-                            <div class="space-y-1.5 w-full">
-                                <span class="text-slate-500 font-medium">Special Request (Permintaan Khusus):</span>
-                                <div class="flex items-center gap-1.5 flex-wrap">
-                                    <template x-if="selectedBooking.special_requests && selectedBooking.special_requests.items && selectedBooking.special_requests.items.length > 0">
-                                        <template x-for="(reqItem, idx) in selectedBooking.special_requests.items" :key="idx">
-                                            <span class="px-2 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-semibold text-slate-800 shadow-2xs"
-                                                  x-text="reqItem"></span>
-                                        </template>
-                                    </template>
-                                    <template x-if="!selectedBooking.special_requests || !selectedBooking.special_requests.items || selectedBooking.special_requests.items.length === 0">
-                                        <span class="text-slate-400 italic text-[11px]">Standar perlengkapan ruangan</span>
-                                    </template>
-                                </div>
-                                <template x-if="selectedBooking.special_requests && selectedBooking.special_requests.lainnya">
-                                    <p class="text-[11px] text-slate-600 bg-white p-2 rounded-lg border border-slate-200 mt-1">
-                                        <strong>Catatan Tambahan:</strong> <span x-text="selectedBooking.special_requests.lainnya"></span>
-                                    </p>
-                                </template>
+                        {{-- Keterangan Tambahan --}}
+                        <template x-if="selectedBooking.keterangan">
+                            <div class="p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-xs space-y-0.5">
+                                <span class="font-bold text-amber-900">Catatan Khusus Penyelenggara:</span>
+                                <p class="text-amber-800 font-medium" x-text="selectedBooking.keterangan"></p>
                             </div>
-                        </div>
+                        </template>
                     </div>
 
-                    {{-- Keterangan Tambahan --}}
-                    <template x-if="selectedBooking.keterangan">
-                        <div class="p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-xs space-y-0.5">
-                            <span class="font-bold text-amber-900">Catatan Khusus Penyelenggara:</span>
-                            <p class="text-amber-800 font-medium" x-text="selectedBooking.keterangan"></p>
-                        </div>
-                    </template>
-
-                    {{-- Footer Button --}}
-                    <div class="pt-3 border-t border-gray-100 flex items-center justify-end">
+                    {{-- Sticky Footer --}}
+                    <div class="p-4 sm:p-5 border-t border-gray-100 shrink-0 bg-gray-50/90 flex items-center justify-end rounded-b-2xl">
                         <button type="button"
                                 @click="detailModalOpen = false"
-                                class="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold rounded-xl transition">
+                                class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-bold rounded-xl transition">
                             Tutup
                         </button>
                     </div>
