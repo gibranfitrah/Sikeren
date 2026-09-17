@@ -809,6 +809,18 @@ class KegiatanController extends Controller
             'success' => true,
             'summary' => $summary,
             'peserta' => $list->values(),
+            'rapat'   => [
+                'id'              => $task ? $task->id : $realId,
+                'status'          => $task ? $task->status : '',
+                'setuju_rapat'    => $task ? (int)$task->setuju_rapat : 0,
+                'notulen'         => $task ? $task->notulen : null,
+                'materi_link'     => $task ? $task->materi_link : null,
+                'foto_link'       => $task ? $task->foto_link : null,
+                'notulen_selesai' => $task ? (int)($task->notulen_selesai ?? (!empty($task->notulen) ? 1 : 0)) : 0,
+                'pemimpin'        => $task ? $task->pemimpin : '',
+                'notulis'         => $task ? $task->notulis : '',
+                'tim_dokumentasi' => $task ? $task->tim_dokumentasi : '',
+            ]
         ]);
     }
 
@@ -857,6 +869,48 @@ class KegiatanController extends Controller
                         'judul' => $jenis . ' Disetujui: ' . $kegiatan->text,
                         'pesan' => $jenis . ' "' . $kegiatan->text . '" telah disetujui oleh ' . $pjNama . '. Agenda telah resmi aktif di Tugas Saya.',
                         'url'   => '/tugas-saya',
+                    ]),
+                    'read_at'         => null,
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ]);
+            }
+        }
+
+        // Notifikasi khusus untuk Notulis ketika Rapat Disetujui
+        if (!empty($kegiatan->notulis)) {
+            $userNotulis = User::where('nama_lengkap', $kegiatan->notulis)->orWhere('username', $kegiatan->notulis)->first();
+            if ($userNotulis && $userNotulis->id !== Auth::id()) {
+                DB::table('notifications')->insert([
+                    'id'              => (string) Str::uuid(),
+                    'type'            => 'App\Notifications\NotulisRapatNotification',
+                    'notifiable_type' => 'App\User',
+                    'notifiable_id'   => $userNotulis->id,
+                    'data'            => json_encode([
+                        'judul' => 'Rapat Disetujui - Silakan Isi Notulen',
+                        'pesan' => 'Rapat "' . $kegiatan->text . '" telah disetujui oleh ' . $pjNama . '. Silakan membuka detail rapat untuk mengisi Hasil Pembahasan Rapat, Tautan Bahan/Materi, dan Tautan Foto Dokumentasi.',
+                        'url'   => '/daftarkegiatan/' . $kegiatan->id,
+                    ]),
+                    'read_at'         => null,
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ]);
+            }
+        }
+
+        // Notifikasi khusus untuk Tim Dokumentasi ketika Rapat Disetujui
+        if (!empty($kegiatan->tim_dokumentasi)) {
+            $userDok = User::where('nama_lengkap', $kegiatan->tim_dokumentasi)->orWhere('username', $kegiatan->tim_dokumentasi)->first();
+            if ($userDok && $userDok->id !== Auth::id()) {
+                DB::table('notifications')->insert([
+                    'id'              => (string) Str::uuid(),
+                    'type'            => 'App\Notifications\PeranKhususNotification',
+                    'notifiable_type' => 'App\User',
+                    'notifiable_id'   => $userDok->id,
+                    'data'            => json_encode([
+                        'judul' => 'Rapat Disetujui - Dokumentasi Rapat',
+                        'pesan' => 'Rapat "' . $kegiatan->text . '" telah disetujui oleh ' . $pjNama . '. Silakan menyiapkan dan menautkan foto dokumentasi pelaksanaan rapat.',
+                        'url'   => '/daftarkegiatan/' . $kegiatan->id,
                     ]),
                     'read_at'         => null,
                     'created_at'      => now(),

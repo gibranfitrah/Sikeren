@@ -153,6 +153,11 @@ class User extends Authenticatable
         return $this->nipbaru ?: ($this->niplama ?: '-');
     }
 
+    public function isAdmin()
+    {
+        return $this->role_label === 'Administrator';
+    }
+
     public function isKetuaTimOrPj()
     {
         $role = $this->role_label;

@@ -171,6 +171,8 @@ class RapatController extends Controller
         $pegawai = $request->input('owners', []);
         $pegawaiStr = is_array($pegawai) ? implode(',', $pegawai) : (string)$pegawai;
 
+        $pjNama = $request->penanggung_jawab ?: ($request->pemimpin ?: (Auth::user()->nama_lengkap ?? Auth::user()->username));
+
         // 5. Simpan Record Task / Rapat
         $task = new Task();
         $task->text              = $request->text;
@@ -179,7 +181,7 @@ class RapatController extends Controller
         $task->pemimpin          = $request->pemimpin;
         $task->notulis           = $request->notulis;
         $task->tim_dokumentasi   = $request->tim_dokumentasi;
-        $task->penanggung_jawab  = Auth::user()->nama_lengkap ?? Auth::user()->username;
+        $task->penanggung_jawab  = $pjNama;
         $task->start_date        = $startDate;
         $task->date_akhir        = $dateAkhir;
         $task->start_jam         = $request->start_jam;
@@ -198,8 +200,6 @@ class RapatController extends Controller
         $task->save();
 
         $taskId = $task->id;
-
-        $pjNama = $task->penanggung_jawab ?: (Auth::check() ? Auth::user()->nama_lengkap : 'Ketua Tim / PJ');
 
         // 6. Simpan Penugasan untuk seluruh peserta rapat
         $kunciFcm = [];
@@ -252,6 +252,27 @@ class RapatController extends Controller
             ]);
         }
 
+        // 7b. Notifikasi Khusus untuk Penanggung Jawab (PJ) jika ditunjuk oleh Admin / User Lain
+        if (!empty($pjNama) && $pjNama !== $request->pemimpin) {
+            $userPj = User::where('nama_lengkap', $pjNama)->orWhere('username', $pjNama)->first();
+            if ($userPj && $userPj->id !== Auth::id() && (!$userPemimpin || $userPemimpin->id !== $userPj->id)) {
+                DB::table('notifications')->insert([
+                    'id'              => (string) Str::uuid(),
+                    'type'            => 'App\Notifications\PenugasanKegiatanNotification',
+                    'notifiable_type' => 'App\User',
+                    'notifiable_id'   => $userPj->id,
+                    'data'            => json_encode([
+                        'judul' => 'Penunjukan Penanggung Jawab Rapat: ' . $request->text,
+                        'pesan' => 'Anda ditunjuk sebagai Penanggung Jawab (PJ) untuk rapat "' . $request->text . '" pada ' . date('d M Y', strtotime($request->start_date)) . '.',
+                        'url'   => '/daftar_kegiatan',
+                    ]),
+                    'read_at'         => null,
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ]);
+            }
+        }
+
         // 8. Notifikasi Khusus untuk Notulis
         $userNotulis = User::where('nama_lengkap', $request->notulis)->orWhere('username', $request->notulis)->first();
         if ($userNotulis && $userNotulis->id !== Auth::id()) {
@@ -261,9 +282,9 @@ class RapatController extends Controller
                 'notifiable_type' => 'App\User',
                 'notifiable_id'   => $userNotulis->id,
                 'data'            => json_encode([
-                    'judul' => 'Penugasan Notulis Rapat',
-                    'pesan' => 'Anda ditugaskan sebagai Notulis pada rapat "' . $request->text . '" oleh ' . $pjNama . '. Mohon siapkan pencatatan jalannya rapat.',
-                    'url'   => '/daftar_kegiatan',
+                    'judul' => 'Penugasan Notulis (Menunggu Persetujuan)',
+                    'pesan' => 'Anda ditugaskan sebagai Notulis pada rapat "' . $request->text . '" oleh ' . $pjNama . '. Status saat ini sedang menunggu persetujuan pemimpin rapat.',
+                    'url'   => '/daftarkegiatan/' . $task->id,
                 ]),
                 'read_at'         => null,
                 'created_at'      => now(),
@@ -281,9 +302,9 @@ class RapatController extends Controller
                     'notifiable_type' => 'App\User',
                     'notifiable_id'   => $userDok->id,
                     'data'            => json_encode([
-                        'judul' => 'Penugasan Tim Dokumentasi Rapat',
-                        'pesan' => 'Anda ditugaskan sebagai Tim Dokumentasi pada rapat "' . $request->text . '" oleh ' . $pjNama . '.',
-                        'url'   => '/daftar_kegiatan',
+                        'judul' => 'Penugasan Tim Dokumentasi (Menunggu Persetujuan)',
+                        'pesan' => 'Anda ditugaskan sebagai Tim Dokumentasi pada rapat "' . $request->text . '" oleh ' . $pjNama . '. Status saat ini sedang menunggu persetujuan pemimpin rapat.',
+                        'url'   => '/daftarkegiatan/' . $task->id,
                     ]),
                     'read_at'         => null,
                     'created_at'      => now(),

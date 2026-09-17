@@ -265,7 +265,50 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {{-- Penanggung Jawab (PJ / Ketua Tim) --}}
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="penanggung_jawab" class="block text-xs font-bold text-gray-700">
+                                Penanggung Jawab (PJ) <span class="text-red-500">*</span>
+                            </label>
+                            <span class="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">Ketua Tim</span>
+                        </div>
+                        <select id="penanggung_jawab" name="penanggung_jawab" class="w-full text-xs border-gray-300 rounded-lg p-2.5 bg-gray-50 focus:bg-white text-gray-800 shadow-xs focus:ring-emerald-500 focus:border-emerald-500 border">
+                            <option value="">-- Pilih Penanggung Jawab (PJ) --</option>
+                            @if(isset($eligiblePJs) && $eligiblePJs->count() > 0)
+                                <optgroup label="⭐ Pejabat, Ketua Tim, & Ahli Madya (Eligible PJ)">
+                                    @foreach ($eligiblePJs as $u)
+                                        <option value="{{ $u->nama_lengkap }}" {{ (old('penanggung_jawab', Auth::user()->nama_lengkap ?? '') == $u->nama_lengkap) ? 'selected' : '' }}>
+                                            {{ $u->nama_lengkap }} ({{ $u->formatted_nip }}) - {{ $u->role_label }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                                <optgroup label="👤 Seluruh Pegawai Lainnya">
+                                    @foreach ($allUsers->diff($eligiblePJs) as $u)
+                                        <option value="{{ $u->nama_lengkap }}" {{ (old('penanggung_jawab', Auth::user()->nama_lengkap ?? '') == $u->nama_lengkap) ? 'selected' : '' }}>
+                                            {{ $u->nama_lengkap }} ({{ $u->formatted_nip }}) - {{ $u->role_label }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @else
+                                @foreach ($peserta as $p)
+                                    <option value="{{ $p->nama_lengkap }}" {{ (old('penanggung_jawab', Auth::user()->nama_lengkap ?? '') == $p->nama_lengkap) ? 'selected' : '' }}>
+                                        {{ $p->nama_lengkap }} ({{ $p->nipbaru ?? $p->niplama }})
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        <div id="pjInfoContainer" class="hidden mt-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-lg text-[11px] text-emerald-800 font-medium">
+                            <div class="flex items-center gap-1.5">
+                                <svg width="14" height="14" style="width: 14px; height: 14px; min-width: 14px; min-height: 14px; max-width: 14px; max-height: 14px;" class="text-emerald-600 inline-block flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span id="pjInfoText" class="truncate">PJ otomatis terpilih</span>
+                            </div>
+                        </div>
+                    </div>
+
                     {{-- Pemimpin Rapat --}}
                     <div>
                         <div class="flex items-center justify-between mb-1">
@@ -275,7 +318,7 @@
                             <span class="text-[10px] text-blue-600 font-bold bg-blue-50 px-1.5 py-0.5 rounded">Approval</span>
                         </div>
                         <select id="pemimpin" name="pemimpin" required class="w-full text-xs border-gray-300 rounded-lg p-2.5 bg-gray-50 focus:bg-white text-gray-800 shadow-xs focus:ring-blue-500 focus:border-blue-500 border">
-                            <option value="">-- Pilih Pemimpin / PJ Rapat --</option>
+                            <option value="">-- Pilih Pemimpin Rapat --</option>
                             @if(isset($eligiblePJs) && $eligiblePJs->count() > 0)
                                 <optgroup label="⭐ Pejabat, Ketua Tim, & Ahli Madya (Eligible PJ)">
                                     @foreach ($eligiblePJs as $u)
@@ -299,14 +342,6 @@
                                 @endforeach
                             @endif
                         </select>
-                        <div id="pjInfoContainer" class="hidden mt-1.5 px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-lg text-[11px] text-blue-700 font-medium">
-                            <div class="flex items-center gap-1.5">
-                                <svg width="14" height="14" style="width: 14px; height: 14px; min-width: 14px; min-height: 14px; max-width: 14px; max-height: 14px;" class="text-blue-600 inline-block flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                <span id="pjInfoText" class="truncate">Ketua Tim otomatis terpilih</span>
-                            </div>
-                        </div>
                         @error('pemimpin') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
                     </div>
 
@@ -510,18 +545,29 @@ document.addEventListener("DOMContentLoaded", function () {
             document.getElementById('text').value = 'Rapat Koordinasi: ' + agenda;
         }
 
-        // Auto-select Ketua Tim (PJ) sebagai Pemimpin Rapat
+        // Auto-select Ketua Tim (PJ) sebagai Penanggung Jawab & Pemimpin Rapat
         if (pj) {
+            const pjSelect = document.getElementById('penanggung_jawab');
             const pemimpinSelect = document.getElementById('pemimpin');
-            let matched = false;
             const pjClean = pj.toLowerCase().trim();
 
-            for (let i = 0; i < pemimpinSelect.options.length; i++) {
-                const optVal = pemimpinSelect.options[i].value.toLowerCase().trim();
-                if (optVal === pjClean || optVal.includes(pjClean) || pjClean.includes(optVal)) {
-                    pemimpinSelect.selectedIndex = i;
-                    matched = true;
-                    break;
+            if (pjSelect) {
+                for (let i = 0; i < pjSelect.options.length; i++) {
+                    const optVal = pjSelect.options[i].value.toLowerCase().trim();
+                    if (optVal === pjClean || optVal.includes(pjClean) || pjClean.includes(optVal)) {
+                        pjSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            if (pemimpinSelect) {
+                for (let i = 0; i < pemimpinSelect.options.length; i++) {
+                    const optVal = pemimpinSelect.options[i].value.toLowerCase().trim();
+                    if (optVal === pjClean || optVal.includes(pjClean) || pjClean.includes(optVal)) {
+                        pemimpinSelect.selectedIndex = i;
+                        break;
+                    }
                 }
             }
 

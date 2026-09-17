@@ -24,14 +24,25 @@
     $rapatId = $firstItem->id ?? ($task->id ?? $id);
 
     $currentUserNama = trim(Auth::user()->nama_lengkap ?? (Auth::user()->name ?? ''));
+    $currentUserNip = trim(Auth::user()->niplama ?? '');
+    $currentUserNipBaru = trim(Auth::user()->nipbaru ?? '');
+    $isAdmin = Auth::check() && isset(Auth::user()->level) && strtolower(Auth::user()->level) === 'admin';
+    $rapatPj = $firstItem->penanggung_jawab ?? ($task->penanggung_jawab ?? '');
+
     $isPemimpin = Auth::check() && (
         strcasecmp($currentUserNama, trim($rapatPemimpin ?? '')) === 0 ||
-        (isset(Auth::user()->level) && strtolower(Auth::user()->level) === 'admin')
+        $currentUserNip === trim($rapatPemimpin ?? '') ||
+        $isAdmin
     );
     $isNotulis = Auth::check() && (
         strcasecmp($currentUserNama, trim($rapatNotulis ?? '')) === 0 ||
+        strcasecmp($currentUserNama, trim($rapatDokumentasi ?? '')) === 0 ||
+        strcasecmp($currentUserNama, trim($rapatPj ?? '')) === 0 ||
+        $currentUserNip === trim($rapatNotulis ?? '') ||
+        $currentUserNip === trim($rapatDokumentasi ?? '') ||
+        $currentUserNip === trim($rapatPj ?? '') ||
         $isPemimpin ||
-        (isset(Auth::user()->level) && strtolower(Auth::user()->level) === 'admin')
+        $isAdmin
     );
 @endphp
 
@@ -274,7 +285,7 @@
                     </h3>
                     <p class="text-xs text-slate-400 mt-0.5">Pantau dan kelola jalannya 4 tahap siklus rapat.</p>
                 </div>
-                <div>
+                <div id="top-banner-status">
                     @if($rapatSetuju == 1 && (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1))
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                             ✓ Seluruh Tahap Tuntas (Selesai)
@@ -307,33 +318,33 @@
                 </div>
 
                 {{-- STEP 2: PERSETUJUAN --}}
-                <div class="p-3 rounded-xl {{ $rapatSetuju == 1 ? 'bg-slate-800/80 border-emerald-500/50' : ($rapatSetuju == 3 ? 'bg-slate-800/80 border-red-500/50' : 'bg-slate-800/80 border-amber-500/50 ring-1 ring-amber-500/30') }} border flex items-center gap-3">
-                    <span class="w-8 h-8 rounded-lg {{ $rapatSetuju == 1 ? 'bg-emerald-600' : ($rapatSetuju == 3 ? 'bg-red-600' : 'bg-amber-500') }} text-white font-black text-xs flex items-center justify-center flex-shrink-0">2</span>
+                <div id="step-2-box" class="p-3 rounded-xl {{ $rapatSetuju == 1 ? 'bg-slate-800/80 border-emerald-500/50' : ($rapatSetuju == 3 ? 'bg-slate-800/80 border-red-500/50' : 'bg-slate-800/80 border-amber-500/50 ring-1 ring-amber-500/30') }} border flex items-center gap-3">
+                    <span id="step-2-badge" class="w-8 h-8 rounded-lg {{ $rapatSetuju == 1 ? 'bg-emerald-600' : ($rapatSetuju == 3 ? 'bg-red-600' : 'bg-amber-500') }} text-white font-black text-xs flex items-center justify-center flex-shrink-0">2</span>
                     <div>
                         <div class="text-xs font-bold text-white">2. Persetujuan</div>
-                        <div class="text-[10px] {{ $rapatSetuju == 1 ? 'text-emerald-400' : ($rapatSetuju == 3 ? 'text-red-400' : 'text-amber-400 font-bold') }}">
+                        <div id="step-2-status" class="text-[10px] {{ $rapatSetuju == 1 ? 'text-emerald-400' : ($rapatSetuju == 3 ? 'text-red-400' : 'text-amber-400 font-bold') }}">
                             {{ $rapatSetuju == 1 ? '✓ Telah Disetujui' : ($rapatSetuju == 3 ? '✕ Ditolak' : '⏳ Menunggu Approval') }}
                         </div>
                     </div>
                 </div>
 
                 {{-- STEP 3: PRESENSI QR --}}
-                <div class="p-3 rounded-xl {{ $rapatSetuju == 1 ? 'bg-slate-800/80 border-blue-500/50' : 'bg-slate-800/40 border-slate-700/50 opacity-60' }} border flex items-center gap-3">
-                    <span class="w-8 h-8 rounded-lg {{ $rapatSetuju == 1 ? 'bg-blue-600' : 'bg-slate-700' }} text-white font-black text-xs flex items-center justify-center flex-shrink-0">3</span>
+                <div id="step-3-box" class="p-3 rounded-xl {{ $rapatSetuju == 1 ? 'bg-slate-800/80 border-blue-500/50' : 'bg-slate-800/40 border-slate-700/50 opacity-60' }} border flex items-center gap-3">
+                    <span id="step-3-badge" class="w-8 h-8 rounded-lg {{ $rapatSetuju == 1 ? 'bg-blue-600' : 'bg-slate-700' }} text-white font-black text-xs flex items-center justify-center flex-shrink-0">3</span>
                     <div>
                         <div class="text-xs font-bold text-white">3. Presensi QR</div>
-                        <div class="text-[10px] {{ $rapatSetuju == 1 ? 'text-blue-400' : 'text-slate-500' }}">
+                        <div id="step-3-status" class="text-[10px] {{ $rapatSetuju == 1 ? 'text-blue-400' : 'text-slate-500' }}">
                             {{ $rapatSetuju == 1 ? '● Siap / QR Aktif' : 'Terkunci' }}
                         </div>
                     </div>
                 </div>
 
                 {{-- STEP 4: NOTULEN --}}
-                <div class="p-3 rounded-xl {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'bg-slate-800/80 border-emerald-500/50' : ($rapatSetuju == 1 ? 'bg-slate-800/80 border-amber-500/50' : 'bg-slate-800/40 border-slate-700/50 opacity-60') }} border flex items-center gap-3">
-                    <span class="w-8 h-8 rounded-lg {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'bg-emerald-600' : ($rapatSetuju == 1 ? 'bg-amber-500' : 'bg-slate-700') }} text-white font-black text-xs flex items-center justify-center flex-shrink-0">4</span>
+                <div id="step-4-box" class="p-3 rounded-xl {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'bg-slate-800/80 border-emerald-500/50' : ($rapatSetuju == 1 ? 'bg-slate-800/80 border-amber-500/50' : 'bg-slate-800/40 border-slate-700/50 opacity-60') }} border flex items-center gap-3">
+                    <span id="step-4-badge" class="w-8 h-8 rounded-lg {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'bg-emerald-600' : ($rapatSetuju == 1 ? 'bg-amber-500' : 'bg-slate-700') }} text-white font-black text-xs flex items-center justify-center flex-shrink-0">4</span>
                     <div>
                         <div class="text-xs font-bold text-white">4. Notulen & Foto</div>
-                        <div class="text-[10px] {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'text-emerald-400' : ($rapatSetuju == 1 ? 'text-amber-400' : 'text-slate-500') }}">
+                        <div id="step-4-status" class="text-[10px] {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'text-emerald-400' : ($rapatSetuju == 1 ? 'text-amber-400' : 'text-slate-500') }}">
                             {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? '✓ Notulen Selesai' : ($rapatSetuju == 1 ? 'Menunggu Unggah' : 'Terkunci') }}
                         </div>
                     </div>
@@ -475,145 +486,127 @@
                                     <p class="text-[11px] text-gray-400">Ringkasan hasil, materi & foto</p>
                                 </div>
                             </div>
-                            <span class="text-[11px] font-bold {{ !empty($rapatNotulen) ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-amber-700 bg-amber-50 border border-amber-200' }} px-3 py-1 rounded-full">
-                                {{ !empty($rapatNotulen) ? '✓ Selesai (100%)' : 'Menunggu Notulen' }}
+                            <span id="badge-tahap4-status" class="text-[11px] font-bold {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-amber-700 bg-amber-50 border border-amber-200' }} px-3 py-1 rounded-full">
+                                {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? '✓ Selesai (100%)' : 'Menunggu Notulen' }}
                             </span>
                         </div>
 
                         @if($rapatSetuju == 1)
-                            @if(!empty($rapatNotulen))
-                                {{-- TAMPILAN VIEW NOTULEN & DOKUMENTASI (SELESAI) --}}
-                                <div id="view-notulen-container" class="space-y-4">
-                                    <div class="flex items-center justify-between gap-2 flex-wrap">
-                                        <div class="flex items-center gap-2">
-                                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                                            <h5 class="text-xs font-bold text-gray-900 uppercase tracking-wide">Hasil Notulen & Kesimpulan:</h5>
-                                        </div>
-                                        @if($isNotulis)
-                                            <button type="button" onclick="toggleEditNotulen(true)" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-bold transition">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                                <span>Ubah / Edit Notulen</span>
-                                            </button>
-                                        @endif
+                            {{-- TAMPILAN VIEW NOTULEN & DOKUMENTASI (SELESAI / SUDAH TERISI) --}}
+                            <div id="view-notulen-container" class="{{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? '' : 'hidden' }} space-y-4">
+                                <div class="flex items-center justify-between gap-2 flex-wrap">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                        <h5 class="text-xs font-bold text-gray-900 uppercase tracking-wide">Hasil Notulen & Kesimpulan:</h5>
                                     </div>
-
-                                    {{-- BOX HASIL NOTULEN --}}
-                                    <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 whitespace-pre-line leading-relaxed max-h-48 overflow-y-auto">
-                                        {{ $rapatNotulen }}
-                                    </div>
-
-                                    {{-- ATTACHMENT CARDS & LINKS --}}
-                                    <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2">
-                                        @if($rapatMateriLink)
-                                            <a target="_blank" href="{{ $rapatMateriLink }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-bold transition shadow-2xs">
-                                                <span>📁</span>
-                                                <span>Buka Materi (Drive)</span>
-                                                <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                                            </a>
-                                        @endif
-
-                                        @if($rapatFotoLink)
-                                            <a target="_blank" href="{{ $rapatFotoLink }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 text-xs font-bold transition shadow-2xs">
-                                                <span>📷</span>
-                                                <span>Buka Foto Dokumentasi</span>
-                                                <svg class="w-3 h-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                                            </a>
-                                        @endif
-
-                                        <a target="_blank" href="{{ url('employee/pdf_kegiatan/' . $rapatId) }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 text-xs font-bold transition shadow-2xs">
-                                            <span>📄</span>
-                                            <span>Unduh PDF Risalah</span>
-                                        </a>
-                                    </div>
+                                    @if($isNotulis)
+                                        <button type="button" onclick="toggleEditNotulen(true)" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-bold transition">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            <span>Ubah / Edit Notulen</span>
+                                        </button>
+                                    @endif
                                 </div>
 
-                                {{-- FORM EDIT NOTULEN --}}
+                                {{-- BOX HASIL NOTULEN --}}
+                                <div id="notulen-display-text" class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 whitespace-pre-line leading-relaxed max-h-48 overflow-y-auto">
+                                    {{ $rapatNotulen }}
+                                </div>
+
+                                {{-- ATTACHMENT CARDS & LINKS --}}
+                                <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                                    <a id="materi-link-btn" target="_blank" href="{{ $rapatMateriLink ?: '#' }}" class="{{ $rapatMateriLink ? 'inline-flex' : 'hidden' }} items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-bold transition shadow-2xs">
+                                        <span>📁</span>
+                                        <span>Buka Materi (Drive)</span>
+                                        <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                    </a>
+
+                                    <a id="foto-link-btn" target="_blank" href="{{ $rapatFotoLink ?: '#' }}" class="{{ $rapatFotoLink ? 'inline-flex' : 'hidden' }} items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 text-xs font-bold transition shadow-2xs">
+                                        <span>📷</span>
+                                        <span>Buka Foto Dokumentasi</span>
+                                        <svg class="w-3 h-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                    </a>
+
+                                    <a target="_blank" href="{{ url('employee/pdf_kegiatan/' . $rapatId) }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 text-xs font-bold transition shadow-2xs">
+                                        <span>📄</span>
+                                        <span>Unduh PDF Risalah</span>
+                                    </a>
+                                </div>
+                            </div>
+
+                            {{-- FORM CONTAINER (PENGISIAN ATAU EDIT NOTULEN) --}}
+                            <div id="form-notulen-container" class="{{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'hidden' : '' }} space-y-4">
                                 @if($isNotulis)
-                                    <div id="form-notulen-container" class="hidden space-y-4">
-                                        <div class="flex items-center justify-between pb-2 border-b border-gray-100">
-                                            <h5 class="text-xs font-bold text-gray-900">Ubah Notulen & Dokumentasi Rapat</h5>
-                                            <button type="button" onclick="toggleEditNotulen(false)" class="text-xs font-bold text-gray-500 hover:text-gray-700 px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 transition">
-                                                ✕ Batal
-                                            </button>
-                                        </div>
-
-                                        <form action="{{ route('update_notulen') }}" method="POST" class="space-y-3">
-                                            @csrf
-                                            <input type="hidden" name="id" value="{{ $rapatId }}">
-                                            <div>
-                                                <label for="notulenTextarea" class="block text-xs font-bold text-gray-700 mb-1">
-                                                    Notulen Hasil Pembahasan Rapat
-                                                </label>
-                                                <textarea id="notulenTextarea" name="notulen" rows="4" placeholder="Tuliskan ringkasan hasil rapat, keputusan, dan tindak lanjut..." class="w-full text-xs border-gray-300 rounded-xl p-3 bg-gray-50 focus:bg-white text-gray-800 focus:ring-blue-500 focus:border-blue-500 border">{{ $rapatNotulen }}</textarea>
-                                            </div>
-
-                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                                <div>
-                                                    <label class="block text-[11px] font-bold text-gray-600 mb-1">Tautan Bahan / Materi (Drive):</label>
-                                                    <input type="url" name="materi_link" value="{{ $rapatMateriLink }}" placeholder="https://drive.google.com/..." class="w-full text-xs border-gray-300 rounded-xl p-2.5 bg-gray-50 focus:bg-white text-gray-800 border">
-                                                </div>
-                                                <div>
-                                                    <label class="block text-[11px] font-bold text-gray-600 mb-1">Tautan Foto Dokumentasi:</label>
-                                                    <input type="url" name="foto_link" value="{{ $rapatFotoLink }}" placeholder="https://photos.app.goo.gl/..." class="w-full text-xs border-gray-300 rounded-xl p-2.5 bg-gray-50 focus:bg-white text-gray-800 border">
-                                                </div>
-                                            </div>
-
-                                            <div class="flex items-center justify-end gap-2 pt-2">
-                                                <button type="button" onclick="toggleEditNotulen(false)" class="btn-secondary-action">
-                                                    Batal
-                                                </button>
-                                                <button type="submit" class="btn-primary-action">
-                                                    Simpan Perubahan Notulen
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                @endif
-                            @else
-                                {{-- FORM PENGISIAN AWAL NOTULEN --}}
-                                <form action="{{ route('update_notulen') }}" method="POST" class="space-y-3">
-                                    @csrf
-                                    <input type="hidden" name="id" value="{{ $rapatId }}">
-                                    <div>
-                                        <label for="notulenTextarea" class="block text-xs font-bold text-gray-700 mb-1">
-                                            Notulen Hasil Pembahasan Rapat
-                                        </label>
-                                        <textarea id="notulenTextarea" name="notulen" rows="4" placeholder="Tuliskan ringkasan hasil rapat, keputusan, dan tindak lanjut..." class="w-full text-xs border-gray-300 rounded-xl p-3 bg-gray-50 focus:bg-white text-gray-800 focus:ring-blue-500 focus:border-blue-500 border">{{ $rapatNotulen }}</textarea>
-                                    </div>
-
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                        <div>
-                                            <label class="block text-[11px] font-bold text-gray-600 mb-1">Tautan Bahan / Materi (Drive):</label>
-                                            <input type="url" name="materi_link" value="{{ $rapatMateriLink }}" placeholder="https://drive.google.com/..." class="w-full text-xs border-gray-300 rounded-xl p-2.5 bg-gray-50 focus:bg-white text-gray-800 border">
-                                        </div>
-                                        <div>
-                                            <label class="block text-[11px] font-bold text-gray-600 mb-1">Tautan Foto Dokumentasi:</label>
-                                            <input type="url" name="foto_link" value="{{ $rapatFotoLink }}" placeholder="https://photos.app.goo.gl/..." class="w-full text-xs border-gray-300 rounded-xl p-2.5 bg-gray-50 focus:bg-white text-gray-800 border">
-                                        </div>
-                                    </div>
-
-                                    <div class="flex justify-end pt-2">
-                                        <button type="submit" class="btn-primary-action">
-                                            Simpan Notulen & Dokumentasi
+                                    <div class="flex items-center justify-between pb-2 border-b border-gray-100">
+                                        <h5 id="form-notulen-title" class="text-xs font-bold text-gray-900">
+                                            {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'Ubah Notulen & Dokumentasi Rapat' : 'Pengisian Notulen & Dokumentasi Rapat' }}
+                                        </h5>
+                                        <button type="button" id="btn-cancel-edit-notulen" onclick="toggleEditNotulen(false)" class="{{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? '' : 'hidden' }} text-xs font-bold text-gray-500 hover:text-gray-700 px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 transition">
+                                            ✕ Batal
                                         </button>
                                     </div>
-                                </form>
-                            @endif
+
+                                    <form id="form-notulen" action="{{ route('update_notulen') }}" method="POST" onsubmit="handleNotulenSubmit(event, this)" class="space-y-3">
+                                        @csrf
+                                        <input type="hidden" name="id" value="{{ $rapatId }}">
+                                        <div>
+                                            <label for="notulenTextarea" class="block text-xs font-bold text-gray-700 mb-1">
+                                                Hasil Pembahasan Rapat <span class="text-rose-500">*</span>
+                                            </label>
+                                            <textarea id="notulenTextarea" name="notulen" rows="4" required placeholder="Tuliskan ringkasan hasil pembahasan rapat, keputusan, dan tindak lanjut..." class="w-full text-xs border-gray-300 rounded-xl p-3 bg-gray-50 focus:bg-white text-gray-800 focus:ring-blue-500 focus:border-blue-500 border">{{ $rapatNotulen }}</textarea>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                            <div>
+                                                <label for="materiLinkInput" class="block text-[11px] font-bold text-gray-600 mb-1">Tautan Bahan / Materi (Drive):</label>
+                                                <input type="url" id="materiLinkInput" name="materi_link" value="{{ $rapatMateriLink }}" placeholder="https://drive.google.com/..." class="w-full text-xs border-gray-300 rounded-xl p-2.5 bg-gray-50 focus:bg-white text-gray-800 border">
+                                            </div>
+                                            <div>
+                                                <label for="fotoLinkInput" class="block text-[11px] font-bold text-gray-600 mb-1">Tautan Foto Dokumentasi:</label>
+                                                <input type="url" id="fotoLinkInput" name="foto_link" value="{{ $rapatFotoLink }}" placeholder="https://photos.app.goo.gl/..." class="w-full text-xs border-gray-300 rounded-xl p-2.5 bg-gray-50 focus:bg-white text-gray-800 border">
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center justify-end gap-2 pt-2">
+                                            <button type="button" id="btn-cancel-edit-notulen-bottom" onclick="toggleEditNotulen(false)" class="{{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? '' : 'hidden' }} btn-secondary-action">
+                                                Batal
+                                            </button>
+                                            <button type="submit" id="btn-submit-notulen" class="btn-primary-action">
+                                                <span id="btn-submit-notulen-text">Simpan Notulen & Dokumentasi</span>
+                                            </button>
+                                        </div>
+                                    </form>
+                                @else
+                                    <div class="p-8 text-center text-xs text-gray-400">
+                                        <svg class="ui-icon-lg mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                        Menunggu Notulis (<strong class="text-gray-600">{{ $rapatNotulis }}</strong>) atau Tim Dokumentasi mengisi notulen dan tautan dokumentasi.
+                                    </div>
+                                @endif
+                            </div>
                         @else
                             <div class="p-8 text-center text-xs text-gray-400">
-                                Form notulen akan terbuka setelah rapat disetujui.
+                                <svg class="ui-icon-lg mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                Form notulen & dokumentasi akan terbuka secara otomatis setelah rapat disetujui oleh Pemimpin Rapat.
                             </div>
                         @endif
                     </div>
                 </div>
 
                 <script>
+                window.isCurrentlyEditingNotulen = false;
                 function toggleEditNotulen(isEdit) {
+                    window.isCurrentlyEditingNotulen = isEdit;
                     const viewContainer = document.getElementById('view-notulen-container');
                     const formContainer = document.getElementById('form-notulen-container');
+                    const btnCancel = document.getElementById('btn-cancel-edit-notulen');
+                    const btnCancelBottom = document.getElementById('btn-cancel-edit-notulen-bottom');
+                    const formTitle = document.getElementById('form-notulen-title');
+
                     if (isEdit) {
                         if (viewContainer) viewContainer.classList.add('hidden');
                         if (formContainer) formContainer.classList.remove('hidden');
+                        if (btnCancel) btnCancel.classList.remove('hidden');
+                        if (btnCancelBottom) btnCancelBottom.classList.remove('hidden');
+                        if (formTitle) formTitle.innerText = 'Ubah Notulen & Dokumentasi Rapat';
                     } else {
                         if (viewContainer) viewContainer.classList.remove('hidden');
                         if (formContainer) formContainer.classList.add('hidden');
@@ -799,7 +792,109 @@
 
 </div>
 
+{{-- FLOATING TOAST NOTIFICATION --}}
+<div id="toast-notification" class="fixed bottom-6 right-6 z-50 transform transition-all duration-300 translate-y-20 opacity-0 pointer-events-none">
+    <div class="bg-emerald-600 text-white px-5 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 text-xs font-bold border border-emerald-400">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+        <span id="toast-message">Operasi berhasil</span>
+    </div>
+</div>
+
 <script>
+function showToastSuccess(msg) {
+    const toast = document.getElementById('toast-notification');
+    const toastMsg = document.getElementById('toast-message');
+    if (toast && toastMsg) {
+        toastMsg.innerText = msg;
+        toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+        toast.classList.add('translate-y-0', 'opacity-100');
+        setTimeout(() => {
+            toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            toast.classList.remove('translate-y-0', 'opacity-100');
+        }, 4000);
+    }
+}
+
+function handleNotulenSubmit(event, form) {
+    event.preventDefault();
+    const btnSubmit = document.getElementById('btn-submit-notulen');
+    const btnText = document.getElementById('btn-submit-notulen-text');
+    const originalText = btnText ? btnText.innerText : 'Simpan';
+
+    if (btnSubmit) {
+        btnSubmit.disabled = true;
+        if (btnText) btnText.innerText = 'Menyimpan...';
+    }
+
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Gagal menyimpan notulen');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            window.isCurrentlyEditingNotulen = false;
+            
+            showToastSuccess(data.message || 'Notulen & foto dokumentasi berhasil disimpan!');
+
+            const notulenText = form.querySelector('[name="notulen"]')?.value || '';
+            const materiLink = form.querySelector('[name="materi_link"]')?.value || '';
+            const fotoLink = form.querySelector('[name="foto_link"]')?.value || '';
+
+            const notulenDisplayText = document.getElementById('notulen-display-text');
+            if (notulenDisplayText) notulenDisplayText.innerText = notulenText;
+
+            const materiLinkBtn = document.getElementById('materi-link-btn');
+            if (materiLinkBtn) {
+                if (materiLink) {
+                    materiLinkBtn.href = materiLink;
+                    materiLinkBtn.classList.remove('hidden');
+                    materiLinkBtn.classList.add('inline-flex');
+                } else {
+                    materiLinkBtn.classList.add('hidden');
+                    materiLinkBtn.classList.remove('inline-flex');
+                }
+            }
+
+            const fotoLinkBtn = document.getElementById('foto-link-btn');
+            if (fotoLinkBtn) {
+                if (fotoLink) {
+                    fotoLinkBtn.href = fotoLink;
+                    fotoLinkBtn.classList.remove('hidden');
+                    fotoLinkBtn.classList.add('inline-flex');
+                } else {
+                    fotoLinkBtn.classList.add('hidden');
+                    fotoLinkBtn.classList.remove('inline-flex');
+                }
+            }
+
+            toggleEditNotulen(false);
+            refreshPresensi();
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Terjadi kesalahan saat menyimpan notulen. Silakan coba lagi.');
+    })
+    .finally(() => {
+        if (btnSubmit) {
+            btnSubmit.disabled = false;
+            if (btnText) btnText.innerText = originalText;
+        }
+    });
+}
+
 function refreshPresensi() {
     const btn = document.getElementById('btn-refresh-presensi');
     if (btn) btn.classList.add('animate-spin');
@@ -809,11 +904,19 @@ function refreshPresensi() {
         .then(data => {
             if (data.success) {
                 // Update summary counters
-                document.getElementById('count-hadir').innerText = data.summary.hadir;
-                document.getElementById('count-lain').innerText = data.summary.kegiatan_lain;
-                document.getElementById('count-tidak').innerText = data.summary.tidak_hadir;
-                document.getElementById('count-belum').innerText = data.summary.belum_hadir;
-                document.getElementById('total-count').innerText = data.summary.total;
+                if (data.summary) {
+                    const elHadir = document.getElementById('count-hadir');
+                    const elLain = document.getElementById('count-lain');
+                    const elTidak = document.getElementById('count-tidak');
+                    const elBelum = document.getElementById('count-belum');
+                    const elTotal = document.getElementById('total-count');
+
+                    if (elHadir) elHadir.innerText = data.summary.hadir;
+                    if (elLain) elLain.innerText = data.summary.kegiatan_lain;
+                    if (elTidak) elTidak.innerText = data.summary.tidak_hadir;
+                    if (elBelum) elBelum.innerText = data.summary.belum_hadir;
+                    if (elTotal) elTotal.innerText = data.summary.total;
+                }
 
                 // Update table rows
                 const tbody = document.getElementById('presensi-table-body');
@@ -857,6 +960,99 @@ function refreshPresensi() {
                         </tr>`;
                     });
                     tbody.innerHTML = html;
+                }
+
+                // Update Live Rapat & Notulen Status
+                if (data.rapat) {
+                    const r = data.rapat;
+                    const hasNotulen = (r.notulen && r.notulen.trim().length > 0) || r.notulen_selesai == 1;
+
+                    // Top Banner Status
+                    const topBanner = document.getElementById('top-banner-status');
+                    if (topBanner) {
+                        if (r.setuju_rapat == 1 && hasNotulen) {
+                            topBanner.innerHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">✓ Seluruh Tahap Tuntas (Selesai)</span>`;
+                        } else if (r.setuju_rapat == 1) {
+                            topBanner.innerHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">● Rapat Disetujui (Sedang Berjalan)</span>`;
+                        } else if (r.setuju_rapat == 3) {
+                            topBanner.innerHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-300 border border-red-500/30">✕ Rapat Ditolak</span>`;
+                        } else {
+                            topBanner.innerHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">⏳ Menunggu Persetujuan Pemimpin</span>`;
+                        }
+                    }
+
+                    // Stepper Step 4
+                    const step4Box = document.getElementById('step-4-box');
+                    const step4Badge = document.getElementById('step-4-badge');
+                    const step4Status = document.getElementById('step-4-status');
+                    if (step4Box && step4Badge && step4Status) {
+                        if (hasNotulen) {
+                            step4Box.className = "p-3 rounded-xl bg-slate-800/80 border-emerald-500/50 border flex items-center gap-3";
+                            step4Badge.className = "w-8 h-8 rounded-lg bg-emerald-600 text-white font-black text-xs flex items-center justify-center flex-shrink-0";
+                            step4Status.className = "text-[10px] text-emerald-400 font-medium";
+                            step4Status.innerText = "✓ Notulen Selesai";
+                        } else if (r.setuju_rapat == 1) {
+                            step4Box.className = "p-3 rounded-xl bg-slate-800/80 border-amber-500/50 border flex items-center gap-3";
+                            step4Badge.className = "w-8 h-8 rounded-lg bg-amber-500 text-white font-black text-xs flex items-center justify-center flex-shrink-0";
+                            step4Status.className = "text-[10px] text-amber-400 font-medium";
+                            step4Status.innerText = "Menunggu Unggah";
+                        }
+                    }
+
+                    // Badge Tahap 4
+                    const badgeTahap4 = document.getElementById('badge-tahap4-status');
+                    if (badgeTahap4) {
+                        if (hasNotulen) {
+                            badgeTahap4.className = "text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full";
+                            badgeTahap4.innerText = "✓ Selesai (100%)";
+                        } else {
+                            badgeTahap4.className = "text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full";
+                            badgeTahap4.innerText = "Menunggu Notulen";
+                        }
+                    }
+
+                    // Realtime Notulen view & links
+                    const viewContainer = document.getElementById('view-notulen-container');
+                    const notulenDisplayText = document.getElementById('notulen-display-text');
+                    const materiLinkBtn = document.getElementById('materi-link-btn');
+                    const fotoLinkBtn = document.getElementById('foto-link-btn');
+                    const formContainer = document.getElementById('form-notulen-container');
+
+                    if (hasNotulen) {
+                        if (notulenDisplayText && r.notulen) {
+                            notulenDisplayText.innerText = r.notulen;
+                        }
+                        if (materiLinkBtn) {
+                            if (r.materi_link) {
+                                materiLinkBtn.href = r.materi_link;
+                                materiLinkBtn.classList.remove('hidden');
+                                materiLinkBtn.classList.add('inline-flex');
+                            } else {
+                                materiLinkBtn.classList.add('hidden');
+                                materiLinkBtn.classList.remove('inline-flex');
+                            }
+                        }
+                        if (fotoLinkBtn) {
+                            if (r.foto_link) {
+                                fotoLinkBtn.href = r.foto_link;
+                                fotoLinkBtn.classList.remove('hidden');
+                                fotoLinkBtn.classList.add('inline-flex');
+                            } else {
+                                fotoLinkBtn.classList.add('hidden');
+                                fotoLinkBtn.classList.remove('inline-flex');
+                            }
+                        }
+
+                        if (!window.isCurrentlyEditingNotulen) {
+                            if (viewContainer) viewContainer.classList.remove('hidden');
+                            if (formContainer) formContainer.classList.add('hidden');
+                        }
+
+                        const btnCancel = document.getElementById('btn-cancel-edit-notulen');
+                        const btnCancelBottom = document.getElementById('btn-cancel-edit-notulen-bottom');
+                        if (btnCancel) btnCancel.classList.remove('hidden');
+                        if (btnCancelBottom) btnCancelBottom.classList.remove('hidden');
+                    }
                 }
             }
         })

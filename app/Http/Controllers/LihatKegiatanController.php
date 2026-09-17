@@ -328,6 +328,47 @@ class LihatKegiatanController extends Controller
                     ]);
                 }
             }
+            // Notifikasi khusus untuk Notulis ketika Rapat Disetujui
+            if ($statusRapat === 1 && !empty($task->notulis)) {
+                $userNotulis = User::where('nama_lengkap', $task->notulis)->orWhere('username', $task->notulis)->first();
+                if ($userNotulis && $userNotulis->id !== Auth::id()) {
+                    DB::table('notifications')->insert([
+                        'id'              => (string) Str::uuid(),
+                        'type'            => 'App\Notifications\NotulisRapatNotification',
+                        'notifiable_type' => 'App\User',
+                        'notifiable_id'   => $userNotulis->id,
+                        'data'            => json_encode([
+                            'judul' => 'Rapat Disetujui - Silakan Isi Notulen',
+                            'pesan' => 'Rapat "' . $task->text . '" telah disetujui oleh ' . $pjNama . '. Silakan membuka detail rapat untuk mengisi Hasil Pembahasan Rapat, Tautan Bahan/Materi, dan Tautan Foto Dokumentasi.',
+                            'url'   => '/daftarkegiatan/' . $task->id,
+                        ]),
+                        'read_at'         => null,
+                        'created_at'      => now(),
+                        'updated_at'      => now(),
+                    ]);
+                }
+            }
+
+            // Notifikasi khusus untuk Tim Dokumentasi ketika Rapat Disetujui
+            if ($statusRapat === 1 && !empty($task->tim_dokumentasi)) {
+                $userDok = User::where('nama_lengkap', $task->tim_dokumentasi)->orWhere('username', $task->tim_dokumentasi)->first();
+                if ($userDok && $userDok->id !== Auth::id()) {
+                    DB::table('notifications')->insert([
+                        'id'              => (string) Str::uuid(),
+                        'type'            => 'App\Notifications\PeranKhususNotification',
+                        'notifiable_type' => 'App\User',
+                        'notifiable_id'   => $userDok->id,
+                        'data'            => json_encode([
+                            'judul' => 'Rapat Disetujui - Dokumentasi Rapat',
+                            'pesan' => 'Rapat "' . $task->text . '" telah disetujui oleh ' . $pjNama . '. Silakan menyiapkan dan menautkan foto dokumentasi pelaksanaan rapat.',
+                            'url'   => '/daftarkegiatan/' . $task->id,
+                        ]),
+                        'read_at'         => null,
+                        'created_at'      => now(),
+                        'updated_at'      => now(),
+                    ]);
+                }
+            }
         }
 
         $msg = $statusRapat === 1 ? 'Berhasil menyetujui kegiatan/rapat.' : 'Berhasil menolak kegiatan/rapat.';
@@ -401,25 +442,71 @@ class LihatKegiatanController extends Controller
 }
 public function updateNotulen(Request $request)
 {
+    $request->validate([
+        'id' => 'required',
+    ]);
+
     $task = Task::findOrFail($request->id);
 
-    if($request->has('notulen')){
-        $task->notulen = $request->notulen;
-        $task->notulen_selesai = 1;
-    }
+    $notulenText = $request->input('notulen');
+    $materiLink  = $request->input('materi_link');
+    $fotoLink    = $request->input('foto_link');
 
-    if($request->has('materi_link')){
-        $task->materi_link = $request->materi_link;
-    }
-
-    if($request->has('foto_link')){
-        $task->foto_link = $request->foto_link;
-    }
-
-    // Ketika notulen & dokumentasi disimpan, status rapat diselesaikan
-    $task->status   = 'Selesai';
-    $task->progress = 100;
+    $task->notulen         = $notulenText;
+    $task->materi_link     = $materiLink;
+    $task->foto_link       = $fotoLink;
+    $task->notulen_selesai = 1;
+    $task->status          = 'Selesai';
+    $task->progress        = 100;
     $task->save();
+
+    $updaterNama = Auth::check() ? Auth::user()->nama_lengkap : 'Notulis / Petugas Rapat';
+
+    // Kirim notifikasi realtime ke PJ / Ketua Tim & Pemimpin Rapat bahwa notulen & dokumentasi telah selesai diisi
+    $notifyUserIds = [];
+    if (!empty($task->penanggung_jawab)) {
+        $u = User::where('nama_lengkap', $task->penanggung_jawab)->orWhere('username', $task->penanggung_jawab)->first();
+        if ($u) $notifyUserIds[] = $u->id;
+    }
+    if (!empty($task->pemimpin)) {
+        $u = User::where('nama_lengkap', $task->pemimpin)->orWhere('username', $task->pemimpin)->first();
+        if ($u) $notifyUserIds[] = $u->id;
+    }
+
+    $notifyUserIds = array_unique(array_filter($notifyUserIds));
+    foreach ($notifyUserIds as $userId) {
+        if ($userId !== Auth::id()) {
+            DB::table('notifications')->insert([
+                'id'              => (string) Str::uuid(),
+                'type'            => 'App\Notifications\KegiatanNotification',
+                'notifiable_type' => 'App\User',
+                'notifiable_id'   => $userId,
+                'data'            => json_encode([
+                    'judul' => 'Notulen & Dokumentasi Selesai: ' . $task->text,
+                    'pesan' => 'Notulen hasil pembahasan rapat, tautan materi, dan foto dokumentasi untuk rapat "' . $task->text . '" telah diisi dan diselesaikan oleh ' . $updaterNama . '. Status rapat telah Selesai.',
+                    'url'   => '/daftarkegiatan/' . $task->id,
+                ]),
+                'read_at'         => null,
+                'created_at'      => now(),
+                'updated_at'      => now(),
+            ]);
+        }
+    }
+
+    if ($request->expectsJson() || $request->ajax()) {
+        return response()->json([
+            'success' => true,
+            'message' => 'Notulen & dokumentasi berhasil disimpan. Status kegiatan rapat telah Selesai.',
+            'task'    => [
+                'id'              => $task->id,
+                'notulen'         => $task->notulen,
+                'materi_link'     => $task->materi_link,
+                'foto_link'       => $task->foto_link,
+                'notulen_selesai' => 1,
+                'status'          => 'Selesai',
+            ]
+        ]);
+    }
 
     return back()->with('success', 'Notulen & dokumentasi berhasil disimpan. Status kegiatan rapat telah Selesai.');
 }
