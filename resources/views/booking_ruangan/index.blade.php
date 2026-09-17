@@ -849,6 +849,34 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                 <input type="checkbox" name="fasilitas_list[]" value="Stop Kontak Ekstra" checked class="rounded text-blue-600">
                                 <span>Stop Kontak Ekstra</span>
                             </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
+                                <input type="checkbox" name="fasilitas_list[]" value="Sofa Depan VIP" class="rounded text-blue-600">
+                                <span>Sofa Depan VIP</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
+                                <input type="checkbox" name="fasilitas_list[]" value="Monitor Pimpinan" class="rounded text-blue-600">
+                                <span>Monitor Pimpinan</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
+                                <input type="checkbox" name="fasilitas_list[]" value="Name Desk" class="rounded text-blue-600">
+                                <span>Name Desk</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
+                                <input type="checkbox" name="fasilitas_list[]" value="Meja Konsumsi" class="rounded text-blue-600">
+                                <span>Meja Konsumsi</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
+                                <input type="checkbox" name="fasilitas_list[]" value="Meja Registrasi" class="rounded text-blue-600">
+                                <span>Meja Registrasi</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
+                                <input type="checkbox" name="fasilitas_list[]" value="Ruang Transit" class="rounded text-blue-600">
+                                <span>Ruang Transit</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
+                                <input type="checkbox" name="fasilitas_list[]" value="Meja Notulensi" class="rounded text-blue-600">
+                                <span>Meja Notulensi</span>
+                            </label>
                         </div>
                     </div>
                 </div>
