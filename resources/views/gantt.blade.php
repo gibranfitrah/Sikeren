@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Kegiatan Saya - Sikeren')
-@section('header_title', 'Kegiatan Saya')
+@section('title', 'Tugas Saya (Gantt Chart) - Sikeren')
+@section('header_title', 'Tugas Saya')
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('assets/codebase/dhtmlxgantt.css') }}">
@@ -76,8 +76,8 @@
 @section('content')
 <div class="space-y-6">
     <div class="mb-6">
-        <h2 class="text-xl font-bold text-gray-800">Kegiatan Saya (Gantt Chart)</h2>
-        <p class="text-gray-500 text-sm mt-1">Pantau dan kelola jadwal kegiatan Anda.</p>
+        <h2 class="text-xl font-bold text-gray-800">Tugas Saya (Gantt Chart)</h2>
+        <p class="text-gray-500 text-sm mt-1">Pantau dan kelola jadwal penugasan Anda.</p>
     </div>
 
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 min-h-[600px] flex flex-col">

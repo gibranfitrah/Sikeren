@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Kegiatan Saya - Sikeren')
-@section('header_title', 'Kegiatan Saya')
+@section('title', 'Tugas Saya - Sikeren')
+@section('header_title', 'Tugas Saya')
 
 @section('content')
 
@@ -17,8 +17,8 @@
                 <span class="text-xs text-gray-400">•</span>
                 <span class="text-xs text-gray-500 font-medium">{{ Auth::user()->nama_lengkap }}</span>
             </div>
-            <h2 class="text-xl font-bold text-gray-900 mt-1">Kegiatan Saya</h2>
-            <p class="text-xs text-gray-500 mt-0.5">Pantau seluruh kegiatan, rapat, dan sub kegiatan yang melibatkan Anda.</p>
+            <h2 class="text-xl font-bold text-gray-900 mt-1">Tugas Saya</h2>
+            <p class="text-xs text-gray-500 mt-0.5">Pantau seluruh penugasan kegiatan, rapat, dan sub kegiatan yang melibatkan Anda.</p>
         </div>
 
         <div class="flex items-center gap-2">
@@ -45,9 +45,9 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs flex items-center justify-between">
             <div>
-                <p class="text-xs font-medium text-gray-500">Total Kegiatan Saya</p>
+                <p class="text-xs font-medium text-gray-500">Total Tugas Saya</p>
                 <h3 class="text-2xl font-bold text-gray-900 mt-1">{{ $totalKegiatanAll }}</h3>
-                <span class="text-[10px] text-gray-400">Kegiatan Utama & Sub Kegiatan</span>
+                <span class="text-[10px] text-gray-400">Penugasan Utama & Sub Kegiatan</span>
             </div>
             <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
                 {{ $totalKegiatanAll }}
@@ -99,7 +99,7 @@
         <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                <h3 class="font-bold text-gray-900 text-sm">Sub Kegiatan Saya</h3>
+                <h3 class="font-bold text-gray-900 text-sm">Tugas Sub Kegiatan Saya</h3>
             </div>
             <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700">
                 {{ count($mySubKegiatans) }} Sub Kegiatan
@@ -172,7 +172,7 @@
         <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
-                <h3 class="font-bold text-gray-900 text-sm">Kegiatan & Rapat Utama Saya</h3>
+                <h3 class="font-bold text-gray-900 text-sm">Tugas Kegiatan & Rapat Utama</h3>
             </div>
             <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700">
                 {{ count($myTasks) }} Agenda

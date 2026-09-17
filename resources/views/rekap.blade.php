@@ -75,7 +75,7 @@
                         <li class="sidebar-item">
                             <a href="gantt" class='sidebar-link'>
                                 <i class="bi bi-kanban-fill"></i>
-                                <span>Kegiatan Saya</span>
+                                <span>Tugas Saya</span>
                             </a>
                         </li>
 

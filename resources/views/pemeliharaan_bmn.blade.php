@@ -110,7 +110,7 @@
             
 
 						<li><a href="daftar_kegiatan" class=""><i class="lnr lnr-list"></i> <span>Daftar Kegiatan</span></a></li>
-						<li><a href="fullcalender" class=""><i class="lnr lnr-calendar-full"></i> <span>Kegiatan Saya</span></a></li>
+						<li><a href="fullcalender" class=""><i class="lnr lnr-calendar-full"></i> <span>Tugas Saya</span></a></li>
             <li><a href="notulis" class=""><i class="lnr lnr-book"></i> <span>Notula</span></a></li>
             <li><a href="bmn" class=""><i class="lnr lnr-laptop-phone"></i> <span>Daftar BMN</span></a></li>
             <li><a href="pemeliharaan_bmn" class="active"><i class="lnr lnr-laptop-phone"></i> <span>Daftar Pemeliharaan BMN</span></a></li>

@@ -194,20 +194,42 @@
             <div class="space-y-6">
                 {{-- 1. PENANGGUNG JAWAB (PJ) --}}
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                        Penanggung Jawab (PJ) Kegiatan <span class="text-rose-500">*</span>
-                    </label>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                            Penanggung Jawab (PJ) Kegiatan <span class="text-rose-500">*</span>
+                        </label>
+                        <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                            ⭐ Prioritas: Minimal Ketua Tim / Ahli Madya
+                        </span>
+                    </div>
                     <div class="relative">
                         <select name="pj"
                                 id="selectPJ"
                                 required
                                 class="w-full px-4 py-2.5 bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition">
                             <option value="">-- Pilih Penanggung Jawab (PJ) --</option>
-                            @foreach($allUsers as $u)
-                                <option value="{{ $u->nama_lengkap }}" {{ old('pj') == $u->nama_lengkap ? 'selected' : '' }}>
-                                    {{ $u->nama_lengkap }} ({{ $u->formatted_nip }}) - {{ $u->role_label }}
-                                </option>
-                            @endforeach
+                            @if(isset($eligiblePJs) && $eligiblePJs->count() > 0)
+                                <optgroup label="⭐ Pejabat, Ketua Tim, & Ahli Madya (Eligible PJ)">
+                                    @foreach($eligiblePJs as $u)
+                                        <option value="{{ $u->nama_lengkap }}" {{ old('pj') == $u->nama_lengkap ? 'selected' : '' }}>
+                                            {{ $u->nama_lengkap }} ({{ $u->formatted_nip }}) - {{ $u->role_label }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                                <optgroup label="📋 Pegawai Lainnya">
+                                    @foreach($allUsers->diff($eligiblePJs) as $u)
+                                        <option value="{{ $u->nama_lengkap }}" {{ old('pj') == $u->nama_lengkap ? 'selected' : '' }}>
+                                            {{ $u->nama_lengkap }} ({{ $u->formatted_nip }}) - {{ $u->role_label }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @else
+                                @foreach($allUsers as $u)
+                                    <option value="{{ $u->nama_lengkap }}" {{ old('pj') == $u->nama_lengkap ? 'selected' : '' }}>
+                                        {{ $u->nama_lengkap }} ({{ $u->formatted_nip }}) - {{ $u->role_label }}
+                                    </option>
+                                @endforeach
+                            @endif
                         </select>
                     </div>
                 </div>

@@ -364,17 +364,12 @@
                     </div>
                 </div>
 
-                {{-- PJ Sub Kegiatan --}}
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                        Penanggung Jawab (PJ) Sub Kegiatan
-                    </label>
-                    <select name="pj" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800">
-                        <option value="">-- Pilih PJ Sub Kegiatan --</option>
-                        @foreach($allUsers as $u)
-                            <option value="{{ $u->nama_lengkap }}">{{ $u->nama_lengkap }} ({{ $u->niplama ?? $u->username }})</option>
-                        @endforeach
-                    </select>
+                {{-- Info PJ Otomatis --}}
+                <div class="p-3 bg-blue-50/60 rounded-xl border border-blue-100 flex items-center gap-2.5 text-xs text-blue-800">
+                    <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span><strong>Penanggung Jawab (PJ):</strong> Otomatis diwarisi langsung dari Kegiatan Induk yang dipilih.</span>
                 </div>
 
                 {{-- Pemilihan Anggota Tim (Group Selector, Select All, Search) --}}

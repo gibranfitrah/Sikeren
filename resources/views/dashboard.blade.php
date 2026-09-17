@@ -198,10 +198,10 @@
             </div>
         </div>
 
-        <!-- Card 2: Kegiatan Saya -->
+        <!-- Card 2: Tugas Saya -->
         <div class="stat-card-box">
             <div class="space-y-1.5">
-                <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Kegiatan Saya</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Tugas Saya</span>
                 <h3 class="text-3xl sm:text-4xl font-black text-indigo-600">{{ $jumlah_kegiatan_saya }}</h3>
                 <p class="text-xs text-indigo-600 font-semibold bg-indigo-50 px-2.5 py-0.5 rounded-lg inline-block">
                     Personal & Penugasan Anda
@@ -383,20 +383,20 @@
         <div id="dashboardCalendar" class="min-h-[520px]"></div>
     </div>
 
-    {{-- 4. KEGIATAN SAYA & SUB KEGIATAN & DEADLINE (2 KOTAK TERPISAH BERSPASI) --}}
+    {{-- 4. TUGAS SAYA & SUB KEGIATAN & DEADLINE (2 KOTAK TERPISAH BERSPASI) --}}
     <div class="tables-two-cols">
         
-        <!-- Kotak 1: Kegiatan Saya -->
+        <!-- Kotak 1: Tugas Saya -->
         <div class="table-section-box">
             <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
                     <div>
-                        <h3 class="font-bold text-gray-900 text-sm sm:text-base">Kegiatan Saya</h3>
-                        <p class="text-xs text-gray-400">Kegiatan yang menugaskan Anda (PJ, Pemimpin, Peserta)</p>
+                        <h3 class="font-bold text-gray-900 text-sm sm:text-base">Tugas Saya</h3>
+                        <p class="text-xs text-gray-400">Daftar penugasan kegiatan yang melibatkan Anda (PJ, Pemimpin, Peserta)</p>
                     </div>
                 </div>
-                <a href="{{ route('kegiatan-saya.index') }}" class="text-xs font-bold text-blue-600 hover:text-blue-800 transition">
+                <a href="{{ url('/tugas-saya') }}" class="text-xs font-bold text-blue-600 hover:text-blue-800 transition">
                     Lihat Semua &rarr;
                 </a>
             </div>

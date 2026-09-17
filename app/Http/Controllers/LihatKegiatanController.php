@@ -25,6 +25,12 @@ class LihatKegiatanController extends Controller
                 ->first();
         }
 
+        // Cek Hak Akses: Jika bukan akun PJ / Ketua Tim dan bukan PJ/Pemimpin dari kegiatan ini
+        $currentUser = Auth::user();
+        if ($currentUser && !$currentUser->canAccessDetailKegiatan($task)) {
+            return redirect()->route('kegiatan.kelola')->with('error_access', 'Halaman detail kegiatan / rapat hanya dapat diakses oleh Ketua Tim / Penanggung Jawab (PJ). Anda hanya memiliki izin untuk melihat daftar agenda.');
+        }
+
         $notifications = Auth::check() ? Auth::user()->notifications()->latest()->take(5)->get() : collect();
         $jumlah_notif  = Auth::check() ? Auth::user()->unreadNotifications()->count() : 0;
 

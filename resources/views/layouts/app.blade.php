@@ -99,10 +99,10 @@
                 <span>Sub Kegiatan</span>
             </a>
 
-            <!-- Kegiatan Saya -->
-            <a href="/kegiatan-saya" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ $isKegiatanSaya ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50 font-semibold' : 'text-slate-400 hover:bg-slate-800 hover:text-white font-medium' }}">
+            <!-- Tugas Saya -->
+            <a href="/tugas-saya" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ $isKegiatanSaya ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50 font-semibold' : 'text-slate-400 hover:bg-slate-800 hover:text-white font-medium' }}">
                 <svg class="w-5 h-5 mr-3 {{ $isKegiatanSaya ? 'text-white' : 'text-slate-500 group-hover:text-slate-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                <span>Kegiatan Saya</span>
+                <span>Tugas Saya</span>
             </a>
 
             <!-- Menu Group: Rapat & Sarpras (Ruangan / Zoom) -->
@@ -216,19 +216,36 @@
 
                         {{-- Header Notifikasi --}}
                         <div class="flex items-center justify-between pb-3 border-b border-gray-100 px-2">
-                            <h4 class="font-bold text-gray-800 text-sm">Notifikasi</h4>
-                            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600">
-                                {{ $jumlah_notif ?? 0 }} Belum Dibaca
-                            </span>
+                            <div>
+                                <h4 class="font-bold text-gray-800 text-sm">Notifikasi</h4>
+                                <span class="text-[11px] font-semibold text-blue-600">
+                                    {{ $jumlah_notif ?? 0 }} Belum Dibaca
+                                </span>
+                            </div>
+                            @if(isset($jumlah_notif) && $jumlah_notif > 0)
+                                <form action="{{ route('notification.markAllRead') }}" method="POST" class="inline">
+                                    @csrf
+                                    <button type="submit" class="text-[11px] font-bold text-gray-500 hover:text-blue-600 transition">
+                                        Tandai Semua Dibaca
+                                    </button>
+                                </form>
+                            @endif
                         </div>
 
                         {{-- Isi Notifikasi --}}
                         <div class="mt-2 space-y-2 max-h-80 overflow-y-auto">
 
                             @forelse($notifications ?? [] as $notif)
+                                @php
+                                    $nData = is_array($notif->data) ? $notif->data : (json_decode($notif->data ?? '{}', true) ?: []);
+                                    $nJudul = $nData['judul'] ?? ($notif->judul ?? 'Pemberitahuan');
+                                    $nPesan = $nData['pesan'] ?? ($notif->pesan ?? '-');
+                                    $nUrl   = route('notification.read', $notif->id);
+                                    $isUnread = is_null($notif->read_at);
+                                @endphp
 
-                                <a href="{{ $notif->url ?? '#' }}"
-                                   class="flex items-start gap-3 p-3 rounded-2xl hover:bg-gray-50 transition-colors {{ ($notif->is_read ?? 0) == 0 ? 'bg-blue-50/50' : '' }}">
+                                <a href="{{ $nUrl }}"
+                                   class="flex items-start gap-3 p-3 rounded-2xl hover:bg-gray-50 transition-colors {{ $isUnread ? 'bg-blue-50/50' : '' }}">
                                     
                                     <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,16 +253,16 @@
                                         </svg>
                                     </div>
 
-                                    <div class="flex-1">
-                                        <p class="text-xs font-bold text-gray-900">{{ $notif->judul ?? 'Penugasan Baru' }}</p>
-                                        <p class="text-xs text-gray-600 mt-0.5 line-clamp-2">{{ $notif->pesan }}</p>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-xs font-bold text-gray-900 truncate">{{ $nJudul }}</p>
+                                        <p class="text-xs text-gray-600 mt-0.5 line-clamp-2 leading-relaxed">{{ $nPesan }}</p>
                                         <span class="text-[10px] text-gray-400 mt-1 block font-medium">
                                             {{ \Carbon\Carbon::parse($notif->created_at)->diffForHumans() }}
                                         </span>
                                     </div>
 
-                                    @if(($notif->is_read ?? 0) == 0)
-                                        <span class="w-2 h-2 rounded-full bg-blue-500 mt-2 flex-shrink-0"></span>
+                                    @if($isUnread)
+                                        <span class="w-2 h-2 rounded-full bg-blue-500 mt-2 flex-shrink-0" title="Belum dibaca"></span>
                                     @endif
 
                                 </a>

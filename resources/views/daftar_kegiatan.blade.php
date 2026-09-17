@@ -28,6 +28,9 @@
             $berjalan++;
         }
     }
+
+    $currentUser = Auth::user();
+    $isPjUser = $currentUser && $currentUser->isKetuaTimOrPj();
 @endphp
 
 <style>
@@ -58,27 +61,50 @@
                 <span class="text-xs text-gray-500 font-medium">BPS Kabupaten/Kota</span>
             </div>
             <h2 class="text-xl font-bold text-gray-900 mt-1">Kelola Kegiatan & Sub Kegiatan</h2>
-            <p class="text-xs text-gray-500 mt-0.5">Kelola seluruh kegiatan, pantau sub-kegiatan terintegrasi melalui menu dropdown, dan delegasikan penugasan tim.</p>
+            <p class="text-xs text-gray-500 mt-0.5">
+                @if($isPjUser)
+                    Kelola seluruh kegiatan, pantau sub-kegiatan terintegrasi melalui menu dropdown, dan delegasikan penugasan tim.
+                @else
+                    Daftar pemantauan seluruh kegiatan dan agenda rapat BPS (Mode Lihat).
+                @endif
+            </p>
         </div>
         <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
-            <a href="{{ route('ketua-tim.create') }}" class="inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs hover:shadow transition-all duration-150">
-                <svg class="w-4 h-4 mr-1.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            <a href="{{ route('agenda.downloadWord') }}" class="inline-flex items-center justify-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs hover:shadow transition-all duration-150">
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
-                Buat Kegiatan Baru
+                Download Agenda (.docx)
             </a>
-            <a href="{{ url('/rapat') }}" class="inline-flex items-center justify-center px-4 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl shadow-xs hover:border-gray-300 transition-all duration-150 ml-3">
-                <svg class="w-4 h-4 mr-1.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-                Buat Rapat
-            </a>
-            <a href="{{ route('sub-kegiatan.index') }}" class="inline-flex items-center justify-center px-4 py-2.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold rounded-xl shadow-xs transition-all duration-150 ml-3">
-                <svg class="w-4 h-4 mr-1.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                </svg>
-                Sub Kegiatan
-            </a>
+
+            @if($isPjUser)
+                <a href="{{ route('ketua-tim.create') }}" class="inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs hover:shadow transition-all duration-150">
+                    <svg class="w-4 h-4 mr-1.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Buat Kegiatan Baru
+                </a>
+                <a href="{{ url('/rapat') }}" class="inline-flex items-center justify-center px-4 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl shadow-xs hover:border-gray-300 transition-all duration-150">
+                    <svg class="w-4 h-4 mr-1.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                    Buat Rapat
+                </a>
+                <a href="{{ route('sub-kegiatan.index') }}" class="inline-flex items-center justify-center px-4 py-2.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold rounded-xl shadow-xs transition-all duration-150">
+                    <svg class="w-4 h-4 mr-1.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    Sub Kegiatan
+                </a>
+            @else
+                <span class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold shadow-2xs">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                    <span>Mode Pantau (Hanya Lihat Agenda)</span>
+                </span>
+            @endif
         </div>
     </div>
 
@@ -94,6 +120,20 @@
             <div>
                 <h4 class="text-xs font-bold text-emerald-900">Operasi Berhasil</h4>
                 <p class="text-xs text-emerald-700 mt-0.5">{{ session('success') }}</p>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    @if (session('error_access'))
+    <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl shadow-xs flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+            <div>
+                <h4 class="text-xs font-bold text-amber-900">Akses Dibatasi</h4>
+                <p class="text-xs text-amber-700 mt-0.5">{{ session('error_access') }}</p>
             </div>
         </div>
     </div>
@@ -221,6 +261,7 @@
                             $subs = $item->subKegiatans;
                             $subCount = count($subs);
                             $wilayahList = $item->wilayah_list;
+                            $canAccessThis = $currentUser && $currentUser->canAccessDetailKegiatan($item);
                         @endphp
                         <tr class="hover:bg-slate-50/60 transition-colors kegiatan-row">
                             <td class="px-6 py-4">
@@ -231,9 +272,15 @@
                                         </span>
                                         <span class="text-xs text-gray-400 font-mono">#{{ $item->id }}</span>
                                     </div>
-                                    <a href="{{ url('daftarkegiatan/' . $item->id) }}" class="font-bold text-gray-900 hover:text-blue-600 text-sm block">
-                                        {{ $item->text }}
-                                    </a>
+                                    @if($canAccessThis)
+                                        <a href="{{ url('daftarkegiatan/' . $item->id) }}" class="font-bold text-gray-900 hover:text-blue-600 text-sm block">
+                                            {{ $item->text }}
+                                        </a>
+                                    @else
+                                        <span class="font-bold text-gray-900 text-sm block" title="Mode pantau agenda">
+                                            {{ $item->text }}
+                                        </span>
+                                    @endif
                                 </div>
                             </td>
 
@@ -284,26 +331,42 @@
 
                             <td class="px-6 py-4 whitespace-nowrap text-right">
                                 <div class="flex items-center justify-end gap-2">
-                                    <a href="{{ route('sub-kegiatan.index', ['task_id' => $item->id]) }}" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold rounded-xl border border-amber-200 text-xs transition inline-flex items-center gap-1" title="Tambah Sub Kegiatan">
+                                    <a href="{{ route('kegiatan.downloadWord', $item->id) }}" class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl border border-blue-200 text-xs transition inline-flex items-center gap-1" title="Unduh Surat Penugasan (.docx)">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                         </svg>
-                                        <span>+ Sub</span>
+                                        <span>Word</span>
                                     </a>
 
-                                    <a href="{{ url('daftarkegiatan/' . $item->id) }}" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl border border-blue-200 text-xs transition">
-                                        Detail
-                                    </a>
-
-                                    <form action="{{ route('ketua-tim.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Hapus kegiatan ini?');" class="inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Hapus Kegiatan">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    @if($canAccessThis)
+                                        <a href="{{ route('sub-kegiatan.index', ['task_id' => $item->id]) }}" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold rounded-xl border border-amber-200 text-xs transition inline-flex items-center gap-1" title="Tambah Sub Kegiatan">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                             </svg>
-                                        </button>
-                                    </form>
+                                            <span>+ Sub</span>
+                                        </a>
+
+                                        <a href="{{ url('daftarkegiatan/' . $item->id) }}" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl border border-blue-200 text-xs transition">
+                                            Detail
+                                        </a>
+
+                                        <form action="{{ route('ketua-tim.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Hapus kegiatan ini?');" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Hapus Kegiatan">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    @else
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 text-gray-400 font-semibold text-[11px] cursor-not-allowed select-none border border-gray-200" title="Detail kegiatan hanya dapat dibuka oleh PJ / Ketua Tim">
+                                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                            </svg>
+                                            <span>Hanya PJ</span>
+                                        </span>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -317,9 +380,11 @@
                                             <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
                                             Daftar Sub Kegiatan di bawah "{{ $item->text }}"
                                         </h4>
-                                        <a href="{{ route('sub-kegiatan.index', ['task_id' => $item->id]) }}" class="text-[11px] font-bold text-blue-600 hover:underline">
-                                            + Tambah Sub Kegiatan Baru
-                                        </a>
+                                        @if($canAccessThis)
+                                            <a href="{{ route('sub-kegiatan.index', ['task_id' => $item->id]) }}" class="text-[11px] font-bold text-blue-600 hover:underline">
+                                                + Tambah Sub Kegiatan Baru
+                                            </a>
+                                        @endif
                                     </div>
 
                                     @if($subCount > 0)
@@ -408,6 +473,7 @@
                                     $statusKey = 'presensi';
                                 }
                             }
+                            $canAccessRapat = $currentUser && $currentUser->canAccessDetailKegiatan($post);
                         @endphp
                         <tr class="hover:bg-slate-50/60 transition-colors rapat-row">
                             <td class="px-6 py-4">
@@ -416,9 +482,15 @@
                                         <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
                                             #{{ $post->id_kegiatan ?? $post->id }}
                                         </span>
-                                        <a href="{{ url('daftarkegiatan/' . ($post->id_kegiatan ?? $post->id)) }}" class="font-bold text-gray-900 hover:text-blue-600 transition-colors text-sm line-clamp-1">
-                                            {{ $post->text }}
-                                        </a>
+                                        @if($canAccessRapat)
+                                            <a href="{{ url('daftarkegiatan/' . ($post->id_kegiatan ?? $post->id)) }}" class="font-bold text-gray-900 hover:text-blue-600 transition-colors text-sm line-clamp-1">
+                                                {{ $post->text }}
+                                            </a>
+                                        @else
+                                            <span class="font-bold text-gray-900 text-sm line-clamp-1" title="Mode pantau agenda">
+                                                {{ $post->text }}
+                                            </span>
+                                        @endif
                                     </div>
                                     
                                     <div class="flex items-center gap-2 flex-wrap">
@@ -476,7 +548,7 @@
                                         <span>Tahap 2: Ditolak</span>
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
                                         <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
                                         <span>Tahap 2: Menunggu Persetujuan</span>
                                     </span>
@@ -485,9 +557,25 @@
 
                             <td class="px-6 py-4 whitespace-nowrap text-right text-xs">
                                 <div class="flex items-center justify-end gap-2">
-                                    <a href="{{ url('daftarkegiatan/' . ($post->id_kegiatan ?? $post->id)) }}" class="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold rounded-xl border border-blue-200 text-xs transition">
-                                        Detail
+                                    <a href="{{ route('rapat.downloadWord', ($post->id_kegiatan ?? $post->id)) }}" class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl border border-blue-200 text-xs transition inline-flex items-center gap-1" title="Unduh Surat Undangan (.docx)">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                        </svg>
+                                        <span>Word</span>
                                     </a>
+
+                                    @if($canAccessRapat)
+                                        <a href="{{ url('daftarkegiatan/' . ($post->id_kegiatan ?? $post->id)) }}" class="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl border border-blue-200 text-xs transition">
+                                            Detail
+                                        </a>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-gray-100 text-gray-400 font-semibold text-[11px] cursor-not-allowed select-none border border-gray-200" title="Detail rapat hanya dapat dibuka oleh Pemimpin / Notulis / PJ">
+                                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                            </svg>
+                                            <span>Hanya PJ</span>
+                                        </span>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

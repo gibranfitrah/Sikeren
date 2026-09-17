@@ -585,7 +585,20 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                     </svg>
                                     {{ substr($bk->start_time, 0, 5) }} - {{ substr($bk->end_time, 0, 5) }} • PJ:
                                     {{ $bk->penyelenggara }}
+                                    @if($bk->jumlah_peserta)
+                                    • 👥 <strong>{{ $bk->jumlah_peserta }} Peserta</strong>
+                                    @endif
                                 </p>
+                                @if($bk->fasilitas || $bk->layout_meja)
+                                <div class="p-2 bg-slate-50 rounded-lg border border-slate-100 text-[10px] text-slate-600 space-y-0.5">
+                                    @if($bk->layout_meja)
+                                    <p>🪑 <strong>Tata Letak:</strong> {{ $bk->layout_meja }}</p>
+                                    @endif
+                                    @if($bk->fasilitas)
+                                    <p>🎙️ <strong>Sarpras:</strong> {{ $bk->fasilitas }}</p>
+                                    @endif
+                                </div>
+                                @endif
                                 @if($bk->zoom_link)
                                 <div class="pt-1 flex items-center justify-between text-[11px]">
                                     <a href="{{ $bk->zoom_link }}" target="_blank"
@@ -679,9 +692,9 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                     </select>
                 </div>
 
-                {{-- Nama Acara & Penyelenggara --}}
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
+                {{-- Nama Acara, Penyelenggara, & Total Peserta --}}
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="sm:col-span-2">
                         <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                             Nama Acara / Agenda <span class="text-rose-500">*</span>
                         </label>
@@ -691,12 +704,27 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                            Penyelenggara / PJ <span class="text-rose-500">*</span>
+                            Total Peserta (Orang) <span class="text-rose-500">*</span>
                         </label>
-                        <input type="text" name="penyelenggara" x-model="penyelenggara" required
-                            placeholder="Contoh: Agnes Widiastuti"
-                            class="w-full px-3.5 py-2 text-xs rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
+                        <div class="relative">
+                            <input type="number" name="jumlah_peserta" min="1" max="500"
+                                placeholder="Contoh: 30"
+                                class="w-full pl-8 pr-3.5 py-2 text-xs rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 font-bold text-gray-800">
+                            <span class="absolute left-2.5 top-2.5 text-xs text-gray-400">👥</span>
+                        </div>
                     </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Penyelenggara / PJ Kegiatan <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text"
+                           name="penyelenggara"
+                           x-model="penyelenggara"
+                           required
+                           placeholder="Contoh: Agnes Widiastuti"
+                           class="w-full px-3.5 py-2 text-xs rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
                 </div>
 
                 {{-- Tipe Pertemuan (Radio: Offline / Online / Hybrid) --}}
@@ -746,6 +774,82 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                             <p class="text-[10px] text-gray-500 mt-1">Kapasitas {{ $v->capacity }} Orang</p>
                         </label>
                         @endforeach
+                    </div>
+                </div>
+
+                {{-- Pilihan Fasilitas Sarpras & Permintaan Microphone (Interactive Selector) --}}
+                <div x-show="tipePertemuan === 'offline' || tipePertemuan === 'hybrid'" class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                        <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                            🎙️ Fasilitas Sarpras & Kebutuhan Ruangan
+                        </label>
+                        <span class="text-[10px] text-slate-500">Pilih kebutuhan sarpras</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {{-- 1. Pilihan Jumlah Microphone --}}
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                                Jumlah Microphone (Wireless/Podium)
+                            </label>
+                            <select name="mic_count" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="0">Tidak butuh Microphone</option>
+                                <option value="1">1 Microphone Wireless</option>
+                                <option value="2" selected>2 Microphone Wireless</option>
+                                <option value="3">3 Microphone Wireless</option>
+                                <option value="4">4 Microphone Wireless</option>
+                                <option value="5">5 Microphone Wireless</option>
+                                <option value="6+">6+ Microphone (Acara Besar / Panelis)</option>
+                            </select>
+                        </div>
+
+                        {{-- 2. Pilihan Tata Letak (Layout) Meja & Kursi --}}
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                                Susunan / Layout Meja & Kursi
+                            </label>
+                            <select name="layout_meja" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="U-Shape">U-Shape (Bentuk Tapal Kuda)</option>
+                                <option value="Classroom" selected>Classroom (Baris Meja Kelas)</option>
+                                <option value="Round Table">Round Table (Meja Bundar Diskusi)</option>
+                                <option value="Theater">Theater (Hanya Kursi Berjejer)</option>
+                                <option value="Boardroom">Boardroom (Meja Rapat Oval Tengah)</option>
+                                <option value="Custom">Custom / Menyesuaikan Ruangan</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- 3. Checklist Fasilitas Tambahan --}}
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">
+                            Perlengkapan & Audio Visual Tambahan
+                        </label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
+                                <input type="checkbox" name="fasilitas_list[]" value="Proyektor & Screen" checked class="rounded text-blue-600">
+                                <span>Proyektor & Layar</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
+                                <input type="checkbox" name="fasilitas_list[]" value="Sound System Standard" checked class="rounded text-blue-600">
+                                <span>Sound System</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
+                                <input type="checkbox" name="fasilitas_list[]" value="Smart TV / Camera Vicon 360" class="rounded text-blue-600">
+                                <span>Camera Vicon 360</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
+                                <input type="checkbox" name="fasilitas_list[]" value="Wireless Laser Pointer" checked class="rounded text-blue-600">
+                                <span>Laser Pointer</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
+                                <input type="checkbox" name="fasilitas_list[]" value="Whiteboard & Spidol" class="rounded text-blue-600">
+                                <span>Whiteboard / Spidol</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
+                                <input type="checkbox" name="fasilitas_list[]" value="Stop Kontak Ekstra" checked class="rounded text-blue-600">
+                                <span>Stop Kontak Ekstra</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -808,13 +912,13 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                     </div>
                 </div>
 
-                {{-- Catatan / Keterangan --}}
+                {{-- Catatan / Permintaan Khusus Tambahan --}}
                 <div>
                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                        Catatan / Permintaan Khusus Sarpras (Opsional)
+                        Catatan Khusus Tambahan (Opsional)
                     </label>
                     <input type="text" name="keterangan" x-model="keterangan"
-                        placeholder="Contoh: Butuh tambahan 2 mic wireless dan layar proyektor ganda"
+                        placeholder="Contoh: Butuh gladi bersih H-1 jam 16:00"
                         class="w-full px-3.5 py-2 text-xs rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
                 </div>
 

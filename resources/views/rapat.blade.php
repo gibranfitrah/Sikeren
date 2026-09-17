@@ -174,19 +174,13 @@
                     </div>
                 </div>
 
-                {{-- Waktu Rapat (Grid 4 Kolom) --}}
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {{-- Waktu Rapat (Tanggal Tunggal & Jam) --}}
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label for="start_date" class="block text-xs font-bold text-gray-700 mb-1">
-                            Tanggal Mulai <span class="text-red-500">*</span>
+                            Tanggal Pelaksanaan Rapat <span class="text-red-500">*</span>
                         </label>
                         <input type="date" id="start_date" name="start_date" value="{{ old('start_date', date('Y-m-d')) }}" required class="w-full text-xs border-gray-300 rounded-lg p-2.5 bg-white text-gray-800 shadow-xs focus:ring-blue-500 focus:border-blue-500 border">
-                    </div>
-                    <div>
-                        <label for="date_akhir" class="block text-xs font-bold text-gray-700 mb-1">
-                            Tanggal Selesai <span class="text-red-500">*</span>
-                        </label>
-                        <input type="date" id="date_akhir" name="date_akhir" value="{{ old('date_akhir', date('Y-m-d')) }}" required class="w-full text-xs border-gray-300 rounded-lg p-2.5 bg-white text-gray-800 shadow-xs focus:ring-blue-500 focus:border-blue-500 border">
                     </div>
                     <div>
                         <label for="start_jam" class="block text-xs font-bold text-gray-700 mb-1">
@@ -281,23 +275,29 @@
                             <span class="text-[10px] text-blue-600 font-bold bg-blue-50 px-1.5 py-0.5 rounded">Approval</span>
                         </div>
                         <select id="pemimpin" name="pemimpin" required class="w-full text-xs border-gray-300 rounded-lg p-2.5 bg-gray-50 focus:bg-white text-gray-800 shadow-xs focus:ring-blue-500 focus:border-blue-500 border">
-                            <option value="">-- Pilih Pemimpin Rapat --</option>
-                            @if(isset($ketua_tims) && $ketua_tims->count() > 0)
-                                <optgroup label="⭐ Ketua Tim / Penanggung Jawab (PJ) Terdaftar">
-                                    @foreach ($ketua_tims as $kt)
-                                        <option value="{{ $kt }}" {{ old('pemimpin') == $kt ? 'selected' : '' }}>
-                                            {{ $kt }} (Ketua Tim / PJ)
+                            <option value="">-- Pilih Pemimpin / PJ Rapat --</option>
+                            @if(isset($eligiblePJs) && $eligiblePJs->count() > 0)
+                                <optgroup label="⭐ Pejabat, Ketua Tim, & Ahli Madya (Eligible PJ)">
+                                    @foreach ($eligiblePJs as $u)
+                                        <option value="{{ $u->nama_lengkap }}" {{ old('pemimpin') == $u->nama_lengkap ? 'selected' : '' }}>
+                                            {{ $u->nama_lengkap }} ({{ $u->formatted_nip }}) - {{ $u->role_label }}
                                         </option>
                                     @endforeach
                                 </optgroup>
-                            @endif
-                            <optgroup label="👤 Seluruh Pegawai">
+                                <optgroup label="👤 Seluruh Pegawai Lainnya">
+                                    @foreach ($allUsers->diff($eligiblePJs) as $u)
+                                        <option value="{{ $u->nama_lengkap }}" {{ old('pemimpin') == $u->nama_lengkap ? 'selected' : '' }}>
+                                            {{ $u->nama_lengkap }} ({{ $u->formatted_nip }}) - {{ $u->role_label }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @else
                                 @foreach ($peserta as $p)
                                     <option value="{{ $p->nama_lengkap }}" {{ old('pemimpin') == $p->nama_lengkap ? 'selected' : '' }}>
                                         {{ $p->nama_lengkap }} ({{ $p->nipbaru ?? $p->niplama }})
                                     </option>
                                 @endforeach
-                            </optgroup>
+                            @endif
                         </select>
                         <div id="pjInfoContainer" class="hidden mt-1.5 px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-lg text-[11px] text-blue-700 font-medium">
                             <div class="flex items-center gap-1.5">
