@@ -438,79 +438,6 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                                     {{ $slot }}
                                                 </td>
 
-<<<<<<< HEAD
-                                                {{-- Aula Lantai 1 --}}
-                                                <td class="py-2 px-2.5 border-l border-gray-100 align-top">
-                                                    @if($bookingAula1)
-                                                    <div
-                                                        class="p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 shadow-2xs">
-                                                        <p class="font-bold text-[11px] truncate">
-                                                            {{ $bookingAula1->nama_acara }}</p>
-                                                        <p class="text-[10px] text-blue-700 mt-0.5">
-                                                            {{ substr($bookingAula1->start_time, 0, 5) }} -
-                                                            {{ substr($bookingAula1->end_time, 0, 5) }} •
-                                                            {{ $bookingAula1->penyelenggara }}
-                                                        </p>
-                                                        @if($bookingAula1->tipe_pertemuan === 'hybrid')
-                                                        <span
-                                                            class="inline-block mt-1 px-1.5 py-0.2 bg-blue-200 text-blue-800 rounded text-[9px] font-bold">Hybrid</span>
-                                                        @endif
-                                                    </div>
-                                                    @else
-                                                    <button type="button"
-                                                        @click="openBookingModal(1, null, '{{ $slot }}')"
-                                                        class="w-full py-2 px-2 text-center rounded-lg border border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50/50 text-gray-400 hover:text-blue-600 text-[11px] transition">
-                                                        + Kosong
-                                                    </button>
-                                                    @endif
-                                                </td>
-
-                                                {{-- Vicon Lantai 3 --}}
-                                                <td class="py-2 px-2.5 border-l border-gray-100 align-top">
-                                                    @if($bookingVicon)
-                                                    <div
-                                                        class="p-2.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 shadow-2xs">
-                                                        <p class="font-bold text-[11px] truncate">
-                                                            {{ $bookingVicon->nama_acara }}</p>
-                                                        <p class="text-[10px] text-purple-700 mt-0.5">
-                                                            {{ substr($bookingVicon->start_time, 0, 5) }} -
-                                                            {{ substr($bookingVicon->end_time, 0, 5) }} •
-                                                            {{ $bookingVicon->penyelenggara }}
-                                                        </p>
-                                                        @if($bookingVicon->tipe_pertemuan === 'hybrid')
-                                                        <span
-                                                            class="inline-block mt-1 px-1.5 py-0.2 bg-purple-200 text-purple-800 rounded text-[9px] font-bold">Hybrid</span>
-                                                        @endif
-                                                    </div>
-                                                    @else
-                                                    <button type="button"
-                                                        @click="openBookingModal(2, null, '{{ $slot }}')"
-                                                        class="w-full py-2 px-2 text-center rounded-lg border border-dashed border-gray-200 hover:border-purple-400 hover:bg-purple-50/50 text-gray-400 hover:text-purple-600 text-[11px] transition">
-                                                        + Kosong
-                                                    </button>
-                                                    @endif
-                                                </td>
-
-                                                {{-- Aula Lantai 4 --}}
-                                                <td class="py-2 px-2.5 border-l border-gray-100 align-top">
-                                                    @if($bookingAula4)
-                                                    <div
-                                                        class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 shadow-2xs">
-                                                        <p class="font-bold text-[11px] truncate">
-                                                            {{ $bookingAula4->nama_acara }}</p>
-                                                        <p class="text-[10px] text-emerald-700 mt-0.5">
-                                                            {{ substr($bookingAula4->start_time, 0, 5) }} -
-                                                            {{ substr($bookingAula4->end_time, 0, 5) }} •
-                                                            {{ $bookingAula4->penyelenggara }}
-                                                        </p>
-                                                        @if($bookingAula4->tipe_pertemuan === 'hybrid')
-                                                        <span
-                                                            class="inline-block mt-1 px-1.5 py-0.2 bg-emerald-200 text-emerald-800 rounded text-[9px] font-bold">Hybrid</span>
-                                                        @endif
-                                                    </div>
-                                                    @else
-                                                    <button type="button"
-=======
                                         {{-- Aula Lantai 1 --}}
                                         <td class="py-2 px-2.5 border-l border-gray-100 align-top">
                                             @if($bookingAula1)
@@ -657,34 +584,13 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                                 </div>
                                             @else
                                                 <button type="button"
->>>>>>> a59eefc (feat: pembaruan persetujuan kegiatan, lifecycle status pelaksanaan, perbaikan export/cetak, dan manajemen sarpras ruangan terstruktur (layout, podium, 11 special requests))
                                                         @click="openBookingModal(3, null, '{{ $slot }}')"
                                                         class="w-full py-2 px-2 text-center rounded-lg border border-dashed border-gray-200 hover:border-emerald-400 hover:bg-emerald-50/50 text-gray-400 hover:text-emerald-600 text-[11px] transition">
-                                                        + Kosong
-                                                    </button>
-                                                    @endif
-                                                </td>
+                                                    + Kosong
+                                                </button>
+                                            @endif
+                                        </td>
 
-<<<<<<< HEAD
-                                                {{-- Akun Zoom --}}
-                                                <td class="py-2 px-2.5 border-l border-gray-100 align-top">
-                                                    @if($bookingZoom)
-                                                    <div
-                                                        class="p-2.5 rounded-xl bg-sky-50 border border-sky-200 text-sky-900 shadow-2xs">
-                                                        <div class="flex items-center justify-between">
-                                                            <p class="font-bold text-[11px] truncate">
-                                                                {{ $bookingZoom->nama_acara }}</p>
-                                                            <span
-                                                                class="text-[9px] font-bold px-1.5 py-0.5 bg-sky-200 text-sky-800 rounded">
-                                                                {{ $bookingZoom->zoom_account === 'zoom_1' ? 'Zoom 1' : ($bookingZoom->zoom_account === 'zoom_2' ? 'Zoom 2' : 'Eksternal') }}
-                                                            </span>
-                                                        </div>
-                                                        <p class="text-[10px] text-sky-700 mt-0.5">
-                                                            {{ substr($bookingZoom->start_time, 0, 5) }} -
-                                                            {{ substr($bookingZoom->end_time, 0, 5) }} •
-                                                            {{ $bookingZoom->penyelenggara }}
-                                                        </p>
-=======
                                         {{-- Akun Zoom --}}
                                         <td class="py-2 px-2.5 border-l border-gray-100 align-top">
                                             @if($bookingZoom)
@@ -716,16 +622,19 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                                         <span class="text-[9px] font-bold px-1.5 py-0.5 bg-sky-200 text-sky-800 rounded">
                                                             {{ $bookingZoom->zoom_account === 'zoom_1' ? 'Zoom 1' : ($bookingZoom->zoom_account === 'zoom_2' ? 'Zoom 2' : 'Eksternal') }}
                                                         </span>
->>>>>>> a59eefc (feat: pembaruan persetujuan kegiatan, lifecycle status pelaksanaan, perbaikan export/cetak, dan manajemen sarpras ruangan terstruktur (layout, podium, 11 special requests))
                                                     </div>
-                                                    @else
-                                                    <button type="button"
+                                                    <p class="text-[10px] text-sky-700 mt-0.5">
+                                                        {{ substr($bookingZoom->start_time, 0, 5) }} - {{ substr($bookingZoom->end_time, 0, 5) }} • {{ $bookingZoom->penyelenggara }}
+                                                    </p>
+                                                </div>
+                                            @else
+                                                <button type="button"
                                                         @click="openBookingModal(null, 'zoom_1', '{{ $slot }}')"
                                                         class="w-full py-2 px-2 text-center rounded-lg border border-dashed border-gray-200 hover:border-sky-400 hover:bg-sky-50/50 text-gray-400 hover:text-sky-600 text-[11px] transition">
-                                                        + Kosong
-                                                    </button>
-                                                    @endif
-                                                </td>
+                                                    + Kosong
+                                                </button>
+                                            @endif
+                                        </td>
                                             </tr>
                                             @endforeach
                         </tbody>
@@ -752,49 +661,22 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                     Belum ada jadwal booking ruangan pada bulan ini.
                 </div>
                 @else
-                <div class="space-y-3">
-                    @foreach($monthlyBookings->groupBy('booking_date') as $bDate => $bList)
-                    <div class="p-4 rounded-xl border border-gray-200 bg-gray-50/50 space-y-2.5">
-                        <div class="flex items-center justify-between border-b border-gray-200 pb-2">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-blue-600"></span>
-                                <strong class="text-xs font-bold text-gray-800">
-                                    {{ \Carbon\Carbon::parse($bDate)->translatedFormat('l, d F Y') }}
-                                </strong>
-                            </div>
-                            <span class="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
-                                {{ $bList->count() }} Kegiatan
-                            </span>
-                        </div>
-<<<<<<< HEAD
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-                            @foreach($bList as $bk)
-                            <div class="p-3 bg-white rounded-xl border border-gray-200 shadow-2xs space-y-1.5">
-                                <div class="flex items-start justify-between gap-2">
-                                    <h5 class="text-xs font-bold text-gray-900">{{ $bk->nama_acara }}</h5>
-                                    <span
-                                        class="text-[10px] font-bold px-2 py-0.5 rounded {{ $bk->venue_id == 1 ? 'bg-blue-50 text-blue-700' : ($bk->venue_id == 2 ? 'bg-purple-50 text-purple-700' : ($bk->venue_id == 3 ? 'bg-emerald-50 text-emerald-700' : 'bg-sky-50 text-sky-700')) }}">
-                                        {{ $bk->nama_ruangan ?: ($bk->zoom_account ? 'Online Zoom' : '-') }}
-                                    </span>
-=======
-                    @else
-                        <div class="space-y-3">
-                            @foreach($monthlyBookings->groupBy('booking_date') as $bDate => $bList)
-                                <div class="p-4 rounded-xl border border-gray-200 bg-gray-50/50 space-y-2.5">
-                                    <div class="flex items-center justify-between border-b border-gray-200 pb-2">
-                                        <div class="flex items-center gap-2">
-                                            <span class="w-2 h-2 rounded-full bg-blue-600"></span>
-                                            <strong class="text-xs font-bold text-gray-800">
-                                                 {{ \Carbon\Carbon::parse($bDate)->translatedFormat('l, d F Y') }}
-                                            </strong>
-                                        </div>
-                                        <span class="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
-                                            {{ $bList->count() }} Kegiatan
-                                        </span>
+                    <div class="space-y-3">
+                        @foreach($monthlyBookings->groupBy('booking_date') as $bDate => $bList)
+                            <div class="p-4 rounded-xl border border-gray-200 bg-gray-50/50 space-y-2.5">
+                                <div class="flex items-center justify-between border-b border-gray-200 pb-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                                        <strong class="text-xs font-bold text-gray-800">
+                                             {{ \Carbon\Carbon::parse($bDate)->translatedFormat('l, d F Y') }}
+                                        </strong>
                                     </div>
+                                    <span class="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
+                                        {{ $bList->count() }} Kegiatan
+                                    </span>
+                                </div>
 
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                                         @foreach($bList as $bk)
                                             @php
                                                 $bPayloadM = [
@@ -860,48 +742,11 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                             </div>
                                         @endforeach
                                     </div>
->>>>>>> a59eefc (feat: pembaruan persetujuan kegiatan, lifecycle status pelaksanaan, perbaikan export/cetak, dan manajemen sarpras ruangan terstruktur (layout, podium, 11 special requests))
                                 </div>
-                                <p class="text-[11px] text-gray-500 inline-flex items-center gap-1">
-                                    <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    {{ substr($bk->start_time, 0, 5) }} - {{ substr($bk->end_time, 0, 5) }} • PJ:
-                                    {{ $bk->penyelenggara }}
-                                    @if($bk->jumlah_peserta)
-                                    • 👥 <strong>{{ $bk->jumlah_peserta }} Peserta</strong>
-                                    @endif
-                                </p>
-                                @if($bk->fasilitas || $bk->layout_meja)
-                                <div class="p-2 bg-slate-50 rounded-lg border border-slate-100 text-[10px] text-slate-600 space-y-0.5">
-                                    @if($bk->layout_meja)
-                                    <p>🪑 <strong>Tata Letak:</strong> {{ $bk->layout_meja }}</p>
-                                    @endif
-                                    @if($bk->fasilitas)
-                                    <p>🎙️ <strong>Sarpras:</strong> {{ $bk->fasilitas }}</p>
-                                    @endif
-                                </div>
-                                @endif
-                                @if($bk->zoom_link)
-                                <div class="pt-1 flex items-center justify-between text-[11px]">
-                                    <a href="{{ $bk->zoom_link }}" target="_blank"
-                                        class="text-blue-600 font-bold hover:underline truncate">
-                                        Link Zoom
-                                    </a>
-                                    <span class="text-gray-400 text-[10px]">Tipe:
-                                        {{ ucfirst($bk->tipe_pertemuan) }}</span>
-                                </div>
-                                @endif
-                            </div>
                             @endforeach
                         </div>
-                    </div>
-                    @endforeach
+                    @endif
                 </div>
-                @endif
-            </div>
             @endif
 
         </div>
@@ -1280,36 +1125,6 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                     <p class="text-[10px] text-slate-400">Coffee break / snack / makan</p>
                                 </div>
                             </label>
-<<<<<<< HEAD
-                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
-                                <input type="checkbox" name="fasilitas_list[]" value="Sofa Depan VIP" class="rounded text-blue-600">
-                                <span>Sofa Depan VIP</span>
-                            </label>
-                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
-                                <input type="checkbox" name="fasilitas_list[]" value="Monitor Pimpinan" class="rounded text-blue-600">
-                                <span>Monitor Pimpinan</span>
-                            </label>
-                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
-                                <input type="checkbox" name="fasilitas_list[]" value="Name Desk" class="rounded text-blue-600">
-                                <span>Name Desk</span>
-                            </label>
-                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
-                                <input type="checkbox" name="fasilitas_list[]" value="Meja Konsumsi" class="rounded text-blue-600">
-                                <span>Meja Konsumsi</span>
-                            </label>
-                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
-                                <input type="checkbox" name="fasilitas_list[]" value="Meja Registrasi" class="rounded text-blue-600">
-                                <span>Meja Registrasi</span>
-                            </label>
-                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
-                                <input type="checkbox" name="fasilitas_list[]" value="Ruang Transit" class="rounded text-blue-600">
-                                <span>Ruang Transit</span>
-                            </label>
-                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
-                                <input type="checkbox" name="fasilitas_list[]" value="Meja Notulensi" class="rounded text-blue-600">
-                                <span>Meja Notulensi</span>
-                            </label>
-=======
 
                             {{-- 7. Meja Registrasi --}}
                             <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs cursor-pointer shadow-2xs transition">
@@ -1358,7 +1173,6 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                        placeholder="Tuliskan permintaan khusus lainnya..."
                                        class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
                             </div>
->>>>>>> a59eefc (feat: pembaruan persetujuan kegiatan, lifecycle status pelaksanaan, perbaikan export/cetak, dan manajemen sarpras ruangan terstruktur (layout, podium, 11 special requests))
                         </div>
                     </div>
                 </div>
