@@ -187,11 +187,20 @@
                         <th class="px-6 py-3.5">Peran / Penugasan</th>
                         <th class="px-6 py-3.5">Waktu Pelaksanaan</th>
                         <th class="px-6 py-3.5">Wilayah / Tempat</th>
+                        <th class="px-6 py-3.5">Status</th>
                         <th class="px-6 py-3.5 text-right">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-100">
                     @forelse($myTasks as $task)
+                    @php
+                        $st = strtolower(trim($task->status ?? ''));
+                        $isDone     = ($st === 'selesai');
+                        $isDelayed  = ($st === 'tertunda');
+                        $isInactive = ($st === 'tidak berjalan' || $st === 'dibatalkan');
+                        $isApproved = ($task->setuju_rapat == 1 || $st === 'disetujui' || $st === 'sedang berjalan' || $isDone || $isDelayed || $isInactive);
+                        $isRejected = ($task->setuju_rapat == 3 || $st === 'ditolak');
+                    @endphp
                     <tr class="hover:bg-slate-50/60 transition-colors">
                         <td class="px-6 py-4">
                             <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ $task->jenis === 'Rapat' ? 'bg-indigo-50 text-indigo-700' : 'bg-sky-50 text-sky-700' }} border inline-block mb-1">
@@ -226,6 +235,49 @@
                                 </span>
                             @else
                                 <span>{{ $task->tempat ?: 'Kantor BPS' }}</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            @if($isDone)
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    <span>Selesai</span>
+                                </span>
+                            @elseif($isDelayed)
+                                <div class="space-y-0.5">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-300">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                        <span>Tertunda</span>
+                                    </span>
+                                    @if(!empty($task->alasan_status))
+                                        <p class="text-[10px] text-amber-700 italic max-w-[140px] truncate" title="{{ $task->alasan_status }}">{{ $task->alasan_status }}</p>
+                                    @endif
+                                </div>
+                            @elseif($isInactive)
+                                <div class="space-y-0.5">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-300">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                                        <span>Tidak Berjalan</span>
+                                    </span>
+                                    @if(!empty($task->alasan_status))
+                                        <p class="text-[10px] text-slate-600 italic max-w-[140px] truncate" title="{{ $task->alasan_status }}">{{ $task->alasan_status }}</p>
+                                    @endif
+                                </div>
+                            @elseif($isApproved)
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                    <span>Sedang Berjalan</span>
+                                </span>
+                            @elseif($isRejected)
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-red-50 text-red-700 border border-red-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                    <span>Ditolak</span>
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                    <span>Menunggu</span>
+                                </span>
                             @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right">

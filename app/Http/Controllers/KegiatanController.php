@@ -477,10 +477,13 @@ class KegiatanController extends Controller
         $qrcode  = base64_encode(QrCode::format('svg')->size(100)->generate($data4));
         $qrcode2 = base64_encode(QrCode::format('svg')->size(100)->generate('https://webapps.bps.go.id/sultra/idcard/'.$data3));
       
-        view()->share('employee', $data);
-        $pdf = \PDF::loadView('pdf_kegiatan', $data, compact('qrcode', 'qrcode2'));
+        $pdf = \PDF::loadView('pdf_kegiatan', [
+            'employee' => $data,
+            'qrcode'   => $qrcode,
+            'qrcode2'  => $qrcode2
+        ]);
   
-        return $pdf->stream('pdf.pdf', array("Attachment" => 0));
+        return $pdf->stream('Surat_Undangan_' . $data->id . '.pdf', array("Attachment" => 0));
     }
 
     public function daftarHadir($id = null) 
@@ -813,24 +816,53 @@ class KegiatanController extends Controller
     {
         $kegiatan = Task::findOrFail($id);
         $kegiatan->status_pemimpin = 'Disetujui';
+        $kegiatan->setuju_rapat = 1;
+        $kegiatan->status = 'Disetujui';
         $kegiatan->save();
 
-        $pembuat = User::where('nama_lengkap', $kegiatan->nama_lengkap)->orWhere('nama_lengkap', $kegiatan->penanggung_jawab)->first();
-        if ($pembuat && $pembuat->id !== Auth::id()) {
-            DB::table('notifications')->insert([
-                'id'              => (string) Str::uuid(),
-                'type'            => 'App\Notifications\RapatStatusNotification',
-                'notifiable_type' => 'App\User',
-                'notifiable_id'   => $pembuat->id,
-                'data'            => json_encode([
-                    'judul' => 'Rapat Disetujui',
-                    'pesan' => 'Pemimpin Rapat telah menyetujui pelaksanaan: ' . $kegiatan->text,
-                    'url'   => '/daftarkegiatan/' . $kegiatan->id,
-                ]),
-                'read_at'         => null,
-                'created_at'      => now(),
-                'updated_at'      => now(),
-            ]);
+        $pjNama = Auth::check() ? Auth::user()->nama_lengkap : ($kegiatan->penanggung_jawab ?: ($kegiatan->pemimpin ?: 'Ketua Tim / PJ'));
+        $jenis = $kegiatan->jenis ?: 'Kegiatan';
+
+        // Notifikasi ke seluruh peserta/anggota penugasan
+        $participantIds = [];
+        
+        $penugasanUsers = \App\penugasan::where('id_kegiatan', $kegiatan->id)->get();
+        foreach ($penugasanUsers as $p) {
+            $u = User::where('niplama', $p->niplama)->orWhere('nama_lengkap', $p->peserta)->first();
+            if ($u) {
+                $participantIds[] = $u->id;
+            }
+        }
+
+        $owners = $kegiatan->owners;
+        if (is_array($owners)) {
+            foreach ($owners as $own) {
+                $u = User::where('niplama', $own)->orWhere('nama_lengkap', $own)->orWhere('username', $own)->first();
+                if ($u) {
+                    $participantIds[] = $u->id;
+                }
+            }
+        }
+
+        $participantIds = array_unique(array_filter($participantIds));
+
+        foreach ($participantIds as $userId) {
+            if ($userId !== Auth::id()) {
+                DB::table('notifications')->insert([
+                    'id'              => (string) Str::uuid(),
+                    'type'            => 'App\Notifications\KegiatanStatusNotification',
+                    'notifiable_type' => 'App\User',
+                    'notifiable_id'   => $userId,
+                    'data'            => json_encode([
+                        'judul' => $jenis . ' Disetujui: ' . $kegiatan->text,
+                        'pesan' => $jenis . ' "' . $kegiatan->text . '" telah disetujui oleh ' . $pjNama . '. Agenda telah resmi aktif di Tugas Saya.',
+                        'url'   => '/tugas-saya',
+                    ]),
+                    'read_at'         => null,
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ]);
+            }
         }
 
         return redirect()->back()->with('success', 'Kegiatan berhasil disetujui.');
@@ -840,27 +872,157 @@ class KegiatanController extends Controller
     {
         $kegiatan = Task::findOrFail($id);
         $kegiatan->status_pemimpin = 'Ditolak';
+        $kegiatan->setuju_rapat = 3;
+        $kegiatan->status = 'Ditolak';
         $kegiatan->save();
 
-        $pembuat = User::where('nama_lengkap', $kegiatan->nama_lengkap)->orWhere('nama_lengkap', $kegiatan->penanggung_jawab)->first();
-        if ($pembuat && $pembuat->id !== Auth::id()) {
-            DB::table('notifications')->insert([
-                'id'              => (string) Str::uuid(),
-                'type'            => 'App\Notifications\RapatStatusNotification',
-                'notifiable_type' => 'App\User',
-                'notifiable_id'   => $pembuat->id,
-                'data'            => json_encode([
-                    'judul' => 'Rapat Ditolak',
-                    'pesan' => 'Pemimpin Rapat menolak kegiatan: ' . $kegiatan->text . '. Alasan: ' . $request->input('alasan', 'Tidak ada alasan.'),
-                    'url'   => '/daftarkegiatan/' . $kegiatan->id,
-                ]),
-                'read_at'         => null,
-                'created_at'      => now(),
-                'updated_at'      => now(),
-            ]);
+        $pjNama = Auth::check() ? Auth::user()->nama_lengkap : ($kegiatan->penanggung_jawab ?: ($kegiatan->pemimpin ?: 'Ketua Tim / PJ'));
+        $jenis = $kegiatan->jenis ?: 'Kegiatan';
+
+        $participantIds = [];
+        $penugasanUsers = \App\penugasan::where('id_kegiatan', $kegiatan->id)->get();
+        foreach ($penugasanUsers as $p) {
+            $u = User::where('niplama', $p->niplama)->orWhere('nama_lengkap', $p->peserta)->first();
+            if ($u) {
+                $participantIds[] = $u->id;
+            }
+        }
+
+        $owners = $kegiatan->owners;
+        if (is_array($owners)) {
+            foreach ($owners as $own) {
+                $u = User::where('niplama', $own)->orWhere('nama_lengkap', $own)->orWhere('username', $own)->first();
+                if ($u) {
+                    $participantIds[] = $u->id;
+                }
+            }
+        }
+
+        $participantIds = array_unique(array_filter($participantIds));
+
+        foreach ($participantIds as $userId) {
+            if ($userId !== Auth::id()) {
+                DB::table('notifications')->insert([
+                    'id'              => (string) Str::uuid(),
+                    'type'            => 'App\Notifications\KegiatanStatusNotification',
+                    'notifiable_type' => 'App\User',
+                    'notifiable_id'   => $userId,
+                    'data'            => json_encode([
+                        'judul' => $jenis . ' Ditolak: ' . $kegiatan->text,
+                        'pesan' => $jenis . ' "' . $kegiatan->text . '" ditolak oleh ' . $pjNama . '. Alasan: ' . $request->input('alasan', 'Tidak disetujui oleh Penanggung Jawab.'),
+                        'url'   => '/tugas-saya',
+                    ]),
+                    'read_at'         => null,
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ]);
+            }
         }
 
         return redirect()->back()->with('success', 'Kegiatan berhasil ditolak.');
+    }
+
+    /**
+     * Update Lifecycle / Execution Status (Selesai, Tertunda, Tidak Berjalan, Sedang Berjalan)
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        $kegiatan = Task::findOrFail($id);
+
+        $request->validate([
+            'status'        => 'required|string|in:Sedang Berjalan,Disetujui,Selesai,Tertunda,Tidak Berjalan,Dibatalkan,Menunggu Persetujuan,Ditolak',
+            'alasan_status' => 'nullable|string',
+        ]);
+
+        $newStatus    = $request->input('status');
+        $alasanStatus = $request->input('alasan_status');
+
+        $kegiatan->status        = $newStatus;
+        $kegiatan->alasan_status = $alasanStatus;
+
+        if ($newStatus === 'Selesai') {
+            $kegiatan->progress        = 100;
+            $kegiatan->notulen_selesai = 1;
+            // Tandai seluruh sub-kegiatan di bawahnya selesai jika ada
+            \App\SubKegiatan::where('task_id', $kegiatan->id)->update([
+                'status'   => 'Selesai',
+                'progress' => 100,
+            ]);
+        } elseif ($newStatus === 'Sedang Berjalan' || $newStatus === 'Disetujui') {
+            if ($kegiatan->setuju_rapat == 0 || $kegiatan->setuju_rapat == 3) {
+                $kegiatan->setuju_rapat    = 1;
+                $kegiatan->status_pemimpin = 'Disetujui';
+            }
+        } elseif ($newStatus === 'Ditolak') {
+            $kegiatan->setuju_rapat    = 3;
+            $kegiatan->status_pemimpin = 'Ditolak';
+        }
+
+        $kegiatan->save();
+
+        $pjNama = Auth::check() ? Auth::user()->nama_lengkap : ($kegiatan->penanggung_jawab ?: ($kegiatan->pemimpin ?: 'Ketua Tim / PJ'));
+        $jenis  = $kegiatan->jenis ?: 'Kegiatan';
+
+        // Gather participants for notification
+        $participantIds = [];
+        $penugasanUsers = \App\penugasan::where('id_kegiatan', $kegiatan->id)->get();
+        foreach ($penugasanUsers as $p) {
+            $u = User::where('niplama', $p->niplama)->orWhere('nama_lengkap', $p->peserta)->first();
+            if ($u) {
+                $participantIds[] = $u->id;
+            }
+        }
+
+        $owners = $kegiatan->owners;
+        if (is_array($owners)) {
+            foreach ($owners as $own) {
+                $u = User::where('niplama', $own)->orWhere('nama_lengkap', $own)->orWhere('username', $own)->first();
+                if ($u) {
+                    $participantIds[] = $u->id;
+                }
+            }
+        }
+
+        $subMembers = \App\SubKegiatan::where('task_id', $kegiatan->id)->get();
+        foreach ($subMembers as $sub) {
+            if (!empty($sub->anggota_list)) {
+                foreach ($sub->anggota_list as $ang) {
+                    $u = User::where('nama_lengkap', $ang)->orWhere('username', $ang)->orWhere('niplama', $ang)->first();
+                    if ($u) {
+                        $participantIds[] = $u->id;
+                    }
+                }
+            }
+        }
+
+        $participantIds = array_unique(array_filter($participantIds));
+
+        $judulNotif = "Status {$jenis}: {$kegiatan->text} ({$newStatus})";
+        $pesanNotif = "Status {$jenis} \"{$kegiatan->text}\" telah diperbarui menjadi \"{$newStatus}\" oleh {$pjNama}.";
+        if (!empty($alasanStatus)) {
+            $pesanNotif .= " Catatan/Alasan: {$alasanStatus}";
+        }
+
+        foreach ($participantIds as $userId) {
+            if ($userId !== Auth::id()) {
+                DB::table('notifications')->insert([
+                    'id'              => (string) Str::uuid(),
+                    'type'            => 'App\Notifications\KegiatanStatusNotification',
+                    'notifiable_type' => 'App\User',
+                    'notifiable_id'   => $userId,
+                    'data'            => json_encode([
+                        'judul' => $judulNotif,
+                        'pesan' => $pesanNotif,
+                        'url'   => '/tugas-saya',
+                    ]),
+                    'read_at'         => null,
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ]);
+            }
+        }
+
+        return redirect()->back()->with('success', "Status kegiatan berhasil diperbarui menjadi {$newStatus}." . (!empty($alasanStatus) ? " (Catatan/Alasan tersimpan)" : ''));
     }
 
     /**

@@ -10,16 +10,29 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
 @section('content')
 <div class="max-w-7xl mx-auto space-y-6 pb-12" x-data="{
          modalOpen: {{ $selectedRapat ? 'true' : 'false' }},
+         detailModalOpen: false,
+         selectedBooking: null,
          selectedVenueId: '{{ $selectedRapat->venue_id ?? 1 }}',
          tipePertemuan: '{{ $selectedRapat ? ($selectedRapat->tempat && str_contains(strtolower($selectedRapat->tempat), 'zoom') ? 'hybrid' : 'offline') : 'offline' }}',
          zoomAccount: 'zoom_1',
          namaAcara: '{{ addslashes($selectedRapat->text ?? '') }}',
          penyelenggara: '{{ addslashes(($selectedRapat ? ($selectedRapat->penanggung_jawab ?? $selectedRapat->pemimpin) : null) ?? Auth::user()->nama_lengkap ?? '') }}',
+         jumlahPeserta: '{{ $selectedRapat ? (is_array($selectedRapat->owners) ? count($selectedRapat->owners) : ($selectedRapat->owners ? count(explode(',', $selectedRapat->owners)) : 25)) : 25 }}',
          bookingDate: '{{ $selectedRapat->start_date ?? $selectedDate }}',
          startTime: '{{ ($selectedRapat && $selectedRapat->start_jam) ? substr($selectedRapat->start_jam, 0, 5) : '09:00' }}',
          endTime: '{{ ($selectedRapat && $selectedRapat->end_jam) ? substr($selectedRapat->end_jam, 0, 5) : '11:00' }}',
          taskId: '{{ $selectedRapat->id ?? '' }}',
          keterangan: '',
+         
+         // Sarpras State
+         layoutMeja: 'Classroom',
+         tipePodium: 'Podium Standar',
+         jumlahKursiPodium: '4',
+         pasangSpanduk: true,
+         keteranganSpanduk: '',
+         micCount: '2',
+         specialLainnya: '',
+
          openBookingModal(venueId = null, zoomAcc = null, time = null) {
              if (venueId) {
                  this.selectedVenueId = venueId;
@@ -35,6 +48,10 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                  this.endTime = (h < 10 ? '0' : '') + h + ':00';
              }
              this.modalOpen = true;
+         },
+         openDetail(booking) {
+             this.selectedBooking = booking;
+             this.detailModalOpen = true;
          },
          copyToClipboard(text, label) {
              navigator.clipboard.writeText(text).then(() => {
@@ -421,6 +438,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                                     {{ $slot }}
                                                 </td>
 
+<<<<<<< HEAD
                                                 {{-- Aula Lantai 1 --}}
                                                 <td class="py-2 px-2.5 border-l border-gray-100 align-top">
                                                     @if($bookingAula1)
@@ -492,6 +510,154 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                                     </div>
                                                     @else
                                                     <button type="button"
+=======
+                                        {{-- Aula Lantai 1 --}}
+                                        <td class="py-2 px-2.5 border-l border-gray-100 align-top">
+                                            @if($bookingAula1)
+                                                @php
+                                                    $bPayload1 = [
+                                                        'id'               => $bookingAula1->id,
+                                                        'nama_acara'       => $bookingAula1->nama_acara,
+                                                        'penyelenggara'    => $bookingAula1->penyelenggara,
+                                                        'jumlah_peserta'   => $bookingAula1->jumlah_peserta,
+                                                        'tipe_pertemuan'   => ucfirst($bookingAula1->tipe_pertemuan),
+                                                        'nama_ruangan'     => $bookingAula1->nama_ruangan ?? 'Aula Lantai 1',
+                                                        'booking_date'     => \Carbon\Carbon::parse($bookingAula1->booking_date)->translatedFormat('l, d F Y'),
+                                                        'start_time'       => substr($bookingAula1->start_time, 0, 5),
+                                                        'end_time'         => substr($bookingAula1->end_time, 0, 5),
+                                                        'layout_meja'      => $bookingAula1->layout_meja ?: 'Classroom',
+                                                        'setup_podium'     => $bookingAula1->setup_podium_data,
+                                                        'special_requests' => $bookingAula1->special_requests_data,
+                                                        'fasilitas'        => $bookingAula1->fasilitas,
+                                                        'zoom_account'     => $bookingAula1->zoom_account,
+                                                        'zoom_link'        => $bookingAula1->zoom_link,
+                                                        'keterangan'       => $bookingAula1->keterangan,
+                                                    ];
+                                                @endphp
+                                                <div class="p-2.5 rounded-xl bg-blue-50/90 border border-blue-200 text-blue-900 shadow-2xs hover:bg-blue-100/60 cursor-pointer transition"
+                                                     @click="openDetail({{ json_encode($bPayload1) }})"
+                                                     title="Klik untuk melihat detail sarpras">
+                                                    <div class="flex items-start justify-between gap-1">
+                                                        <p class="font-bold text-[11px] truncate">{{ $bookingAula1->nama_acara }}</p>
+                                                        @if($bookingAula1->tipe_pertemuan === 'hybrid')
+                                                            <span class="px-1.5 py-0.2 bg-blue-200 text-blue-800 rounded text-[9px] font-bold shrink-0">Hybrid</span>
+                                                        @endif
+                                                    </div>
+                                                    <p class="text-[10px] text-blue-700 mt-0.5">
+                                                        {{ substr($bookingAula1->start_time, 0, 5) }} - {{ substr($bookingAula1->end_time, 0, 5) }} • {{ $bookingAula1->penyelenggara }}
+                                                    </p>
+                                                    <div class="mt-1 flex items-center gap-1 flex-wrap text-[9px] text-blue-800">
+                                                        <span class="px-1 py-0.5 bg-white/80 rounded border border-blue-200 font-medium">🪑 {{ $bookingAula1->layout_meja ?: 'Classroom' }}</span>
+                                                        @if(!empty($bookingAula1->setup_podium_data['tipe']) && $bookingAula1->setup_podium_data['tipe'] !== 'Tanpa Podium')
+                                                            <span class="px-1 py-0.5 bg-white/80 rounded border border-blue-200 font-medium">🏛️ {{ $bookingAula1->setup_podium_data['tipe'] }}</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <button type="button"
+                                                        @click="openBookingModal(1, null, '{{ $slot }}')"
+                                                        class="w-full py-2 px-2 text-center rounded-lg border border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50/50 text-gray-400 hover:text-blue-600 text-[11px] transition">
+                                                    + Kosong
+                                                </button>
+                                            @endif
+                                        </td>
+
+                                        {{-- Vicon Lantai 3 --}}
+                                        <td class="py-2 px-2.5 border-l border-gray-100 align-top">
+                                            @if($bookingVicon)
+                                                @php
+                                                    $bPayload2 = [
+                                                        'id'               => $bookingVicon->id,
+                                                        'nama_acara'       => $bookingVicon->nama_acara,
+                                                        'penyelenggara'    => $bookingVicon->penyelenggara,
+                                                        'jumlah_peserta'   => $bookingVicon->jumlah_peserta,
+                                                        'tipe_pertemuan'   => ucfirst($bookingVicon->tipe_pertemuan),
+                                                        'nama_ruangan'     => $bookingVicon->nama_ruangan ?? 'Vicon Lantai 3',
+                                                        'booking_date'     => \Carbon\Carbon::parse($bookingVicon->booking_date)->translatedFormat('l, d F Y'),
+                                                        'start_time'       => substr($bookingVicon->start_time, 0, 5),
+                                                        'end_time'         => substr($bookingVicon->end_time, 0, 5),
+                                                        'layout_meja'      => $bookingVicon->layout_meja ?: 'Classroom',
+                                                        'setup_podium'     => $bookingVicon->setup_podium_data,
+                                                        'special_requests' => $bookingVicon->special_requests_data,
+                                                        'fasilitas'        => $bookingVicon->fasilitas,
+                                                        'zoom_account'     => $bookingVicon->zoom_account,
+                                                        'zoom_link'        => $bookingVicon->zoom_link,
+                                                        'keterangan'       => $bookingVicon->keterangan,
+                                                    ];
+                                                @endphp
+                                                <div class="p-2.5 rounded-xl bg-purple-50/90 border border-purple-200 text-purple-900 shadow-2xs hover:bg-purple-100/60 cursor-pointer transition"
+                                                     @click="openDetail({{ json_encode($bPayload2) }})"
+                                                     title="Klik untuk melihat detail sarpras">
+                                                    <div class="flex items-start justify-between gap-1">
+                                                        <p class="font-bold text-[11px] truncate">{{ $bookingVicon->nama_acara }}</p>
+                                                        @if($bookingVicon->tipe_pertemuan === 'hybrid')
+                                                            <span class="px-1.5 py-0.2 bg-purple-200 text-purple-800 rounded text-[9px] font-bold shrink-0">Hybrid</span>
+                                                        @endif
+                                                    </div>
+                                                    <p class="text-[10px] text-purple-700 mt-0.5">
+                                                        {{ substr($bookingVicon->start_time, 0, 5) }} - {{ substr($bookingVicon->end_time, 0, 5) }} • {{ $bookingVicon->penyelenggara }}
+                                                    </p>
+                                                    <div class="mt-1 flex items-center gap-1 flex-wrap text-[9px] text-purple-800">
+                                                        <span class="px-1 py-0.5 bg-white/80 rounded border border-purple-200 font-medium">🪑 {{ $bookingVicon->layout_meja ?: 'Classroom' }}</span>
+                                                        @if(!empty($bookingVicon->setup_podium_data['tipe']) && $bookingVicon->setup_podium_data['tipe'] !== 'Tanpa Podium')
+                                                            <span class="px-1 py-0.5 bg-white/80 rounded border border-purple-200 font-medium">🏛️ {{ $bookingVicon->setup_podium_data['tipe'] }}</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <button type="button"
+                                                        @click="openBookingModal(2, null, '{{ $slot }}')"
+                                                        class="w-full py-2 px-2 text-center rounded-lg border border-dashed border-gray-200 hover:border-purple-400 hover:bg-purple-50/50 text-gray-400 hover:text-purple-600 text-[11px] transition">
+                                                    + Kosong
+                                                </button>
+                                            @endif
+                                        </td>
+
+                                        {{-- Aula Lantai 4 --}}
+                                        <td class="py-2 px-2.5 border-l border-gray-100 align-top">
+                                            @if($bookingAula4)
+                                                @php
+                                                    $bPayload3 = [
+                                                        'id'               => $bookingAula4->id,
+                                                        'nama_acara'       => $bookingAula4->nama_acara,
+                                                        'penyelenggara'    => $bookingAula4->penyelenggara,
+                                                        'jumlah_peserta'   => $bookingAula4->jumlah_peserta,
+                                                        'tipe_pertemuan'   => ucfirst($bookingAula4->tipe_pertemuan),
+                                                        'nama_ruangan'     => $bookingAula4->nama_ruangan ?? 'Aula Lantai 4',
+                                                        'booking_date'     => \Carbon\Carbon::parse($bookingAula4->booking_date)->translatedFormat('l, d F Y'),
+                                                        'start_time'       => substr($bookingAula4->start_time, 0, 5),
+                                                        'end_time'         => substr($bookingAula4->end_time, 0, 5),
+                                                        'layout_meja'      => $bookingAula4->layout_meja ?: 'Classroom',
+                                                        'setup_podium'     => $bookingAula4->setup_podium_data,
+                                                        'special_requests' => $bookingAula4->special_requests_data,
+                                                        'fasilitas'        => $bookingAula4->fasilitas,
+                                                        'zoom_account'     => $bookingAula4->zoom_account,
+                                                        'zoom_link'        => $bookingAula4->zoom_link,
+                                                        'keterangan'       => $bookingAula4->keterangan,
+                                                    ];
+                                                @endphp
+                                                <div class="p-2.5 rounded-xl bg-emerald-50/90 border border-emerald-200 text-emerald-900 shadow-2xs hover:bg-emerald-100/60 cursor-pointer transition"
+                                                     @click="openDetail({{ json_encode($bPayload3) }})"
+                                                     title="Klik untuk melihat detail sarpras">
+                                                    <div class="flex items-start justify-between gap-1">
+                                                        <p class="font-bold text-[11px] truncate">{{ $bookingAula4->nama_acara }}</p>
+                                                        @if($bookingAula4->tipe_pertemuan === 'hybrid')
+                                                            <span class="px-1.5 py-0.2 bg-emerald-200 text-emerald-800 rounded text-[9px] font-bold shrink-0">Hybrid</span>
+                                                        @endif
+                                                    </div>
+                                                    <p class="text-[10px] text-emerald-700 mt-0.5">
+                                                        {{ substr($bookingAula4->start_time, 0, 5) }} - {{ substr($bookingAula4->end_time, 0, 5) }} • {{ $bookingAula4->penyelenggara }}
+                                                    </p>
+                                                    <div class="mt-1 flex items-center gap-1 flex-wrap text-[9px] text-emerald-800">
+                                                        <span class="px-1 py-0.5 bg-white/80 rounded border border-emerald-200 font-medium">🪑 {{ $bookingAula4->layout_meja ?: 'Classroom' }}</span>
+                                                        @if(!empty($bookingAula4->setup_podium_data['tipe']) && $bookingAula4->setup_podium_data['tipe'] !== 'Tanpa Podium')
+                                                            <span class="px-1 py-0.5 bg-white/80 rounded border border-emerald-200 font-medium">🏛️ {{ $bookingAula4->setup_podium_data['tipe'] }}</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <button type="button"
+>>>>>>> a59eefc (feat: pembaruan persetujuan kegiatan, lifecycle status pelaksanaan, perbaikan export/cetak, dan manajemen sarpras ruangan terstruktur (layout, podium, 11 special requests))
                                                         @click="openBookingModal(3, null, '{{ $slot }}')"
                                                         class="w-full py-2 px-2 text-center rounded-lg border border-dashed border-gray-200 hover:border-emerald-400 hover:bg-emerald-50/50 text-gray-400 hover:text-emerald-600 text-[11px] transition">
                                                         + Kosong
@@ -499,6 +665,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                                     @endif
                                                 </td>
 
+<<<<<<< HEAD
                                                 {{-- Akun Zoom --}}
                                                 <td class="py-2 px-2.5 border-l border-gray-100 align-top">
                                                     @if($bookingZoom)
@@ -517,6 +684,39 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                                             {{ substr($bookingZoom->end_time, 0, 5) }} •
                                                             {{ $bookingZoom->penyelenggara }}
                                                         </p>
+=======
+                                        {{-- Akun Zoom --}}
+                                        <td class="py-2 px-2.5 border-l border-gray-100 align-top">
+                                            @if($bookingZoom)
+                                                @php
+                                                    $bPayloadZ = [
+                                                        'id'               => $bookingZoom->id,
+                                                        'nama_acara'       => $bookingZoom->nama_acara,
+                                                        'penyelenggara'    => $bookingZoom->penyelenggara,
+                                                        'jumlah_peserta'   => $bookingZoom->jumlah_peserta,
+                                                        'tipe_pertemuan'   => ucfirst($bookingZoom->tipe_pertemuan),
+                                                        'nama_ruangan'     => $bookingZoom->nama_ruangan ?? 'Online Zoom',
+                                                        'booking_date'     => \Carbon\Carbon::parse($bookingZoom->booking_date)->translatedFormat('l, d F Y'),
+                                                        'start_time'       => substr($bookingZoom->start_time, 0, 5),
+                                                        'end_time'         => substr($bookingZoom->end_time, 0, 5),
+                                                        'layout_meja'      => $bookingZoom->layout_meja ?: '-',
+                                                        'setup_podium'     => $bookingZoom->setup_podium_data,
+                                                        'special_requests' => $bookingZoom->special_requests_data,
+                                                        'fasilitas'        => $bookingZoom->fasilitas,
+                                                        'zoom_account'     => $bookingZoom->zoom_account,
+                                                        'zoom_link'        => $bookingZoom->zoom_link,
+                                                        'keterangan'       => $bookingZoom->keterangan,
+                                                    ];
+                                                @endphp
+                                                <div class="p-2.5 rounded-xl bg-sky-50/90 border border-sky-200 text-sky-900 shadow-2xs hover:bg-sky-100/60 cursor-pointer transition"
+                                                     @click="openDetail({{ json_encode($bPayloadZ) }})"
+                                                     title="Klik untuk melihat detail rapat & zoom">
+                                                    <div class="flex items-center justify-between">
+                                                        <p class="font-bold text-[11px] truncate">{{ $bookingZoom->nama_acara }}</p>
+                                                        <span class="text-[9px] font-bold px-1.5 py-0.5 bg-sky-200 text-sky-800 rounded">
+                                                            {{ $bookingZoom->zoom_account === 'zoom_1' ? 'Zoom 1' : ($bookingZoom->zoom_account === 'zoom_2' ? 'Zoom 2' : 'Eksternal') }}
+                                                        </span>
+>>>>>>> a59eefc (feat: pembaruan persetujuan kegiatan, lifecycle status pelaksanaan, perbaikan export/cetak, dan manajemen sarpras ruangan terstruktur (layout, podium, 11 special requests))
                                                     </div>
                                                     @else
                                                     <button type="button"
@@ -566,6 +766,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                 {{ $bList->count() }} Kegiatan
                             </span>
                         </div>
+<<<<<<< HEAD
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                             @foreach($bList as $bk)
@@ -576,6 +777,90 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                         class="text-[10px] font-bold px-2 py-0.5 rounded {{ $bk->venue_id == 1 ? 'bg-blue-50 text-blue-700' : ($bk->venue_id == 2 ? 'bg-purple-50 text-purple-700' : ($bk->venue_id == 3 ? 'bg-emerald-50 text-emerald-700' : 'bg-sky-50 text-sky-700')) }}">
                                         {{ $bk->nama_ruangan ?: ($bk->zoom_account ? 'Online Zoom' : '-') }}
                                     </span>
+=======
+                    @else
+                        <div class="space-y-3">
+                            @foreach($monthlyBookings->groupBy('booking_date') as $bDate => $bList)
+                                <div class="p-4 rounded-xl border border-gray-200 bg-gray-50/50 space-y-2.5">
+                                    <div class="flex items-center justify-between border-b border-gray-200 pb-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                                            <strong class="text-xs font-bold text-gray-800">
+                                                 {{ \Carbon\Carbon::parse($bDate)->translatedFormat('l, d F Y') }}
+                                            </strong>
+                                        </div>
+                                        <span class="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
+                                            {{ $bList->count() }} Kegiatan
+                                        </span>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                                        @foreach($bList as $bk)
+                                            @php
+                                                $bPayloadM = [
+                                                    'id'               => $bk->id,
+                                                    'nama_acara'       => $bk->nama_acara,
+                                                    'penyelenggara'    => $bk->penyelenggara,
+                                                    'jumlah_peserta'   => $bk->jumlah_peserta,
+                                                    'tipe_pertemuan'   => ucfirst($bk->tipe_pertemuan),
+                                                    'nama_ruangan'     => $bk->nama_ruangan ?: ($bk->zoom_account ? 'Online Zoom' : '-'),
+                                                    'booking_date'     => \Carbon\Carbon::parse($bk->booking_date)->translatedFormat('l, d F Y'),
+                                                    'start_time'       => substr($bk->start_time, 0, 5),
+                                                    'end_time'         => substr($bk->end_time, 0, 5),
+                                                    'layout_meja'      => $bk->layout_meja ?: 'Classroom',
+                                                    'setup_podium'     => $bk->setup_podium_data,
+                                                    'special_requests' => $bk->special_requests_data,
+                                                    'fasilitas'        => $bk->fasilitas,
+                                                    'zoom_account'     => $bk->zoom_account,
+                                                    'zoom_link'        => $bk->zoom_link,
+                                                    'keterangan'       => $bk->keterangan,
+                                                ];
+                                            @endphp
+                                            <div class="p-3 bg-white rounded-xl border border-gray-200 shadow-2xs space-y-2 hover:border-blue-300 transition cursor-pointer"
+                                                 @click="openDetail({{ json_encode($bPayloadM) }})">
+                                                <div class="flex items-start justify-between gap-2">
+                                                    <h5 class="text-xs font-bold text-gray-900 hover:text-blue-600 transition">{{ $bk->nama_acara }}</h5>
+                                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded {{ $bk->venue_id == 1 ? 'bg-blue-50 text-blue-700' : ($bk->venue_id == 2 ? 'bg-purple-50 text-purple-700' : ($bk->venue_id == 3 ? 'bg-emerald-50 text-emerald-700' : 'bg-sky-50 text-sky-700')) }}">
+                                                        {{ $bk->nama_ruangan ?: ($bk->zoom_account ? 'Online Zoom' : '-') }}
+                                                    </span>
+                                                </div>
+                                                <p class="text-[11px] text-gray-500">
+                                                    ⏰ {{ substr($bk->start_time, 0, 5) }} - {{ substr($bk->end_time, 0, 5) }} • PJ: {{ $bk->penyelenggara }}
+                                                    @if($bk->jumlah_peserta)
+                                                        • 👥 <strong>{{ $bk->jumlah_peserta }} Peserta</strong>
+                                                    @endif
+                                                </p>
+                                                
+                                                {{-- Ringkasan Sarpras (A, B, C) --}}
+                                                <div class="p-2 bg-slate-50 rounded-lg border border-slate-100 text-[10px] text-slate-700 space-y-1">
+                                                    <div class="flex items-center gap-2 flex-wrap">
+                                                        <span class="px-1.5 py-0.5 bg-white border border-slate-200 rounded font-medium">🪑 {{ $bk->layout_meja ?: 'Classroom' }}</span>
+                                                        @if(!empty($bk->setup_podium_data['tipe']) && $bk->setup_podium_data['tipe'] !== 'Tanpa Podium')
+                                                            <span class="px-1.5 py-0.5 bg-white border border-slate-200 rounded font-medium">🏛️ {{ $bk->setup_podium_data['tipe'] }} ({{ $bk->setup_podium_data['jumlah_kursi'] ?? 0 }} Kursi)</span>
+                                                        @endif
+                                                        @if(!empty($bk->setup_podium_data['pasang_spanduk']))
+                                                            <span class="px-1.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded font-medium">🚩 Spanduk</span>
+                                                        @endif
+                                                    </div>
+                                                    @if(!empty($bk->special_requests_data['items']))
+                                                        <p class="text-slate-500 truncate">✨ {{ implode(', ', $bk->special_requests_data['items']) }}</p>
+                                                    @endif
+                                                </div>
+
+                                                <div class="pt-1 flex items-center justify-between text-[11px]">
+                                                    <button type="button" class="text-blue-600 font-bold hover:underline text-[10px] flex items-center gap-1">
+                                                        <span>🔍 Lihat Detail Sarpras</span> &rarr;
+                                                    </button>
+                                                    @if($bk->zoom_link)
+                                                        <a href="{{ $bk->zoom_link }}" target="_blank" @click.stop class="text-indigo-600 font-bold hover:underline text-[10px]">
+                                                            Link Zoom &rarr;
+                                                        </a>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+>>>>>>> a59eefc (feat: pembaruan persetujuan kegiatan, lifecycle status pelaksanaan, perbaikan export/cetak, dan manajemen sarpras ruangan terstruktur (layout, podium, 11 special requests))
                                 </div>
                                 <p class="text-[11px] text-gray-500 inline-flex items-center gap-1">
                                     <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor"
@@ -777,78 +1062,225 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                     </div>
                 </div>
 
-                {{-- Pilihan Fasilitas Sarpras & Permintaan Microphone (Interactive Selector) --}}
-                <div x-show="tipePertemuan === 'offline' || tipePertemuan === 'hybrid'" class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-                        <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">
-                            🎙️ Fasilitas Sarpras & Kebutuhan Ruangan
-                        </label>
-                        <span class="text-[10px] text-slate-500">Pilih kebutuhan sarpras</span>
+                {{-- Pilihan Fasilitas Sarpras Terstruktur (Man Ruangan: A, B, C) --}}
+                <div x-show="tipePertemuan === 'offline' || tipePertemuan === 'hybrid'" class="space-y-4 bg-slate-50/90 p-4 sm:p-5 rounded-2xl border border-slate-200">
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-2.5">
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-2xs">🏢</span>
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Manajemen Ruangan & Sarpras</h4>
+                                <p class="text-[11px] text-slate-500">Konfigurasi layout ruangan, setup panggung, dan kebutuhan khusus</p>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md">Sarpras BPS</span>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {{-- 1. Pilihan Jumlah Microphone --}}
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                                Jumlah Microphone (Wireless/Podium)
+                    {{-- ========================================================
+                        A. SET UP RUANGAN (LAYOUT TATA LETAK MEJA & KURSI)
+                    ========================================================= --}}
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2 text-xs font-bold text-slate-800 uppercase tracking-wider">
+                            <span class="w-5 h-5 rounded-md bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-bold">A</span>
+                            <span>Set Up Ruangan (Layout / Tata Letak)</span>
+                        </label>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
+                                   :class="layoutMeja === 'Classroom' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'">
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <input type="radio" name="layout_meja" value="Classroom" x-model="layoutMeja" class="text-blue-600">
+                                    <span class="text-[11px]">Classroom</span>
+                                </div>
+                                <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Baris meja & kursi kelas (Default)</span>
                             </label>
-                            <select name="mic_count" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="0">Tidak butuh Microphone</option>
-                                <option value="1">1 Microphone Wireless</option>
-                                <option value="2" selected>2 Microphone Wireless</option>
-                                <option value="3">3 Microphone Wireless</option>
-                                <option value="4">4 Microphone Wireless</option>
-                                <option value="5">5 Microphone Wireless</option>
-                                <option value="6+">6+ Microphone (Acara Besar / Panelis)</option>
-                            </select>
-                        </div>
 
-                        {{-- 2. Pilihan Tata Letak (Layout) Meja & Kursi --}}
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                                Susunan / Layout Meja & Kursi
+                            <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
+                                   :class="layoutMeja === 'U-Shape' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'">
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <input type="radio" name="layout_meja" value="U-Shape" x-model="layoutMeja" class="text-blue-600">
+                                    <span class="text-[11px]">U-Shape</span>
+                                </div>
+                                <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Bentuk huruf U / tapal kuda</span>
                             </label>
-                            <select name="layout_meja" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="U-Shape">U-Shape (Bentuk Tapal Kuda)</option>
-                                <option value="Classroom" selected>Classroom (Baris Meja Kelas)</option>
-                                <option value="Round Table">Round Table (Meja Bundar Diskusi)</option>
-                                <option value="Theater">Theater (Hanya Kursi Berjejer)</option>
-                                <option value="Boardroom">Boardroom (Meja Rapat Oval Tengah)</option>
-                                <option value="Custom">Custom / Menyesuaikan Ruangan</option>
-                            </select>
+
+                            <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
+                                   :class="layoutMeja === 'Theater' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'">
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <input type="radio" name="layout_meja" value="Theater" x-model="layoutMeja" class="text-blue-600">
+                                    <span class="text-[11px]">Theatre / Teater</span>
+                                </div>
+                                <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Hanya kursi berjejer tanpa meja</span>
+                            </label>
+
+                            <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
+                                   :class="layoutMeja === 'Round Table' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'">
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <input type="radio" name="layout_meja" value="Round Table" x-model="layoutMeja" class="text-blue-600">
+                                    <span class="text-[11px]">Round Table</span>
+                                </div>
+                                <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Meja bundar kelompok diskusi</span>
+                            </label>
+
+                            <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
+                                   :class="layoutMeja === 'Boardroom' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'">
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <input type="radio" name="layout_meja" value="Boardroom" x-model="layoutMeja" class="text-blue-600">
+                                    <span class="text-[11px]">Boardroom</span>
+                                </div>
+                                <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Satu meja rapat oval / panjang</span>
+                            </label>
+
+                            <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
+                                   :class="layoutMeja === 'Hollow Square' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'">
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <input type="radio" name="layout_meja" value="Hollow Square" x-model="layoutMeja" class="text-blue-600">
+                                    <span class="text-[11px]">Hollow Square</span>
+                                </div>
+                                <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Persegi berongga tengah</span>
+                            </label>
+
+                            <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between sm:col-span-2"
+                                   :class="layoutMeja === 'Custom Layout' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'">
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <input type="radio" name="layout_meja" value="Custom Layout" x-model="layoutMeja" class="text-blue-600">
+                                    <span class="text-[11px]">Custom / Menyesuaikan</span>
+                                </div>
+                                <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Tata letak khusus disesuaikan kebutuhan acara</span>
+                            </label>
                         </div>
                     </div>
 
-                    {{-- 3. Checklist Fasilitas Tambahan --}}
-                    <div>
-                        <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">
-                            Perlengkapan & Audio Visual Tambahan
+                    {{-- ========================================================
+                        B. SET UP PODIUM (PANGGUNG, PODIUM, KURSI & SPANDUK)
+                    ========================================================= --}}
+                    <div class="pt-3 border-t border-slate-200 space-y-3">
+                        <label class="flex items-center gap-2 text-xs font-bold text-slate-800 uppercase tracking-wider">
+                            <span class="w-5 h-5 rounded-md bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-bold">B</span>
+                            <span>Set Up Podium & Panggung Depan</span>
                         </label>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
-                                <input type="checkbox" name="fasilitas_list[]" value="Proyektor & Screen" checked class="rounded text-blue-600">
-                                <span>Proyektor & Layar</span>
+                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-white p-3.5 rounded-xl border border-slate-200">
+                            {{-- Tipe Podium --}}
+                            <div class="sm:col-span-5">
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1">
+                                    Tipe Set Up Podium / Panggung
+                                </label>
+                                <select name="tipe_podium" x-model="tipePodium" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold">
+                                    <option value="Podium Standar">Podium Standar (Mimbar Pidato)</option>
+                                    <option value="Meja & Kursi Panelis">Meja & Kursi Panelis / Narasumber</option>
+                                    <option value="Set Sofa VIP">Set Sofa VIP Panggung</option>
+                                    <option value="Kombinasi (Podium + Panelis)">Kombinasi (Podium + Meja Panelis)</option>
+                                    <option value="Tanpa Podium">Tanpa Podium / Flat</option>
+                                </select>
+                            </div>
+
+                            {{-- Jumlah Kursi / Sofa Podium --}}
+                            <div class="sm:col-span-3">
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1">
+                                    Jml Kursi/Sofa Panggung
+                                </label>
+                                <select name="jumlah_kursi_podium" x-model="jumlahKursiPodium" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold">
+                                    <option value="0">0 (Tanpa Kursi)</option>
+                                    <option value="1">1 Kursi/Sofa</option>
+                                    <option value="2">2 Kursi/Sofa</option>
+                                    <option value="3">3 Kursi/Sofa</option>
+                                    <option value="4">4 Kursi/Sofa</option>
+                                    <option value="5">5 Kursi/Sofa</option>
+                                    <option value="6">6 Kursi/Sofa</option>
+                                    <option value="8">8 Kursi/Sofa</option>
+                                    <option value="10">10+ Kursi/Sofa</option>
+                                </select>
+                            </div>
+
+                            {{-- Pasang Spanduk & Keterangan --}}
+                            <div class="sm:col-span-4 space-y-1.5">
+                                <label class="flex items-center gap-2 text-[11px] font-bold text-slate-800 cursor-pointer pt-1">
+                                    <input type="checkbox" name="pasang_spanduk" value="1" x-model="pasangSpanduk" class="rounded text-blue-600 focus:ring-blue-500">
+                                    <span>Pasang Spanduk / Backdrop</span>
+                                </label>
+                                <div x-show="pasangSpanduk">
+                                    <input type="text"
+                                           name="keterangan_spanduk"
+                                           x-model="keteranganSpanduk"
+                                           placeholder="Ukuran / tema spanduk (contoh: 4x2 m)"
+                                           class="w-full px-2.5 py-1.5 text-[11px] rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- ========================================================
+                        C. TAMBAH SPECIAL REQUEST (11 ITEM LENGKAP)
+                    ========================================================= --}}
+                    <div class="pt-3 border-t border-slate-200 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label class="flex items-center gap-2 text-xs font-bold text-slate-800 uppercase tracking-wider">
+                                <span class="w-5 h-5 rounded-md bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-bold">C</span>
+                                <span>Tambah Special Request (Permintaan Khusus)</span>
                             </label>
-                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
-                                <input type="checkbox" name="fasilitas_list[]" value="Sound System Standard" checked class="rounded text-blue-600">
-                                <span>Sound System</span>
+                            <span class="text-[10px] text-slate-400">11 Kebutuhan Sarpras</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                            {{-- 1. Tambah Mic (dengan selector jumlah) --}}
+                            <div class="p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-1 sm:col-span-2 lg:col-span-1">
+                                <label class="block text-xs font-bold text-slate-800">
+                                    🎙️ 1. Tambah Mic
+                                </label>
+                                <select name="mic_count" x-model="micCount" class="w-full px-2.5 py-1.5 text-[11px] rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold">
+                                    <option value="0">Tidak butuh Mic</option>
+                                    <option value="1">1 Microphone Wireless</option>
+                                    <option value="2">2 Microphone Wireless</option>
+                                    <option value="3">3 Microphone Wireless</option>
+                                    <option value="4">4 Microphone Wireless</option>
+                                    <option value="5">5 Microphone Wireless</option>
+                                    <option value="6+">6+ Microphone Panelis</option>
+                                </select>
+                            </div>
+
+                            {{-- 2. Tambah Colokan --}}
+                            <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs cursor-pointer shadow-2xs transition">
+                                <input type="checkbox" name="special_requests_list[]" value="Tambah Colokan / Stop Kontak Ekstra" checked class="rounded text-blue-600">
+                                <div>
+                                    <span class="font-bold text-slate-800">🔌 2. Tambah Colokan</span>
+                                    <p class="text-[10px] text-slate-400">Terminal stop kontak ekstra</p>
+                                </div>
                             </label>
-                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
-                                <input type="checkbox" name="fasilitas_list[]" value="Smart TV / Camera Vicon 360" class="rounded text-blue-600">
-                                <span>Camera Vicon 360</span>
+
+                            {{-- 3. Sofa Depan VIP --}}
+                            <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs cursor-pointer shadow-2xs transition">
+                                <input type="checkbox" name="special_requests_list[]" value="Sofa Depan VIP" class="rounded text-blue-600">
+                                <div>
+                                    <span class="font-bold text-slate-800">🛋️ 3. Sofa Depan VIP</span>
+                                    <p class="text-[10px] text-slate-400">Baris depan tamu VIP</p>
+                                </div>
                             </label>
-                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
-                                <input type="checkbox" name="fasilitas_list[]" value="Wireless Laser Pointer" checked class="rounded text-blue-600">
-                                <span>Laser Pointer</span>
+
+                            {{-- 4. Monitor Pimpinan --}}
+                            <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs cursor-pointer shadow-2xs transition">
+                                <input type="checkbox" name="special_requests_list[]" value="Monitor Pimpinan" class="rounded text-blue-600">
+                                <div>
+                                    <span class="font-bold text-slate-800">🖥️ 4. Monitor Pimpinan</span>
+                                    <p class="text-[10px] text-slate-400">Standing monitor / prompter</p>
+                                </div>
                             </label>
-                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
-                                <input type="checkbox" name="fasilitas_list[]" value="Whiteboard & Spidol" class="rounded text-blue-600">
-                                <span>Whiteboard / Spidol</span>
+
+                            {{-- 5. Name Desk --}}
+                            <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs cursor-pointer shadow-2xs transition">
+                                <input type="checkbox" name="special_requests_list[]" value="Name Desk" class="rounded text-blue-600">
+                                <div>
+                                    <span class="font-bold text-slate-800">🏷️ 5. Name Desk</span>
+                                    <p class="text-[10px] text-slate-400">Papan nama meja pimpinan/narasumber</p>
+                                </div>
                             </label>
-                            <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
-                                <input type="checkbox" name="fasilitas_list[]" value="Stop Kontak Ekstra" checked class="rounded text-blue-600">
-                                <span>Stop Kontak Ekstra</span>
+
+                            {{-- 6. Meja Konsumsi --}}
+                            <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs cursor-pointer shadow-2xs transition">
+                                <input type="checkbox" name="special_requests_list[]" value="Meja Konsumsi" checked class="rounded text-blue-600">
+                                <div>
+                                    <span class="font-bold text-slate-800">☕ 6. Meja Konsumsi</span>
+                                    <p class="text-[10px] text-slate-400">Coffee break / snack / makan</p>
+                                </div>
                             </label>
+<<<<<<< HEAD
                             <label class="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200 text-xs cursor-pointer hover:bg-slate-50 transition">
                                 <input type="checkbox" name="fasilitas_list[]" value="Sofa Depan VIP" class="rounded text-blue-600">
                                 <span>Sofa Depan VIP</span>
@@ -877,6 +1309,56 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                 <input type="checkbox" name="fasilitas_list[]" value="Meja Notulensi" class="rounded text-blue-600">
                                 <span>Meja Notulensi</span>
                             </label>
+=======
+
+                            {{-- 7. Meja Registrasi --}}
+                            <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs cursor-pointer shadow-2xs transition">
+                                <input type="checkbox" name="special_requests_list[]" value="Meja Registrasi" checked class="rounded text-blue-600">
+                                <div>
+                                    <span class="font-bold text-slate-800">📝 7. Meja Registrasi</span>
+                                    <p class="text-[10px] text-slate-400">Presensi tamu di pintu masuk</p>
+                                </div>
+                            </label>
+
+                            {{-- 8. Ruang Transit --}}
+                            <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs cursor-pointer shadow-2xs transition">
+                                <input type="checkbox" name="special_requests_list[]" value="Ruang Transit VIP" class="rounded text-blue-600">
+                                <div>
+                                    <span class="font-bold text-slate-800">🚪 8. Ruang Transit</span>
+                                    <p class="text-[10px] text-slate-400">Ruang transit pejabat / VIP</p>
+                                </div>
+                            </label>
+
+                            {{-- 9. Meja Asrot --}}
+                            <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs cursor-pointer shadow-2xs transition">
+                                <input type="checkbox" name="special_requests_list[]" value="Meja Asrot (Operator Slide)" checked class="rounded text-blue-600">
+                                <div>
+                                    <span class="font-bold text-slate-800">💻 9. Meja Asrot</span>
+                                    <p class="text-[10px] text-slate-400">Asisten sorot / operator presentasi</p>
+                                </div>
+                            </label>
+
+                            {{-- 10. Meja Notulensi --}}
+                            <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs cursor-pointer shadow-2xs transition">
+                                <input type="checkbox" name="special_requests_list[]" value="Meja Notulensi" checked class="rounded text-blue-600">
+                                <div>
+                                    <span class="font-bold text-slate-800">📋 10. Meja Notulensi</span>
+                                    <p class="text-[10px] text-slate-400">Meja tim pencatat rapat</p>
+                                </div>
+                            </label>
+
+                            {{-- 11. Lainnya..... --}}
+                            <div class="p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs sm:col-span-2 lg:col-span-2 space-y-1">
+                                <label class="block text-xs font-bold text-slate-800">
+                                    ✨ 11. Permintaan Sarpras Lainnya
+                                </label>
+                                <input type="text"
+                                       name="special_lainnya"
+                                       x-model="specialLainnya"
+                                       placeholder="Tuliskan permintaan khusus lainnya..."
+                                       class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            </div>
+>>>>>>> a59eefc (feat: pembaruan persetujuan kegiatan, lifecycle status pelaksanaan, perbaikan export/cetak, dan manajemen sarpras ruangan terstruktur (layout, podium, 11 special requests))
                         </div>
                     </div>
                 </div>
@@ -962,6 +1444,166 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                     </button>
                 </div>
             </form>
+
+        </div>
+    </div>
+
+    {{-- =========================================================
+        MODAL POPUP: DETAIL RESERVASI RUANGAN & SARPRAS
+    ========================================================== --}}
+    <div x-show="detailModalOpen"
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 sm:p-6"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+
+        {{-- Backdrop --}}
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" @click="detailModalOpen = false"></div>
+
+        {{-- Modal Content Card --}}
+        <div class="relative bg-white rounded-2xl shadow-2xl border border-gray-200 max-w-2xl w-full p-6 sm:p-7 overflow-hidden z-10 space-y-5"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95">
+
+            <template x-if="selectedBooking">
+                <div class="space-y-5">
+                    {{-- Header --}}
+                    <div class="flex items-start justify-between pb-3 border-b border-gray-100">
+                        <div class="flex items-start gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-lg shrink-0">
+                                🏢
+                            </div>
+                            <div>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 uppercase tracking-wider"
+                                      x-text="selectedBooking.tipe_pertemuan"></span>
+                                <h3 class="text-base font-bold text-gray-900 mt-1" x-text="selectedBooking.nama_acara"></h3>
+                                <p class="text-xs text-gray-500">
+                                    PJ / Penyelenggara: <strong class="text-gray-800" x-text="selectedBooking.penyelenggara"></strong>
+                                </p>
+                            </div>
+                        </div>
+                        <button type="button" @click="detailModalOpen = false" class="text-gray-400 hover:text-gray-600 text-xl font-bold p-1">&times;</button>
+                    </div>
+
+                    {{-- Informasi Waktu & Lokasi --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-gray-50 p-3.5 rounded-xl border border-gray-200 text-xs">
+                        <div class="space-y-1">
+                            <span class="text-gray-400 font-medium text-[11px]">📅 Tanggal & Waktu:</span>
+                            <p class="font-bold text-gray-800" x-text="selectedBooking.booking_date"></p>
+                            <p class="text-blue-600 font-bold" x-text="'⏰ ' + selectedBooking.start_time + ' - ' + selectedBooking.end_time + ' WITA'"></p>
+                        </div>
+                        <div class="space-y-1">
+                            <span class="text-gray-400 font-medium text-[11px]">📍 Ruangan / Venue:</span>
+                            <p class="font-bold text-gray-800" x-text="selectedBooking.nama_ruangan"></p>
+                            <p class="text-gray-600" x-text="'👥 ' + (selectedBooking.jumlah_peserta ? selectedBooking.jumlah_peserta + ' Peserta' : 'Jumlah peserta disesuaikan')"></p>
+                        </div>
+                    </div>
+
+                    {{-- Zoom Info (Jika ada) --}}
+                    <template x-if="selectedBooking.zoom_link">
+                        <div class="p-3 bg-indigo-50/70 border border-indigo-200 rounded-xl space-y-1.5 text-xs">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-indigo-900">💻 Akses Zoom Meeting:</span>
+                                <span class="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded" x-text="selectedBooking.zoom_account === 'zoom_1' ? 'Akun Zoom 1' : (selectedBooking.zoom_account === 'zoom_2' ? 'Akun Zoom 2' : 'Zoom Eksternal')"></span>
+                            </div>
+                            <div class="flex items-center justify-between text-[11px] pt-1 border-t border-indigo-100">
+                                <a :href="selectedBooking.zoom_link" target="_blank" class="text-blue-600 font-bold hover:underline truncate" x-text="selectedBooking.zoom_link"></a>
+                                <button type="button"
+                                        @click="copyToClipboard(selectedBooking.zoom_link, 'Zoom')"
+                                        class="px-2 py-0.5 bg-white border border-indigo-200 rounded text-[10px] font-bold text-indigo-700 hover:bg-indigo-50 shrink-0">
+                                    Salin Link
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+
+                    {{-- RINCIAN SARPRAS LENGKAP: A, B, C --}}
+                    <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
+                        <h4 class="font-bold text-slate-800 uppercase tracking-wider text-[11px] pb-1.5 border-b border-slate-200 flex items-center justify-between">
+                            <span>🏛️ Rincian Manajemen Ruangan & Sarpras</span>
+                            <span class="text-blue-600 text-[10px] font-bold">Terverifikasi</span>
+                        </h4>
+
+                        {{-- Section A --}}
+                        <div class="flex items-start gap-2">
+                            <span class="w-5 h-5 rounded bg-blue-100 text-blue-700 font-bold text-[10px] flex items-center justify-center shrink-0">A</span>
+                            <div>
+                                <span class="text-slate-500 font-medium">Set Up Ruangan (Layout):</span>
+                                <p class="font-bold text-slate-900" x-text="selectedBooking.layout_meja || 'Classroom (Default)'"></p>
+                            </div>
+                        </div>
+
+                        {{-- Section B --}}
+                        <div class="flex items-start gap-2 pt-2 border-t border-slate-200/60">
+                            <span class="w-5 h-5 rounded bg-blue-100 text-blue-700 font-bold text-[10px] flex items-center justify-center shrink-0">B</span>
+                            <div class="space-y-1">
+                                <span class="text-slate-500 font-medium">Set Up Podium & Panggung:</span>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="font-bold text-slate-900" x-text="(selectedBooking.setup_podium && selectedBooking.setup_podium.tipe) ? selectedBooking.setup_podium.tipe : 'Podium Standar'"></span>
+                                    <template x-if="selectedBooking.setup_podium && selectedBooking.setup_podium.jumlah_kursi > 0">
+                                        <span class="px-1.5 py-0.5 bg-white rounded border border-slate-200 text-[10px] font-semibold text-slate-700"
+                                              x-text="selectedBooking.setup_podium.jumlah_kursi + ' Kursi/Sofa Panggung'"></span>
+                                    </template>
+                                    <template x-if="selectedBooking.setup_podium && selectedBooking.setup_podium.pasang_spanduk">
+                                        <span class="px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded text-[10px] font-bold">
+                                            🚩 Pasang Spanduk <span x-show="selectedBooking.setup_podium.keterangan_spanduk" x-text="'(' + selectedBooking.setup_podium.keterangan_spanduk + ')'"></span>
+                                        </span>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Section C --}}
+                        <div class="flex items-start gap-2 pt-2 border-t border-slate-200/60">
+                            <span class="w-5 h-5 rounded bg-blue-100 text-blue-700 font-bold text-[10px] flex items-center justify-center shrink-0">C</span>
+                            <div class="space-y-1.5 w-full">
+                                <span class="text-slate-500 font-medium">Special Request (Permintaan Khusus):</span>
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <template x-if="selectedBooking.special_requests && selectedBooking.special_requests.items && selectedBooking.special_requests.items.length > 0">
+                                        <template x-for="(reqItem, idx) in selectedBooking.special_requests.items" :key="idx">
+                                            <span class="px-2 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-semibold text-slate-800 shadow-2xs"
+                                                  x-text="reqItem"></span>
+                                        </template>
+                                    </template>
+                                    <template x-if="!selectedBooking.special_requests || !selectedBooking.special_requests.items || selectedBooking.special_requests.items.length === 0">
+                                        <span class="text-slate-400 italic text-[11px]">Standar perlengkapan ruangan</span>
+                                    </template>
+                                </div>
+                                <template x-if="selectedBooking.special_requests && selectedBooking.special_requests.lainnya">
+                                    <p class="text-[11px] text-slate-600 bg-white p-2 rounded-lg border border-slate-200 mt-1">
+                                        <strong>Catatan Tambahan:</strong> <span x-text="selectedBooking.special_requests.lainnya"></span>
+                                    </p>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Keterangan Tambahan --}}
+                    <template x-if="selectedBooking.keterangan">
+                        <div class="p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-xs space-y-0.5">
+                            <span class="font-bold text-amber-900">Catatan Khusus Penyelenggara:</span>
+                            <p class="text-amber-800 font-medium" x-text="selectedBooking.keterangan"></p>
+                        </div>
+                    </template>
+
+                    {{-- Footer Button --}}
+                    <div class="pt-3 border-t border-gray-100 flex items-center justify-end">
+                        <button type="button"
+                                @click="detailModalOpen = false"
+                                class="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold rounded-xl transition">
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+            </template>
 
         </div>
     </div>

@@ -22,6 +22,8 @@ class RoomBooking extends Model
         'nama_ruangan',
         'fasilitas',
         'layout_meja',
+        'setup_podium',
+        'special_requests',
         'zoom_account',
         'zoom_link',
         'zoom_meeting_id',
@@ -85,6 +87,63 @@ class RoomBooking extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Accessor untuk Data Setup Podium
+     */
+    public function getSetupPodiumDataAttribute()
+    {
+        if (empty($this->setup_podium)) {
+            return [
+                'tipe'               => 'Tanpa Podium',
+                'jumlah_kursi'       => 0,
+                'pasang_spanduk'     => false,
+                'keterangan_spanduk' => null,
+            ];
+        }
+        $decoded = json_decode($this->setup_podium, true);
+        if (is_array($decoded)) {
+            return array_merge([
+                'tipe'               => 'Tanpa Podium',
+                'jumlah_kursi'       => 0,
+                'pasang_spanduk'     => false,
+                'keterangan_spanduk' => null,
+            ], $decoded);
+        }
+        return [
+            'tipe'               => $this->setup_podium,
+            'jumlah_kursi'       => 0,
+            'pasang_spanduk'     => false,
+            'keterangan_spanduk' => null,
+        ];
+    }
+
+    /**
+     * Accessor untuk Data Special Requests
+     */
+    public function getSpecialRequestsDataAttribute()
+    {
+        if (empty($this->special_requests)) {
+            return [
+                'items'     => [],
+                'mic_count' => null,
+                'lainnya'   => null,
+            ];
+        }
+        $decoded = json_decode($this->special_requests, true);
+        if (is_array($decoded)) {
+            return array_merge([
+                'items'     => [],
+                'mic_count' => null,
+                'lainnya'   => null,
+            ], $decoded);
+        }
+        return [
+            'items'     => array_filter(array_map('trim', explode(',', $this->special_requests))),
+            'mic_count' => null,
+            'lainnya'   => null,
+        ];
     }
 
     /**

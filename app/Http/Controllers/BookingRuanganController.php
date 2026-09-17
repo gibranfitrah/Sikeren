@@ -252,35 +252,81 @@ class BookingRuanganController extends Controller
             $zoomPasscode = $request->zoom_passcode_custom ?? null;
         }
 
-        // Susun Fasilitas Terpilih (Mic + Checklist Sarpras)
-        $fasilitasList = $request->input('fasilitas_list', []);
-        if ($request->mic_count && $request->mic_count !== 'none' && $request->mic_count !== '0') {
-            array_unshift($fasilitasList, $request->mic_count . ' Mic Wireless');
+        // Susun Data Section A, B, C Sarpras
+        $layoutMeja = $request->input('layout_meja', 'Classroom');
+
+        // Section B: Setup Podium
+        $setupPodium = [
+            'tipe'               => $request->input('tipe_podium', 'Tanpa Podium'),
+            'jumlah_kursi'       => (int) $request->input('jumlah_kursi_podium', 0),
+            'pasang_spanduk'     => $request->boolean('pasang_spanduk'),
+            'keterangan_spanduk' => $request->input('keterangan_spanduk'),
+        ];
+        $setupPodiumJson = json_encode($setupPodium);
+
+        // Section C: Special Requests (11 Items)
+        $specialReqItems = (array) $request->input('special_requests_list', []);
+        $micCount = $request->input('mic_count', '0');
+        if ($micCount && $micCount !== '0' && $micCount !== 'none') {
+            $micLabel = 'Tambah Mic (' . $micCount . ' Mic)';
+            if (!in_array($micLabel, $specialReqItems)) {
+                array_unshift($specialReqItems, $micLabel);
+            }
         }
-        $fasilitasString = !empty($fasilitasList) ? implode(', ', $fasilitasList) : null;
+        $specialRequestsData = [
+            'items'     => array_values(array_unique($specialReqItems)),
+            'mic_count' => ($micCount && $micCount !== '0' && $micCount !== 'none') ? $micCount : null,
+            'lainnya'   => $request->input('special_lainnya'),
+        ];
+        $specialRequestsJson = json_encode($specialRequestsData);
+
+        // Ringkasan Fasilitas Gabungan untuk Kompatibilitas
+        $summaryParts = [];
+        if ($layoutMeja) {
+            $summaryParts[] = 'Layout: ' . $layoutMeja;
+        }
+        if (!empty($setupPodium['tipe']) && $setupPodium['tipe'] !== 'Tanpa Podium') {
+            $podiumTxt = 'Podium: ' . $setupPodium['tipe'];
+            if ($setupPodium['jumlah_kursi'] > 0) {
+                $podiumTxt .= ' (' . $setupPodium['jumlah_kursi'] . ' Kursi/Sofa)';
+            }
+            if ($setupPodium['pasang_spanduk']) {
+                $podiumTxt .= ' + Spanduk';
+            }
+            $summaryParts[] = $podiumTxt;
+        }
+        if (!empty($specialReqItems)) {
+            $summaryParts = array_merge($summaryParts, $specialReqItems);
+        }
+        if (!empty($request->special_lainnya)) {
+            $summaryParts[] = 'Catatan: ' . $request->special_lainnya;
+        }
+        $fasilitasString = !empty($summaryParts) ? implode(', ', $summaryParts) : null;
 
         // 1. Simpan ke RoomBooking
         $booking = RoomBooking::create([
-            'task_id'         => $request->task_id ?: null,
-            'nama_acara'      => $request->nama_acara,
-            'penyelenggara'   => $request->penyelenggara,
-            'jumlah_peserta'  => $request->jumlah_peserta ?: null,
-            'tipe_pertemuan'  => $request->tipe_pertemuan,
-            'venue_id'        => $venueId,
-            'nama_ruangan'    => $namaRuangan,
-            'fasilitas'       => $fasilitasString,
-            'layout_meja'     => $request->layout_meja ?: null,
-            'zoom_account'    => $zoomAccount,
-            'zoom_link'       => $zoomLink,
-            'zoom_meeting_id' => $zoomMeetingId,
-            'zoom_passcode'   => $zoomPasscode,
-            'zoom_host_key'   => $zoomHostKey,
-            'booking_date'    => $request->booking_date,
-            'start_time'      => $request->start_time,
-            'end_time'        => $request->end_time,
-            'status'          => 'Disetujui',
-            'keterangan'      => $request->keterangan,
-            'created_by'      => Auth::id(),
+            'task_id'          => $request->task_id ?: null,
+            'nama_acara'       => $request->nama_acara,
+            'penyelenggara'    => $request->penyelenggara,
+            'jumlah_peserta'   => $request->jumlah_peserta ?: null,
+            'tipe_pertemuan'   => $request->tipe_pertemuan,
+            'venue_id'         => $venueId,
+            'nama_ruangan'     => $namaRuangan,
+            'fasilitas'        => $fasilitasString,
+            'layout_meja'      => $layoutMeja,
+            'setup_podium'     => $setupPodiumJson,
+            'special_requests' => $specialRequestsJson,
+            'zoom_account'     => $zoomAccount,
+            'zoom_link'        => $zoomLink,
+            'zoom_meeting_id'  => $zoomMeetingId,
+            'zoom_passcode'    => $zoomPasscode,
+            'zoom_host_key'    => $zoomHostKey,
+            'booking_date'     => $request->booking_date,
+            'start_time'       => $request->start_time,
+            'end_time'         => $request->end_time,
+            'status'           => 'Disetujui',
+            'keterangan'       => $request->keterangan,
+            'created_by'       => Auth::id(),
         ]);
 
         // 2. Jika terhubung dengan Task/Rapat, perbarui detail tempat di tabel Task
@@ -357,12 +403,17 @@ class BookingRuanganController extends Controller
                 'borderColor'     => $color,
                 'textColor'       => '#ffffff',
                 'extendedProps'   => [
-                    'ruangan'       => $b->nama_ruangan ?? 'Online (Tanpa Ruangan)',
-                    'tipe'          => ucfirst($b->tipe_pertemuan),
-                    'penyelenggara' => $b->penyelenggara,
-                    'zoom_account'  => $b->zoom_account,
-                    'zoom_link'     => $b->zoom_link,
-                    'keterangan'    => $b->keterangan
+                    'ruangan'          => $b->nama_ruangan ?? 'Online (Tanpa Ruangan)',
+                    'tipe'             => ucfirst($b->tipe_pertemuan),
+                    'penyelenggara'    => $b->penyelenggara,
+                    'jumlah_peserta'   => $b->jumlah_peserta,
+                    'layout_meja'      => $b->layout_meja,
+                    'setup_podium'     => $b->setup_podium_data,
+                    'special_requests' => $b->special_requests_data,
+                    'fasilitas'        => $b->fasilitas,
+                    'zoom_account'     => $b->zoom_account,
+                    'zoom_link'        => $b->zoom_link,
+                    'keterangan'       => $b->keterangan
                 ]
             ];
         });

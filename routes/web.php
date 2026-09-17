@@ -193,5 +193,6 @@ Route::post('/disposisi', [\App\Http\Controllers\DisposisiController::class, 'st
 
 Route::post('/kegiatan/{id}/approve', [\App\Http\Controllers\KegiatanController::class, 'approve'])->name('kegiatan.approve');
 Route::post('/kegiatan/{id}/reject', [\App\Http\Controllers\KegiatanController::class, 'reject'])->name('kegiatan.reject');
+Route::post('/kegiatan/{id}/status', [\App\Http\Controllers\KegiatanController::class, 'updateStatus'])->name('kegiatan.updateStatus');
 
 });

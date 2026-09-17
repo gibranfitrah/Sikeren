@@ -15,18 +15,40 @@
 
     // Status Styling
     $statusText = $task->status ?? 'Sedang Berjalan';
-    $statusVariant = match(strtolower($statusText)) {
+    $stLower = strtolower(trim($statusText));
+    $statusVariant = match($stLower) {
         'selesai' => 'success',
         'disetujui', 'sedang berjalan' => 'primary',
+        'tertunda' => 'warning',
+        'tidak berjalan', 'ditolak', 'batal', 'dibatalkan' => 'danger',
         'menunggu', 'menunggu persetujuan', 'belum' => 'warning',
-        'ditolak', 'batal' => 'danger',
         default => 'neutral'
     };
 
     $pjNama = $task->penanggung_jawab ?? ($task->pemimpin ?? '-');
+
+    $currentUser = Auth::user();
+    $isPj = false;
+    if ($currentUser) {
+        $cName = strtolower(trim($currentUser->nama_lengkap ?? ''));
+        $cUser = strtolower(trim($currentUser->username ?? ''));
+        $cNip  = trim($currentUser->nipbaru ?? ($currentUser->niplama ?? ''));
+        $pjTarget = strtolower(trim($pjNama));
+        
+        $isPj = ($pjTarget && (str_contains($pjTarget, $cName) || str_contains($cName, $pjTarget) || $cUser === $pjTarget || $cNip === $pjTarget))
+                || ($currentUser->canAccessDetailKegiatan($task) ?? false);
+    }
+
+    $setujuVal  = (int)($task->setuju_rapat ?? 0);
+    $isDone     = ($stLower === 'selesai');
+    $isDelayed  = ($stLower === 'tertunda');
+    $isInactive = ($stLower === 'tidak berjalan' || $stLower === 'dibatalkan');
+    $isRejected = ($setujuVal === 3 || $stLower === 'ditolak');
+    $isApproved = ($setujuVal === 1 || in_array($stLower, ['disetujui', 'sedang berjalan']) || $isDone || $isDelayed || $isInactive);
+    $isWaiting  = ($setujuVal === 0 && !$isApproved && !$isRejected && in_array($stLower, ['menunggu', 'menunggu persetujuan', 'belum']));
 @endphp
 
-<div class="space-y-6 pb-12" x-data="{ modalTambahSub: false, modalEditSub: false, activeSub: null }">
+<div class="space-y-6 pb-12" x-data="{ modalTambahSub: false, modalEditSub: false, activeSub: null, modalUpdateStatus: false, newStatus: '{{ $task->status ?? 'Sedang Berjalan' }}', alasanStatus: '{{ addslashes($task->alasan_status ?? '') }}' }">
 
     {{-- =========================================================================
         1. TOP HEADER & ACTIONS
@@ -85,6 +107,105 @@
             <span>{{ session('success') }}</span>
         </div>
     @endif
+
+    {{-- =========================================================================
+        APPROVAL STATUS & EXECUTION LIFECYCLE BANNER
+    ========================================================================== --}}
+    @php
+        $bannerBg = $isDone ? 'bg-emerald-50/90 border-emerald-200' :
+                   ($isDelayed ? 'bg-amber-50/90 border-amber-300' :
+                   ($isInactive || $isRejected ? 'bg-rose-50/90 border-rose-200' :
+                   ($isApproved ? 'bg-blue-50/90 border-blue-200' : 'bg-amber-50/90 border-amber-200')));
+
+        $iconBg = $isDone ? 'bg-emerald-600 text-white shadow-xs' :
+                 ($isDelayed ? 'bg-amber-500 text-white shadow-xs' :
+                 ($isInactive || $isRejected ? 'bg-rose-600 text-white shadow-xs' :
+                 ($isApproved ? 'bg-blue-600 text-white shadow-xs' : 'bg-amber-500 text-white shadow-xs animate-pulse')));
+    @endphp
+
+    <div class="p-4 sm:p-5 rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 {{ $bannerBg }}">
+        <div class="flex items-start sm:items-center gap-3.5">
+            <div class="w-11 h-11 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 {{ $iconBg }}">
+                @if($isDone)
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                @elseif($isDelayed)
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                @elseif($isInactive || $isRejected)
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                @elseif($isApproved)
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                @else
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                @endif
+            </div>
+            <div class="space-y-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <h4 class="text-xs font-bold uppercase tracking-wider {{ $isDone ? 'text-emerald-900' : ($isDelayed ? 'text-amber-900' : ($isInactive || $isRejected ? 'text-rose-900' : ($isApproved ? 'text-blue-900' : 'text-amber-900'))) }}">
+                        Status Pelaksanaan Kegiatan
+                    </h4>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold uppercase {{ $isDone ? 'bg-emerald-200 text-emerald-800' : ($isDelayed ? 'bg-amber-200 text-amber-800' : ($isInactive || $isRejected ? 'bg-rose-200 text-rose-800' : ($isApproved ? 'bg-blue-200 text-blue-800' : 'bg-amber-200 text-amber-800'))) }}">
+                        {{ $statusText }}
+                    </span>
+                </div>
+                <p class="text-xs {{ $isDone ? 'text-emerald-700' : ($isDelayed ? 'text-amber-700' : ($isInactive || $isRejected ? 'text-rose-700' : ($isApproved ? 'text-blue-700' : 'text-amber-700'))) }}">
+                    @if($isDone)
+                        Kegiatan telah <strong>Selesai</strong> dan seluruh target pengerjaan telah tuntas 100%.
+                    @elseif($isDelayed)
+                        Pelaksanaan kegiatan saat ini berstatus <strong>Tertunda</strong>.
+                    @elseif($isInactive)
+                        Kegiatan berstatus <strong>Tidak Berjalan / Dibatalkan</strong>.
+                    @elseif($isRejected)
+                        Kegiatan ini telah <strong>Ditolak</strong> oleh Penanggung Jawab ({{ $pjNama }}).
+                    @elseif($isApproved)
+                        Kegiatan telah disetujui oleh Penanggung Jawab ({{ $pjNama }}) dan <strong>Sedang Berjalan</strong> aktif.
+                    @else
+                        Menunggu keputusan persetujuan dari Penanggung Jawab (<strong>{{ $pjNama }}</strong>).
+                    @endif
+                </p>
+
+                @if(!empty($task->alasan_status) && ($isDelayed || $isInactive || $isRejected))
+                    <div class="mt-2 p-2.5 rounded-xl bg-white/90 border border-amber-200/80 text-xs text-gray-700 flex items-start gap-2 shadow-2xs">
+                        <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <div>
+                            <span class="font-bold text-gray-800">Catatan / Alasan:</span>
+                            <span class="text-gray-600">{{ $task->alasan_status }}</span>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        {{-- Action Buttons for PJ / Pemimpin --}}
+        <div class="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
+            @if($isPj && $isWaiting)
+                <form action="{{ url('/setuju_rapat') }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menolak kegiatan ini?')">
+                    @csrf
+                    <input type="hidden" name="id" value="{{ $task->id }}">
+                    <input type="hidden" name="setuju_rapat" value="3">
+                    <button type="submit" class="px-4 py-2 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                        Tolak Kegiatan
+                    </button>
+                </form>
+                <form action="{{ url('/setuju_rapat') }}" method="POST" class="inline">
+                    @csrf
+                    <input type="hidden" name="id" value="{{ $task->id }}">
+                    <input type="hidden" name="setuju_rapat" value="1">
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                        Setujui Kegiatan
+                    </button>
+                </form>
+            @elseif($isPj)
+                <button type="button" 
+                        @click="modalUpdateStatus = true"
+                        class="px-4 py-2 bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    <span>Update Status Pelaksanaan</span>
+                </button>
+            @endif
+        </div>
+    </div>
 
     {{-- =========================================================================
         2. SUMMARY KPI METRIC CARDS
@@ -606,7 +727,105 @@
                         Simpan Sub Kegiatan
                     </x-button>
                 </div>
+    {{-- =========================================================================
+        5. MODAL UPDATE STATUS PELAKSANAAN KEGIATAN
+    ========================================================================== --}}
+    <div x-show="modalUpdateStatus" 
+         x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-lg p-6 space-y-4 my-8"
+             @click.away="modalUpdateStatus = false">
+            
+            <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-gray-900 text-base">Update Status Kegiatan</h3>
+                        <p class="text-xs text-gray-400">Atur progres & kelanjutan pelaksanaan agenda</p>
+                    </div>
+                </div>
+                <button type="button" @click="modalUpdateStatus = false" class="text-gray-400 hover:text-gray-600 text-xl font-bold">
+                    &times;
+                </button>
+            </div>
+
+            <div class="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-1">
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Kegiatan</span>
+                <h4 class="font-bold text-gray-900 text-xs">{{ $task->text }}</h4>
+            </div>
+
+            <form action="{{ route('kegiatan.updateStatus', $task->id) }}" method="POST" class="space-y-4">
+                @csrf
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                        Pilih Status Pelaksanaan <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="space-y-2">
+                        <label class="flex items-center justify-between p-3 rounded-xl border cursor-pointer transition hover:bg-emerald-50/50" :class="newStatus === 'Selesai' ? 'bg-emerald-50 border-emerald-300 ring-1 ring-emerald-500' : 'border-gray-200'">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="status" value="Selesai" x-model="newStatus" class="text-emerald-600 focus:ring-emerald-500">
+                                <div>
+                                    <span class="text-xs font-bold text-gray-900 block">Selesai (Tuntas 100%)</span>
+                                    <span class="text-[11px] text-gray-500 block">Seluruh target dan sub kegiatan telah tuntas dikerjakan</span>
+                                </div>
+                            </div>
+                            <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                        </label>
+
+                        <label class="flex items-center justify-between p-3 rounded-xl border cursor-pointer transition hover:bg-blue-50/50" :class="newStatus === 'Sedang Berjalan' ? 'bg-blue-50 border-blue-300 ring-1 ring-blue-500' : 'border-gray-200'">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="status" value="Sedang Berjalan" x-model="newStatus" class="text-blue-600 focus:ring-blue-500">
+                                <div>
+                                    <span class="text-xs font-bold text-gray-900 block">Sedang Berjalan</span>
+                                    <span class="text-[11px] text-gray-500 block">Kegiatan aktif berjalan sesuai jadwal dan penugasan</span>
+                                </div>
+                            </div>
+                            <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                        </label>
+
+                        <label class="flex items-center justify-between p-3 rounded-xl border cursor-pointer transition hover:bg-amber-50/50" :class="newStatus === 'Tertunda' ? 'bg-amber-50 border-amber-300 ring-1 ring-amber-500' : 'border-gray-200'">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="status" value="Tertunda" x-model="newStatus" class="text-amber-600 focus:ring-amber-500">
+                                <div>
+                                    <span class="text-xs font-bold text-gray-900 block">Tertunda (Pending)</span>
+                                    <span class="text-[11px] text-gray-500 block">Pelaksanaan ditunda sementara waktu dengan alasan khusus</span>
+                                </div>
+                            </div>
+                            <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                        </label>
+
+                        <label class="flex items-center justify-between p-3 rounded-xl border cursor-pointer transition hover:bg-rose-50/50" :class="newStatus === 'Tidak Berjalan' ? 'bg-rose-50 border-rose-300 ring-1 ring-rose-500' : 'border-gray-200'">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="status" value="Tidak Berjalan" x-model="newStatus" class="text-rose-600 focus:ring-rose-500">
+                                <div>
+                                    <span class="text-xs font-bold text-gray-900 block">Tidak Berjalan / Dibatalkan</span>
+                                    <span class="text-[11px] text-gray-500 block">Kegiatan tidak dapat dilaksanakan atau dibatalkan</span>
+                                </div>
+                            </div>
+                            <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div x-show="newStatus === 'Tertunda' || newStatus === 'Tidak Berjalan'" x-cloak class="space-y-1">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        Alasan / Catatan Status <span class="text-rose-500">*</span>
+                    </label>
+                    <textarea name="alasan_status" x-model="alasanStatus" rows="2" placeholder="Contoh: Menunggu pencairan anggaran DIPA / Pergeseran jadwal lapangan..." class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+                    <button type="button" @click="modalUpdateStatus = false" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs transition">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition shadow-xs">
+                        Simpan Perubahan Status
+                    </button>
+                </div>
             </form>
+
         </div>
     </div>
 

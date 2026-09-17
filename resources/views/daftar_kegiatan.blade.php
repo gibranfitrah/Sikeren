@@ -24,8 +24,12 @@
     foreach ($kegiatans2 as $k2) {
         if ($k2->status == 'Selesai') {
             $selesai++;
-        } else {
+        } elseif ($k2->setuju_rapat == 3 || $k2->status == 'Ditolak' || $k2->status_pemimpin == 'Ditolak') {
+            // ditolak
+        } elseif ($k2->setuju_rapat == 1 || $k2->status == 'Disetujui' || $k2->status_pemimpin == 'Disetujui') {
             $berjalan++;
+        } else {
+            $menungguApprove++;
         }
     }
 
@@ -48,7 +52,11 @@
     }
 </style>
 
-<div class="space-y-6 pb-12 max-w-7xl mx-auto" x-data="{ expandedSub: null }">
+<div class="space-y-6 pb-12 max-w-7xl mx-auto" x-data="{ 
+    expandedSub: null, 
+    approvalModal: { open: false, id: null, text: '', pj: '', jenis: 'Kegiatan' },
+    statusModal: { open: false, id: null, text: '', currentStatus: 'Sedang Berjalan', newStatus: 'Sedang Berjalan', alasan: '' }
+}">
 
     {{-- HEADER SECTION & ACTION BUTTONS --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-200/80 shadow-xs">
@@ -250,8 +258,9 @@
                         <tr>
                             <th scope="col" class="px-6 py-4">Nama Kegiatan & Tim</th>
                             <th scope="col" class="px-6 py-4">Rentang Waktu</th>
-                            <th scope="col" class="px-6 py-4">Wilayah Kegiatan</th>
+                            <th scope="col" class="px-6 py-4">Wilayah / Lokasi</th>
                             <th scope="col" class="px-6 py-4">PJ & Sub Kegiatan</th>
+                            <th scope="col" class="px-6 py-4">Status Persetujuan</th>
                             <th scope="col" class="px-6 py-4 text-right">Aksi</th>
                         </tr>
                     </thead>
@@ -262,19 +271,32 @@
                             $subCount = count($subs);
                             $wilayahList = $item->wilayah_list;
                             $canAccessThis = $currentUser && $currentUser->canAccessDetailKegiatan($item);
+                            $isPjOfThis = $currentUser && (
+                                strcasecmp($currentUser->nama_lengkap ?? '', $item->penanggung_jawab ?? '') === 0 ||
+                                strcasecmp($currentUser->username ?? '', $item->penanggung_jawab ?? '') === 0 ||
+                                strcasecmp($currentUser->nama_lengkap ?? '', $item->pemimpin ?? '') === 0 ||
+                                (isset($currentUser->level) && strtolower($currentUser->level) === 'admin')
+                            );
+                            $st = strtolower(trim($item->status ?? ''));
+                            $isDone     = ($st === 'selesai');
+                            $isDelayed  = ($st === 'tertunda');
+                            $isInactive = ($st === 'tidak berjalan' || $st === 'dibatalkan');
+                            $isApproved = ($item->setuju_rapat == 1 || $st === 'disetujui' || $st === 'sedang berjalan' || $isDone || $isDelayed || $isInactive);
+                            $isRejected = ($item->setuju_rapat == 3 || $st === 'ditolak');
+                            $isPending  = ($item->setuju_rapat == 0 && !$isApproved && !$isRejected && in_array($st, ['menunggu', 'menunggu persetujuan', 'belum', '']));
                         @endphp
                         <tr class="hover:bg-slate-50/60 transition-colors kegiatan-row">
                             <td class="px-6 py-4">
                                 <div class="space-y-1 max-w-md">
                                     <div class="flex items-center gap-2">
                                         <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
-                                            {{ $item->tim ?: 'Umum' }}
+                                             {{ $item->tim ?: 'Umum' }}
                                         </span>
                                         <span class="text-xs text-gray-400 font-mono">#{{ $item->id }}</span>
                                     </div>
                                     @if($canAccessThis)
                                         <a href="{{ url('daftarkegiatan/' . $item->id) }}" class="font-bold text-gray-900 hover:text-blue-600 text-sm block">
-                                            {{ $item->text }}
+                                             {{ $item->text }}
                                         </a>
                                     @else
                                         <span class="font-bold text-gray-900 text-sm block" title="Mode pantau agenda">
@@ -329,14 +351,77 @@
                                 </div>
                             </td>
 
+                            {{-- Status Persetujuan & Pelaksanaan --}}
+                            <td class="px-6 py-4">
+                                @if($isDone)
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                        <span>Selesai</span>
+                                    </span>
+                                @elseif($isDelayed)
+                                    <div class="space-y-1">
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-300">
+                                            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                            <span>Tertunda</span>
+                                        </span>
+                                        @if(!empty($item->alasan_status))
+                                            <p class="text-[10px] text-amber-700 italic max-w-[180px] truncate" title="{{ $item->alasan_status }}">{{ $item->alasan_status }}</p>
+                                        @endif
+                                    </div>
+                                @elseif($isInactive)
+                                    <div class="space-y-1">
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-300">
+                                            <span class="w-2 h-2 rounded-full bg-slate-500"></span>
+                                            <span>Tidak Berjalan</span>
+                                        </span>
+                                        @if(!empty($item->alasan_status))
+                                            <p class="text-[10px] text-slate-600 italic max-w-[180px] truncate" title="{{ $item->alasan_status }}">{{ $item->alasan_status }}</p>
+                                        @endif
+                                    </div>
+                                @elseif($isApproved)
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                        <span>Sedang Berjalan</span>
+                                    </span>
+                                @elseif($isRejected)
+                                    <div class="space-y-1">
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-red-50 text-red-700 border border-red-200">
+                                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                            <span>Ditolak</span>
+                                        </span>
+                                        @if(!empty($item->alasan_status))
+                                            <p class="text-[10px] text-red-600 italic max-w-[180px] truncate" title="{{ $item->alasan_status }}">{{ $item->alasan_status }}</p>
+                                        @endif
+                                    </div>
+                                @else
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                        <span>Menunggu Persetujuan</span>
+                                    </span>
+                                @endif
+                            </td>
+
                             <td class="px-6 py-4 whitespace-nowrap text-right">
-                                <div class="flex items-center justify-end gap-2">
-                                    <a href="{{ route('kegiatan.downloadWord', $item->id) }}" class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl border border-blue-200 text-xs transition inline-flex items-center gap-1" title="Unduh Surat Penugasan (.docx)">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                        </svg>
-                                        <span>Word</span>
-                                    </a>
+                                <div class="flex items-center justify-end gap-1.5">
+                                    {{-- Tombol Persetujuan Cepat untuk PJ (Saat Menunggu) --}}
+                                    @if($isPjOfThis && $isPending)
+                                        <button type="button" 
+                                                @click="approvalModal = { open: true, id: {{ $item->id }}, text: '{{ addslashes($item->text) }}', pj: '{{ addslashes($item->penanggung_jawab ?: ($item->pemimpin ?: '-')) }}', jenis: 'Kegiatan' }" 
+                                                class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition inline-flex items-center gap-1 shadow-xs cursor-pointer" 
+                                                title="Tinjau dan Berikan Persetujuan">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            <span>Persetujuan</span>
+                                        </button>
+                                    @elseif($isPjOfThis)
+                                        {{-- Tombol Update Status Pelaksanaan untuk PJ (Saat Sudah Disetujui/Berjalan/Tertunda) --}}
+                                        <button type="button" 
+                                                @click="statusModal = { open: true, id: {{ $item->id }}, text: '{{ addslashes($item->text) }}', currentStatus: '{{ addslashes($item->status ?? 'Sedang Berjalan') }}', newStatus: '{{ addslashes($item->status ?? 'Sedang Berjalan') }}', alasan: '{{ addslashes($item->alasan_status ?? '') }}' }" 
+                                                class="px-2.5 py-1.5 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 font-bold rounded-xl border border-slate-200 hover:border-blue-200 text-xs transition inline-flex items-center gap-1 shadow-2xs cursor-pointer" 
+                                                title="Update Status Pelaksanaan Kegiatan">
+                                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            <span>Status</span>
+                                        </button>
+                                    @endif
 
                                     @if($canAccessThis)
                                         <a href="{{ route('sub-kegiatan.index', ['task_id' => $item->id]) }}" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold rounded-xl border border-amber-200 text-xs transition inline-flex items-center gap-1" title="Tambah Sub Kegiatan">
@@ -346,7 +431,7 @@
                                             <span>+ Sub</span>
                                         </a>
 
-                                        <a href="{{ url('daftarkegiatan/' . $item->id) }}" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl border border-blue-200 text-xs transition">
+                                        <a href="{{ url('daftarkegiatan/' . $item->id) }}" class="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl border border-blue-200 text-xs transition">
                                             Detail
                                         </a>
 
@@ -373,7 +458,7 @@
 
                         {{-- EXPANDED SUB KEGIATAN ACCORDION / DROPDOWN PANEL --}}
                         <tr x-show="expandedSub === {{ $item->id }}" x-cloak class="bg-indigo-50/30">
-                            <td colspan="5" class="px-8 py-4 border-t border-b border-indigo-100">
+                            <td colspan="6" class="px-8 py-4 border-t border-b border-indigo-100">
                                 <div class="bg-white rounded-2xl p-4 border border-indigo-100 shadow-2xs space-y-3">
                                     <div class="flex items-center justify-between">
                                         <h4 class="font-bold text-gray-900 text-xs flex items-center gap-1.5">
@@ -426,7 +511,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-16 text-center text-gray-400">
+                            <td colspan="6" class="px-6 py-16 text-center text-gray-400">
                                 <div class="max-w-xs mx-auto text-center space-y-3">
                                     <div class="w-12 h-12 rounded-2xl bg-gray-50 text-gray-300 flex items-center justify-center mx-auto">
                                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -474,6 +559,11 @@
                                 }
                             }
                             $canAccessRapat = $currentUser && $currentUser->canAccessDetailKegiatan($post);
+                            $isPemimpinThisRapat = $currentUser && (
+                                strcasecmp($currentUser->nama_lengkap ?? '', $post->pemimpin ?? '') === 0 ||
+                                strcasecmp($currentUser->username ?? '', $post->pemimpin ?? '') === 0 ||
+                                (isset($currentUser->level) && strtolower($currentUser->level) === 'admin')
+                            );
                         @endphp
                         <tr class="hover:bg-slate-50/60 transition-colors rapat-row">
                             <td class="px-6 py-4">
@@ -557,12 +647,16 @@
 
                             <td class="px-6 py-4 whitespace-nowrap text-right text-xs">
                                 <div class="flex items-center justify-end gap-2">
-                                    <a href="{{ route('rapat.downloadWord', ($post->id_kegiatan ?? $post->id)) }}" class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl border border-blue-200 text-xs transition inline-flex items-center gap-1" title="Unduh Surat Undangan (.docx)">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                        </svg>
-                                        <span>Word</span>
-                                    </a>
+                                    {{-- Tombol Persetujuan Cepat untuk Pemimpin Rapat --}}
+                                    @if($isPemimpinThisRapat && $post->setuju_rapat == 0)
+                                        <button type="button" 
+                                                @click="approvalModal = { open: true, id: {{ $post->id_kegiatan ?? $post->id }}, text: '{{ addslashes($post->text) }}', pj: '{{ addslashes($post->pemimpin ?? '-') }}', jenis: 'Rapat' }" 
+                                                class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition inline-flex items-center gap-1 shadow-xs" 
+                                                title="Tinjau dan Berikan Persetujuan Rapat">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            <span>Persetujuan</span>
+                                        </button>
+                                    @endif
 
                                     @if($canAccessRapat)
                                         <a href="{{ url('daftarkegiatan/' . ($post->id_kegiatan ?? $post->id)) }}" class="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl border border-blue-200 text-xs transition">
@@ -593,7 +687,178 @@
 
     </div>
 
-</div>
+    {{-- ==========================================
+        MODAL PERSETUJUAN KEGIATAN & RAPAT
+    =========================================== --}}
+    <div x-show="approvalModal.open" 
+         x-cloak 
+         class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-5"
+             @click.away="approvalModal.open = false">
+            
+            <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-900 text-sm" x-text="'Persetujuan ' + approvalModal.jenis"></h3>
+                        <p class="text-[11px] text-gray-400">Tentukan status persetujuan agenda</p>
+                    </div>
+                </div>
+                <button type="button" @click="approvalModal.open = false" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="space-y-3 text-xs bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <div>
+                    <span class="text-gray-400 text-[10px] uppercase font-bold tracking-wider">Nama Agenda:</span>
+                    <p class="font-bold text-gray-900 text-sm mt-0.5" x-text="approvalModal.text"></p>
+                </div>
+                <div class="flex items-center justify-between text-gray-600 pt-1 border-t border-slate-200/60">
+                    <span>Penanggung Jawab / Pemimpin:</span>
+                    <span class="font-bold text-gray-800" x-text="approvalModal.pj"></span>
+                </div>
+            </div>
+
+            <p class="text-xs text-gray-500 leading-relaxed">
+                Sebagai Ketua Tim / PJ / Pemimpin, silakan tentukan apakah agenda ini disetujui untuk dilaksanakan atau ditolak.
+            </p>
+
+            <div class="flex items-center gap-3 pt-2">
+                {{-- Form Tolak --}}
+                <form action="{{ url('/setuju_rapat') }}" method="POST" class="flex-1">
+                    @csrf
+                    <input type="hidden" name="id" :value="approvalModal.id">
+                    <input type="hidden" name="setuju_rapat" value="3">
+                    <button type="submit" 
+                            onclick="return confirm('Apakah Anda yakin ingin menolak agenda ini?')" 
+                            class="w-full py-2.5 px-4 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+                        <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        <span>Tolak</span>
+                    </button>
+                </form>
+
+                {{-- Form Setujui --}}
+                <form action="{{ url('/setuju_rapat') }}" method="POST" class="flex-1">
+                    @csrf
+                    <input type="hidden" name="id" :value="approvalModal.id">
+                    <input type="hidden" name="setuju_rapat" value="1">
+                    <button type="submit" 
+                            class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1.5">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Setujui</span>
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    {{-- =========================================================================
+        MODAL UPDATE STATUS PELAKSANAAN (SELESAI, TERTUNDA, TIDAK BERJALAN, SEDANG BERJALAN)
+    ========================================================================== --}}
+    <div x-show="statusModal.open" 
+         x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-lg p-6 space-y-4 my-8"
+             @click.away="statusModal.open = false">
+            
+            <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-gray-900 text-base">Update Status Kegiatan</h3>
+                        <p class="text-xs text-gray-400">Atur progres & kelanjutan pelaksanaan agenda</p>
+                    </div>
+                </div>
+                <button type="button" @click="statusModal.open = false" class="text-gray-400 hover:text-gray-600 text-xl font-bold">
+                    &times;
+                </button>
+            </div>
+
+            <div class="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-1">
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Nama Kegiatan</span>
+                <h4 class="font-bold text-gray-900 text-xs" x-text="statusModal.text"></h4>
+            </div>
+
+            <form :action="'/kegiatan/' + statusModal.id + '/status'" method="POST" class="space-y-4">
+                @csrf
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                        Pilih Status Pelaksanaan <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="space-y-2">
+                        <label class="flex items-center justify-between p-3 rounded-xl border cursor-pointer transition hover:bg-emerald-50/50" :class="statusModal.newStatus === 'Selesai' ? 'bg-emerald-50 border-emerald-300 ring-1 ring-emerald-500' : 'border-gray-200'">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="status" value="Selesai" x-model="statusModal.newStatus" class="text-emerald-600 focus:ring-emerald-500">
+                                <div>
+                                    <span class="text-xs font-bold text-gray-900 block">Selesai (Tuntas 100%)</span>
+                                    <span class="text-[11px] text-gray-500 block">Seluruh target dan sub kegiatan telah tuntas dikerjakan</span>
+                                </div>
+                            </div>
+                            <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                        </label>
+
+                        <label class="flex items-center justify-between p-3 rounded-xl border cursor-pointer transition hover:bg-blue-50/50" :class="statusModal.newStatus === 'Sedang Berjalan' ? 'bg-blue-50 border-blue-300 ring-1 ring-blue-500' : 'border-gray-200'">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="status" value="Sedang Berjalan" x-model="statusModal.newStatus" class="text-blue-600 focus:ring-blue-500">
+                                <div>
+                                    <span class="text-xs font-bold text-gray-900 block">Sedang Berjalan</span>
+                                    <span class="text-[11px] text-gray-500 block">Kegiatan aktif berjalan sesuai jadwal dan penugasan</span>
+                                </div>
+                            </div>
+                            <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                        </label>
+
+                        <label class="flex items-center justify-between p-3 rounded-xl border cursor-pointer transition hover:bg-amber-50/50" :class="statusModal.newStatus === 'Tertunda' ? 'bg-amber-50 border-amber-300 ring-1 ring-amber-500' : 'border-gray-200'">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="status" value="Tertunda" x-model="statusModal.newStatus" class="text-amber-600 focus:ring-amber-500">
+                                <div>
+                                    <span class="text-xs font-bold text-gray-900 block">Tertunda (Pending)</span>
+                                    <span class="text-[11px] text-gray-500 block">Pelaksanaan ditunda sementara waktu dengan alasan khusus</span>
+                                </div>
+                            </div>
+                            <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                        </label>
+
+                        <label class="flex items-center justify-between p-3 rounded-xl border cursor-pointer transition hover:bg-rose-50/50" :class="statusModal.newStatus === 'Tidak Berjalan' ? 'bg-rose-50 border-rose-300 ring-1 ring-rose-500' : 'border-gray-200'">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="status" value="Tidak Berjalan" x-model="statusModal.newStatus" class="text-rose-600 focus:ring-rose-500">
+                                <div>
+                                    <span class="text-xs font-bold text-gray-900 block">Tidak Berjalan / Dibatalkan</span>
+                                    <span class="text-[11px] text-gray-500 block">Kegiatan tidak dapat dilaksanakan atau dibatalkan</span>
+                                </div>
+                            </div>
+                            <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div x-show="statusModal.newStatus === 'Tertunda' || statusModal.newStatus === 'Tidak Berjalan'" x-cloak class="space-y-1">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        Alasan / Catatan Status <span class="text-rose-500">*</span>
+                    </label>
+                    <textarea name="alasan_status" x-model="statusModal.alasan" rows="2" placeholder="Contoh: Menunggu pencairan anggaran DIPA / Pergeseran jadwal lapangan..." class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+                    <button type="button" @click="statusModal.open = false" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs transition cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition shadow-xs cursor-pointer">
+                        Simpan Perubahan Status
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
 
 <script>
 function switchTab(tabId) {

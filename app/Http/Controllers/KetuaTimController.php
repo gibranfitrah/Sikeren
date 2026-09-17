@@ -116,7 +116,9 @@ class KetuaTimController extends Controller
             'pemimpin'         => $request->pj,
             'owners'           => $anggotaList,
             'jenis'            => 'Kegiatan',
-            'status'           => 'Belum',
+            'status'           => 'Menunggu Persetujuan',
+            'status_pemimpin'  => 'Menunggu',
+            'setuju_rapat'     => 0,
             'surat'            => $request->dasar,
         ]);
 
@@ -144,7 +146,7 @@ class KetuaTimController extends Controller
                     'data'            => json_encode([
                         'judul' => 'Undangan Penugasan Kegiatan: ' . $request->agenda,
                         'pesan' => 'Anda ditugaskan oleh ' . $pjNama . ' (Ketua Tim / PJ) untuk mengikuti kegiatan "' . $request->agenda . '" mulai tanggal ' . date('d M Y', strtotime($startDate)) . '.',
-                        'url'   => '/daftar_kegiatan',
+                        'url'   => '/tugas-saya',
                     ]),
                     'read_at'         => null,
                     'created_at'      => now(),

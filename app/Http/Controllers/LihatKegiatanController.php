@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use App\kegiatan;
 use App\User;
 use App\Task;
@@ -245,17 +246,92 @@ class LihatKegiatanController extends Controller
         
     public function setuju_rapat(Request $request)
     {
-        $statusRapat = $request->input('setuju_rapat');
-        $statusPemimpin = $statusRapat == 1 ? 'Disetujui' : ($statusRapat == 3 ? 'Ditolak' : 'Menunggu');
-        $statusTeks = $statusRapat == 1 ? 'Disetujui' : ($statusRapat == 3 ? 'Ditolak' : 'Menunggu Persetujuan');
+        $statusRapat = (int)$request->input('setuju_rapat');
+        $statusPemimpin = $statusRapat === 1 ? 'Disetujui' : ($statusRapat === 3 ? 'Ditolak' : 'Menunggu');
+        $statusTeks = $statusRapat === 1 ? 'Disetujui' : ($statusRapat === 3 ? 'Ditolak' : 'Menunggu Persetujuan');
+        $taskId = $request->input('id');
 
-        Task::where('id', $request->input('id'))->update([
-            'setuju_rapat'    => $statusRapat,
-            'status_pemimpin' => $statusPemimpin,
-            'status'          => $statusTeks,
-        ]);
+        $task = Task::find($taskId);
+        if ($task) {
+            $task->update([
+                'setuju_rapat'    => $statusRapat,
+                'status_pemimpin' => $statusPemimpin,
+                'status'          => $statusTeks,
+            ]);
 
-        return redirect()->back()->with(['success' => 'Berhasil memperbarui status persetujuan rapat.']);
+            $pjNama = Auth::check() ? Auth::user()->nama_lengkap : ($task->penanggung_jawab ?: ($task->pemimpin ?: 'Ketua Tim / PJ'));
+            $jenis = $task->jenis ?: 'Kegiatan';
+
+            // Kirim notifikasi realtime ke seluruh peserta dan anggota tim yang terlibat
+            $participantIds = [];
+
+            // Dari penugasans
+            $penugasanUsers = \App\penugasan::where('id_kegiatan', $task->id)->get();
+            foreach ($penugasanUsers as $p) {
+                $u = User::where('niplama', $p->niplama)
+                    ->orWhere('nama_lengkap', $p->peserta)
+                    ->first();
+                if ($u) {
+                    $participantIds[] = $u->id;
+                }
+            }
+
+            // Dari owners
+            $owners = $task->owners;
+            if (is_array($owners)) {
+                foreach ($owners as $own) {
+                    $u = User::where('niplama', $own)->orWhere('nama_lengkap', $own)->orWhere('username', $own)->first();
+                    if ($u) {
+                        $participantIds[] = $u->id;
+                    }
+                }
+            }
+
+            // Dari sub kegiatan
+            $subMembers = \App\SubKegiatan::where('task_id', $task->id)->get();
+            foreach ($subMembers as $sub) {
+                if (!empty($sub->anggota_list)) {
+                    foreach ($sub->anggota_list as $ang) {
+                        $u = User::where('nama_lengkap', $ang)->orWhere('username', $ang)->orWhere('niplama', $ang)->first();
+                        if ($u) {
+                            $participantIds[] = $u->id;
+                        }
+                    }
+                }
+            }
+
+            $participantIds = array_unique(array_filter($participantIds));
+
+            $judulNotif = $statusRapat === 1 
+                ? ($jenis . ' Disetujui: ' . $task->text) 
+                : ($jenis . ' Ditolak: ' . $task->text);
+
+            $pesanNotif = $statusRapat === 1
+                ? ($jenis . ' "' . $task->text . '" telah disetujui oleh ' . $pjNama . '. Agenda telah resmi aktif dan masuk ke Tugas Saya.')
+                : ($jenis . ' "' . $task->text . '" ditolak oleh ' . $pjNama . '.');
+
+            foreach ($participantIds as $userId) {
+                if ($userId !== Auth::id()) {
+                    DB::table('notifications')->insert([
+                        'id'              => (string) Str::uuid(),
+                        'type'            => 'App\Notifications\KegiatanStatusNotification',
+                        'notifiable_type' => 'App\User',
+                        'notifiable_id'   => $userId,
+                        'data'            => json_encode([
+                            'judul' => $judulNotif,
+                            'pesan' => $pesanNotif,
+                            'url'   => '/tugas-saya',
+                        ]),
+                        'read_at'         => null,
+                        'created_at'      => now(),
+                        'updated_at'      => now(),
+                    ]);
+                }
+            }
+        }
+
+        $msg = $statusRapat === 1 ? 'Berhasil menyetujui kegiatan/rapat.' : 'Berhasil menolak kegiatan/rapat.';
+        return redirect()->back()->with(['success' => $msg]);
     }    
         
 

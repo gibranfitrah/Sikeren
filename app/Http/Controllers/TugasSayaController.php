@@ -37,7 +37,9 @@ class TugasSayaController extends Controller
               ->orWhere('pemimpin', 'LIKE', '%' . $nama . '%')
               ->orWhere('notulis', 'LIKE', '%' . $nama . '%')
               ->orWhere('tim_dokumentasi', 'LIKE', '%' . $nama . '%')
-              ->orWhere('owners', 'LIKE', '%' . $nip . '%');
+              ->orWhere('owners', 'LIKE', '%' . $nip . '%')
+              ->orWhere('owners', 'LIKE', '%' . $nama . '%')
+              ->orWhere('owners', 'LIKE', '%' . $username . '%');
 
             if (!empty($taskIdsFromPenugasan)) {
                 $q->orWhereIn('id', $taskIdsFromPenugasan);

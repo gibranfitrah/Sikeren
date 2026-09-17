@@ -9,13 +9,21 @@ class Task extends Model
     protected $appends = ["open"];
 
     protected $fillable = [
-        'nomor','duration','surat','owners','text', 'tim', 'wilayah', 'agenda', 'tempat', 'pemimpin', 'notulis',  'start_date', 'date_akhir', 'start_jam', 'end_jam','notulen','jenis', 'status',
-        'parent_id', 'jenis_kegiatan', 'status_ruangan', 'status_pemimpin', 'surat_id', 'venue_id', 'tim_dokumentasi', 'penanggung_jawab'
+        'nomor', 'duration', 'surat', 'owners', 'text', 'tim', 'wilayah', 'agenda', 'tempat', 
+        'pemimpin', 'notulis', 'start_date', 'date_akhir', 'start_jam', 'end_jam', 'notulen', 
+        'jenis', 'status', 'alasan_status', 'parent_id', 'parent', 'jenis_kegiatan', 'status_ruangan', 'status_pemimpin', 
+        'surat_id', 'venue_id', 'tim_dokumentasi', 'penanggung_jawab', 'setuju_rapat', 'progress', 
+        'notulen_selesai', 'materi_link', 'foto_link', 'jenis_tujuan', 'tujuan', 'sortorder'
     ];
 
     public function subKegiatans()
     {
         return $this->hasMany(SubKegiatan::class, 'task_id');
+    }
+
+    public function roomBooking()
+    {
+        return $this->hasOne(RoomBooking::class, 'task_id');
     }
 
     public function getWilayahListAttribute()
