@@ -141,6 +141,99 @@
 @section('content')
 <div class="dashboard-container">
 
+    {{-- ========================================================
+        0. WELCOME GREETING BANNER (ADMIN / KETUA TIM / PEGAWAI)
+    ========================================================= --}}
+    @php
+        $hour = (int) \Carbon\Carbon::now()->format('H');
+        if ($hour >= 4 && $hour < 11) {
+            $timeGreeting = 'Selamat Pagi';
+            $timeEmoji = '🌅';
+        } elseif ($hour >= 11 && $hour < 15) {
+            $timeGreeting = 'Selamat Siang';
+            $timeEmoji = '☀️';
+        } elseif ($hour >= 15 && $hour < 18) {
+            $timeGreeting = 'Selamat Sore';
+            $timeEmoji = '🌇';
+        } else {
+            $timeGreeting = 'Selamat Malam';
+            $timeEmoji = '🌙';
+        }
+
+        $currentUser = Auth::user();
+        $userName = $currentUser->nama_lengkap ?: ($currentUser->username ?: 'Pegawai');
+        $userRole = $currentUser->role_label ?? 'Pegawai BPS';
+    @endphp
+
+    <div class="relative overflow-hidden bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900 rounded-3xl p-6 sm:p-7 text-white shadow-md border border-blue-500/20">
+        {{-- Background Soft Glows --}}
+        <div class="absolute -right-16 -top-16 w-64 h-64 bg-blue-400/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute right-1/3 -bottom-16 w-48 h-48 bg-indigo-400/20 rounded-full blur-2xl pointer-events-none"></div>
+
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+            {{-- Left: Avatar & Greeting Text --}}
+            <div class="flex items-start sm:items-center gap-4">
+                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-3xl shadow-inner shrink-0">
+                    <span>👋</span>
+                </div>
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-white/15 text-blue-100 backdrop-blur-xs border border-white/10 flex items-center gap-1">
+                            <span>{{ $timeEmoji }}</span>
+                            <span>{{ $timeGreeting }}</span>
+                        </span>
+                        @if($userRole === 'Administrator')
+                            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/30 text-rose-200 border border-rose-400/40">
+                                🛡️ Administrator Sistem
+                            </span>
+                        @elseif(str_contains(strtolower($userRole), 'ketua tim') || str_contains(strtolower($userRole), 'pj'))
+                            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-400/30 text-amber-200 border border-amber-300/40">
+                                ⭐ {{ $userRole }}
+                            </span>
+                        @elseif(str_contains(strtolower($userRole), 'anggota tim'))
+                            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-sky-400/30 text-sky-200 border border-sky-300/40">
+                                👥 {{ $userRole }}
+                            </span>
+                        @else
+                            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-400/30 text-emerald-200 border border-emerald-300/40">
+                                👔 {{ $userRole }}
+                            </span>
+                        @endif
+                    </div>
+
+                    <h1 class="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight">
+                        Hai, Selamat Datang <span class="bg-clip-text text-transparent bg-gradient-to-r from-amber-200 via-blue-100 to-white">{{ $userName }}</span>!
+                    </h1>
+                    
+                    <p class="text-xs sm:text-sm text-blue-100/80 max-w-2xl font-normal leading-relaxed">
+                        Pantau kalender jadwal kerja, rincian penugasan personal, dan aktivitas tim BPS secara terpadu.
+                    </p>
+                </div>
+            </div>
+
+            {{-- Right: Date & Quick Action Chips --}}
+            <div class="flex sm:flex-row md:flex-col items-start md:items-end justify-between gap-2.5 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-white/10">
+                <div class="text-left md:text-right">
+                    <span class="text-[11px] font-medium text-blue-200/80 block">📅 Hari Ini:</span>
+                    <span class="text-xs sm:text-sm font-bold text-white tracking-wide">
+                        {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}
+                    </span>
+                </div>
+                
+                <div class="flex items-center gap-2 flex-wrap">
+                    <a href="{{ url('/tugas-saya') }}" 
+                       class="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition flex items-center gap-1.5 backdrop-blur-xs border border-white/20 shadow-xs">
+                        <span>📋 {{ $jumlah_kegiatan_saya }} Tugas Saya</span>
+                    </a>
+                    <a href="{{ route('time-schedule.index') }}" 
+                       class="px-3 py-1.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs">
+                        <span>⏰ Time Schedule</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- 1. HEADER & ACTION BUTTONS --}}
     <div class="dash-header-card">
         <div>
@@ -180,13 +273,35 @@
         </div>
     </div>
 
-    {{-- 2. STATS CARDS: 2 DI ATAS & 2 DI BAWAH (TERPISAH & BERSPASI RAPI) --}}
+    {{-- 2. STATS CARDS: 2 DI ATAS & 2 DI BAWAH (DENGAN ANIMASI ANGKA BERJALAN) --}}
     <div class="stat-cards-grid">
         <!-- Card 1: Total Kegiatan -->
-        <div class="stat-card-box">
+        <div class="stat-card-box" 
+             x-data="{
+                current: 0,
+                target: {{ (int) $jumlah_kegiatan }},
+                init() {
+                    if (this.target <= 0) { this.current = 0; return; }
+                    let start = 0, duration = 1200, startTime = null;
+                    const step = (timestamp) => {
+                        if (!startTime) startTime = timestamp;
+                        const progress = Math.min((timestamp - startTime) / duration, 1);
+                        const easeOut = 1 - Math.pow(1 - progress, 3);
+                        this.current = Math.floor(easeOut * this.target);
+                        if (progress < 1) {
+                            window.requestAnimationFrame(step);
+                        } else {
+                            this.current = this.target;
+                        }
+                    };
+                    window.requestAnimationFrame(step);
+                }
+             }">
             <div class="space-y-1.5">
                 <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Total Kegiatan</span>
-                <h3 class="text-3xl sm:text-4xl font-black text-gray-900">{{ $jumlah_kegiatan }}</h3>
+                <h3 class="text-3xl sm:text-4xl font-black text-gray-900 tabular-nums">
+                    <span x-text="current">{{ $jumlah_kegiatan }}</span>
+                </h3>
                 <p class="text-xs text-blue-600 font-semibold bg-blue-50 px-2.5 py-0.5 rounded-lg inline-block">
                     Semua Kegiatan & Rapat
                 </p>
@@ -199,10 +314,32 @@
         </div>
 
         <!-- Card 2: Tugas Saya -->
-        <div class="stat-card-box">
+        <div class="stat-card-box" 
+             x-data="{
+                current: 0,
+                target: {{ (int) $jumlah_kegiatan_saya }},
+                init() {
+                    if (this.target <= 0) { this.current = 0; return; }
+                    let start = 0, duration = 1200, startTime = null;
+                    const step = (timestamp) => {
+                        if (!startTime) startTime = timestamp;
+                        const progress = Math.min((timestamp - startTime) / duration, 1);
+                        const easeOut = 1 - Math.pow(1 - progress, 3);
+                        this.current = Math.floor(easeOut * this.target);
+                        if (progress < 1) {
+                            window.requestAnimationFrame(step);
+                        } else {
+                            this.current = this.target;
+                        }
+                    };
+                    window.requestAnimationFrame(step);
+                }
+             }">
             <div class="space-y-1.5">
                 <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Tugas Saya</span>
-                <h3 class="text-3xl sm:text-4xl font-black text-indigo-600">{{ $jumlah_kegiatan_saya }}</h3>
+                <h3 class="text-3xl sm:text-4xl font-black text-indigo-600 tabular-nums">
+                    <span x-text="current">{{ $jumlah_kegiatan_saya }}</span>
+                </h3>
                 <p class="text-xs text-indigo-600 font-semibold bg-indigo-50 px-2.5 py-0.5 rounded-lg inline-block">
                     Personal & Penugasan Anda
                 </p>
@@ -215,10 +352,32 @@
         </div>
 
         <!-- Card 3: Sedang Berjalan -->
-        <div class="stat-card-box">
+        <div class="stat-card-box" 
+             x-data="{
+                current: 0,
+                target: {{ (int) $jumlah_kegiatan_belum }},
+                init() {
+                    if (this.target <= 0) { this.current = 0; return; }
+                    let start = 0, duration = 1200, startTime = null;
+                    const step = (timestamp) => {
+                        if (!startTime) startTime = timestamp;
+                        const progress = Math.min((timestamp - startTime) / duration, 1);
+                        const easeOut = 1 - Math.pow(1 - progress, 3);
+                        this.current = Math.floor(easeOut * this.target);
+                        if (progress < 1) {
+                            window.requestAnimationFrame(step);
+                        } else {
+                            this.current = this.target;
+                        }
+                    };
+                    window.requestAnimationFrame(step);
+                }
+             }">
             <div class="space-y-1.5">
                 <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Sedang Berjalan</span>
-                <h3 class="text-3xl sm:text-4xl font-black text-amber-600">{{ $jumlah_kegiatan_belum }}</h3>
+                <h3 class="text-3xl sm:text-4xl font-black text-amber-600 tabular-nums">
+                    <span x-text="current">{{ $jumlah_kegiatan_belum }}</span>
+                </h3>
                 <p class="text-xs text-amber-700 font-semibold bg-amber-50 px-2.5 py-0.5 rounded-lg inline-block">
                     Dalam Proses Pelaksanaan
                 </p>
@@ -231,10 +390,32 @@
         </div>
 
         <!-- Card 4: Kegiatan Selesai -->
-        <div class="stat-card-box">
+        <div class="stat-card-box" 
+             x-data="{
+                current: 0,
+                target: {{ (int) $jumlah_kegiatan_selesai }},
+                init() {
+                    if (this.target <= 0) { this.current = 0; return; }
+                    let start = 0, duration = 1200, startTime = null;
+                    const step = (timestamp) => {
+                        if (!startTime) startTime = timestamp;
+                        const progress = Math.min((timestamp - startTime) / duration, 1);
+                        const easeOut = 1 - Math.pow(1 - progress, 3);
+                        this.current = Math.floor(easeOut * this.target);
+                        if (progress < 1) {
+                            window.requestAnimationFrame(step);
+                        } else {
+                            this.current = this.target;
+                        }
+                    };
+                    window.requestAnimationFrame(step);
+                }
+             }">
             <div class="space-y-1.5">
                 <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Kegiatan Selesai</span>
-                <h3 class="text-3xl sm:text-4xl font-black text-emerald-600">{{ $jumlah_kegiatan_selesai }}</h3>
+                <h3 class="text-3xl sm:text-4xl font-black text-emerald-600 tabular-nums">
+                    <span x-text="current">{{ $jumlah_kegiatan_selesai }}</span>
+                </h3>
                 <p class="text-xs text-emerald-700 font-semibold bg-emerald-50 px-2.5 py-0.5 rounded-lg inline-block">
                     Tuntas & Notulen Siap
                 </p>
