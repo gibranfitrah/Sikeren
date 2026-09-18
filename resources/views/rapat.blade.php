@@ -274,26 +274,29 @@
                             </label>
                             <span class="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">Ketua Tim</span>
                         </div>
+                        @php
+                            $defaultPj = old('penanggung_jawab', (!Auth::user()->isAdmin() ? (Auth::user()->nama_lengkap ?? '') : ''));
+                        @endphp
                         <select id="penanggung_jawab" name="penanggung_jawab" class="w-full text-xs border-gray-300 rounded-lg p-2.5 bg-gray-50 focus:bg-white text-gray-800 shadow-xs focus:ring-emerald-500 focus:border-emerald-500 border">
                             <option value="">-- Pilih Penanggung Jawab (PJ) --</option>
                             @if(isset($eligiblePJs) && $eligiblePJs->count() > 0)
                                 <optgroup label="⭐ Pejabat, Ketua Tim, & Ahli Madya (Eligible PJ)">
                                     @foreach ($eligiblePJs as $u)
-                                        <option value="{{ $u->nama_lengkap }}" {{ (old('penanggung_jawab', Auth::user()->nama_lengkap ?? '') == $u->nama_lengkap) ? 'selected' : '' }}>
+                                        <option value="{{ $u->nama_lengkap }}" {{ $defaultPj == $u->nama_lengkap ? 'selected' : '' }}>
                                             {{ $u->nama_lengkap }} ({{ $u->formatted_nip }}) - {{ $u->role_label }}
                                         </option>
                                     @endforeach
                                 </optgroup>
                                 <optgroup label="👤 Seluruh Pegawai Lainnya">
                                     @foreach ($allUsers->diff($eligiblePJs) as $u)
-                                        <option value="{{ $u->nama_lengkap }}" {{ (old('penanggung_jawab', Auth::user()->nama_lengkap ?? '') == $u->nama_lengkap) ? 'selected' : '' }}>
+                                        <option value="{{ $u->nama_lengkap }}" {{ $defaultPj == $u->nama_lengkap ? 'selected' : '' }}>
                                             {{ $u->nama_lengkap }} ({{ $u->formatted_nip }}) - {{ $u->role_label }}
                                         </option>
                                     @endforeach
                                 </optgroup>
                             @else
                                 @foreach ($peserta as $p)
-                                    <option value="{{ $p->nama_lengkap }}" {{ (old('penanggung_jawab', Auth::user()->nama_lengkap ?? '') == $p->nama_lengkap) ? 'selected' : '' }}>
+                                    <option value="{{ $p->nama_lengkap }}" {{ $defaultPj == $p->nama_lengkap ? 'selected' : '' }}>
                                         {{ $p->nama_lengkap }} ({{ $p->nipbaru ?? $p->niplama }})
                                     </option>
                                 @endforeach
@@ -317,26 +320,29 @@
                             </label>
                             <span class="text-[10px] text-blue-600 font-bold bg-blue-50 px-1.5 py-0.5 rounded">Approval</span>
                         </div>
+                        @php
+                            $defaultPemimpin = old('pemimpin', (!Auth::user()->isAdmin() ? (Auth::user()->nama_lengkap ?? '') : ''));
+                        @endphp
                         <select id="pemimpin" name="pemimpin" required class="w-full text-xs border-gray-300 rounded-lg p-2.5 bg-gray-50 focus:bg-white text-gray-800 shadow-xs focus:ring-blue-500 focus:border-blue-500 border">
                             <option value="">-- Pilih Pemimpin Rapat --</option>
                             @if(isset($eligiblePJs) && $eligiblePJs->count() > 0)
                                 <optgroup label="⭐ Pejabat, Ketua Tim, & Ahli Madya (Eligible PJ)">
                                     @foreach ($eligiblePJs as $u)
-                                        <option value="{{ $u->nama_lengkap }}" {{ old('pemimpin') == $u->nama_lengkap ? 'selected' : '' }}>
+                                        <option value="{{ $u->nama_lengkap }}" {{ $defaultPemimpin == $u->nama_lengkap ? 'selected' : '' }}>
                                             {{ $u->nama_lengkap }} ({{ $u->formatted_nip }}) - {{ $u->role_label }}
                                         </option>
                                     @endforeach
                                 </optgroup>
                                 <optgroup label="👤 Seluruh Pegawai Lainnya">
                                     @foreach ($allUsers->diff($eligiblePJs) as $u)
-                                        <option value="{{ $u->nama_lengkap }}" {{ old('pemimpin') == $u->nama_lengkap ? 'selected' : '' }}>
+                                        <option value="{{ $u->nama_lengkap }}" {{ $defaultPemimpin == $u->nama_lengkap ? 'selected' : '' }}>
                                             {{ $u->nama_lengkap }} ({{ $u->formatted_nip }}) - {{ $u->role_label }}
                                         </option>
                                     @endforeach
                                 </optgroup>
                             @else
                                 @foreach ($peserta as $p)
-                                    <option value="{{ $p->nama_lengkap }}" {{ old('pemimpin') == $p->nama_lengkap ? 'selected' : '' }}>
+                                    <option value="{{ $p->nama_lengkap }}" {{ $defaultPemimpin == $p->nama_lengkap ? 'selected' : '' }}>
                                         {{ $p->nama_lengkap }} ({{ $p->nipbaru ?? $p->niplama }})
                                     </option>
                                 @endforeach

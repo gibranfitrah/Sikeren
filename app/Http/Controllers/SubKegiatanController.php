@@ -43,8 +43,10 @@ class SubKegiatanController extends Controller
         // Master data for modal / creation
         $tasks = Task::orderBy('id', 'desc')->get();
         $masterGroups = master_group::all();
-        $allUsers = User::orderBy('nama_lengkap', 'asc')->get();
+        $allUsers = User::getPegawaiBps();
         $usersByGroup = group::join('users', 'users.niplama', '=', 'groups.niplama')
+            ->where('users.username', '!=', 'admin')
+            ->where('users.nama_lengkap', '!=', 'Administrator')
             ->select('groups.grup', 'users.id', 'users.niplama', 'users.nama_lengkap', 'users.username')
             ->get()
             ->groupBy('grup');

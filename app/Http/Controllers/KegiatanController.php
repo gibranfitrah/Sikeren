@@ -27,8 +27,8 @@ class KegiatanController extends Controller
 {
     public function index(Request $request) 
     {
-        $peserta       = User::all();
-        $calon_peserta = User::all();
+        $peserta       = User::getPegawaiBps();
+        $calon_peserta = User::getPegawaiBps();
         $category      = DB::table("master_organisasi")->pluck("nm_organisasi", "id");
         
         $start = $request->input('start');
@@ -40,7 +40,10 @@ class KegiatanController extends Controller
         $a = Session::get('key');
         $b = Session::get('key2');
 
-        $groups        = group::join('users', 'users.niplama', 'groups.niplama')->get();
+        $groups        = group::join('users', 'users.niplama', 'groups.niplama')
+            ->where('users.username', '!=', 'admin')
+            ->where('users.nama_lengkap', '!=', 'Administrator')
+            ->get();
         $master_groups = master_group::all();
 
         $notifications = Auth::user()->notifications()->latest()->take(5)->get();
@@ -61,8 +64,8 @@ class KegiatanController extends Controller
 
     public function index_penugasan(Request $request) 
     {
-        $peserta       = User::all();
-        $calon_peserta = User::all();
+        $peserta       = User::getPegawaiBps();
+        $calon_peserta = User::getPegawaiBps();
         $id            = Task::latest()->first()->id ?? null;
         $category      = DB::table("master_organisasi")->pluck("nm_organisasi", "id");
         
@@ -182,8 +185,10 @@ class KegiatanController extends Controller
         $a       = 1;  
         
         $master_groups = \App\master_group::all();
-        $all_users = User::orderBy('nama_lengkap', 'asc')->get();
+        $all_users = User::getPegawaiBps();
         $usersByGroup = \App\group::join('users', 'users.niplama', '=', 'groups.niplama')
+            ->where('users.username', '!=', 'admin')
+            ->where('users.nama_lengkap', '!=', 'Administrator')
             ->select('groups.grup', 'users.id', 'users.niplama', 'users.nama_lengkap', 'users.username')
             ->get()
             ->groupBy('grup');

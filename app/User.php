@@ -155,14 +155,26 @@ class User extends Authenticatable
 
     public function isAdmin()
     {
-        return $this->role_label === 'Administrator';
+        $username = strtolower(trim($this->username ?? ''));
+        $email    = strtolower(trim($this->email ?? ''));
+        $nama     = strtolower(trim($this->nama_lengkap ?? ''));
+
+        return $username === 'admin' ||
+               str_contains($email, 'admin') ||
+               $nama === 'administrator' ||
+               (isset($this->level) && strtolower($this->level) === 'admin') ||
+               $this->role_label === 'Administrator';
     }
 
     public function isKetuaTimOrPj()
     {
+        // Admin adalah Superuser/Sistem dan BUKAN Pegawai BPS yang dapat dijadikan PJ/Ketua Tim
+        if ($this->isAdmin()) {
+            return false;
+        }
+
         $role = $this->role_label;
         if (
-            $role === 'Administrator' ||
             str_contains($role, 'Pimpinan') ||
             str_contains($role, 'Kepala') ||
             str_contains($role, 'Ketua Tim') ||
@@ -187,13 +199,12 @@ class User extends Authenticatable
             return true;
         }
 
-        // Check if user is assigned as PJ / Pemimpin / Notulis in any task
+        // Check if user is assigned as PJ / Pemimpin in any task
         $nama = trim($this->nama_lengkap ?? '');
         if (!empty($nama)) {
             $hasTaskAsPJ = \DB::table('tasks')
                 ->where('penanggung_jawab', 'LIKE', '%' . $nama . '%')
                 ->orWhere('pemimpin', 'LIKE', '%' . $nama . '%')
-                ->orWhere('notulis', 'LIKE', '%' . $nama . '%')
                 ->exists();
             if ($hasTaskAsPJ) {
                 return true;
@@ -205,15 +216,42 @@ class User extends Authenticatable
 
     public function isEligiblePJ()
     {
+        if ($this->isAdmin()) {
+            return false;
+        }
         return $this->isKetuaTimOrPj();
     }
 
+    /**
+     * Scope query untuk mengambil seluruh Pegawai BPS (non-admin)
+     */
+    public function scopeBpsStaff($query)
+    {
+        return $query->where('username', '!=', 'admin')
+                     ->where('nama_lengkap', '!=', 'Administrator')
+                     ->where('email', 'not like', '%admin%');
+    }
+
+    /**
+     * Mengambil daftar seluruh Pegawai BPS resmi (tanpa akun Administrator)
+     */
+    public static function getPegawaiBps()
+    {
+        $all = self::bpsStaff()->orderBy('nama_lengkap', 'asc')->get();
+        return $all->filter(function ($u) {
+            return !$u->isAdmin();
+        })->values();
+    }
+
+    /**
+     * Mengambil daftar seluruh Pejabat / Ketua Tim / Ahli Madya (Eligible PJ) BPS
+     */
     public static function getEligiblePJs()
     {
-        $all = self::orderBy('nama_lengkap', 'asc')->get();
+        $all = self::getPegawaiBps();
         return $all->filter(function ($u) {
             return $u->isEligiblePJ();
-        });
+        })->values();
     }
 
     public function canAccessDetailKegiatan($task = null)

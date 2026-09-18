@@ -202,6 +202,9 @@
                             ⭐ Prioritas: Minimal Ketua Tim / Ahli Madya
                         </span>
                     </div>
+                    @php
+                        $defaultPj = old('pj', (!Auth::user()->isAdmin() ? (Auth::user()->nama_lengkap ?? '') : ''));
+                    @endphp
                     <div class="relative">
                         <select name="pj"
                                 id="selectPJ"
@@ -211,21 +214,21 @@
                             @if(isset($eligiblePJs) && $eligiblePJs->count() > 0)
                                 <optgroup label="⭐ Pejabat, Ketua Tim, & Ahli Madya (Eligible PJ)">
                                     @foreach($eligiblePJs as $u)
-                                        <option value="{{ $u->nama_lengkap }}" {{ old('pj') == $u->nama_lengkap ? 'selected' : '' }}>
+                                        <option value="{{ $u->nama_lengkap }}" {{ $defaultPj == $u->nama_lengkap ? 'selected' : '' }}>
                                             {{ $u->nama_lengkap }} ({{ $u->formatted_nip }}) - {{ $u->role_label }}
                                         </option>
                                     @endforeach
                                 </optgroup>
                                 <optgroup label="📋 Pegawai Lainnya">
                                     @foreach($allUsers->diff($eligiblePJs) as $u)
-                                        <option value="{{ $u->nama_lengkap }}" {{ old('pj') == $u->nama_lengkap ? 'selected' : '' }}>
+                                        <option value="{{ $u->nama_lengkap }}" {{ $defaultPj == $u->nama_lengkap ? 'selected' : '' }}>
                                             {{ $u->nama_lengkap }} ({{ $u->formatted_nip }}) - {{ $u->role_label }}
                                         </option>
                                     @endforeach
                                 </optgroup>
                             @else
                                 @foreach($allUsers as $u)
-                                    <option value="{{ $u->nama_lengkap }}" {{ old('pj') == $u->nama_lengkap ? 'selected' : '' }}>
+                                    <option value="{{ $u->nama_lengkap }}" {{ $defaultPj == $u->nama_lengkap ? 'selected' : '' }}>
                                         {{ $u->nama_lengkap }} ({{ $u->formatted_nip }}) - {{ $u->role_label }}
                                     </option>
                                 @endforeach

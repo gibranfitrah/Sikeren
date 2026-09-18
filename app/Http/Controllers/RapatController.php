@@ -21,14 +21,17 @@ class RapatController extends Controller
      */
     public function index()
     {
-        // 1. Data User untuk Pemimpin, Notulis, Dokumentasi, & Peserta
-        $peserta = DB::table('users')->orderBy('nama_lengkap', 'asc')->get();
+        // 1. Data Pegawai BPS untuk Pemimpin, Notulis, Dokumentasi, & Peserta (Non-Admin)
+        $peserta = User::getPegawaiBps();
+        $allUsers = $peserta;
+        $eligiblePJs = User::getEligiblePJs();
         
         // 2. Data Kegiatan Ketua Tim untuk relasi rapat & Daftar Ketua Tim (PJ)
         $kegiatans = DB::table('agenda_ketua_tim')->orderBy('created_at', 'desc')->get();
         $ketua_tims = DB::table('agenda_ketua_tim')
             ->whereNotNull('pj')
             ->where('pj', '!=', '')
+            ->where('pj', '!=', 'Administrator')
             ->pluck('pj')
             ->unique()
             ->values();
@@ -45,9 +48,11 @@ class RapatController extends Controller
             ]);
         }
 
-        // 4. Pengelompokan Peserta per Divisi/Kelompok
+        // 4. Pengelompokan Peserta per Divisi/Kelompok (Hanya Pegawai BPS)
         $groups = DB::table('groups')
             ->join('users', 'users.niplama', '=', 'groups.niplama')
+            ->where('users.username', '!=', 'admin')
+            ->where('users.nama_lengkap', '!=', 'Administrator')
             ->select('groups.grup', 'users.*')
             ->get();
 
@@ -56,9 +61,6 @@ class RapatController extends Controller
         // 5. ID task terakhir untuk referensi penugasan
         $latestTask = Task::latest()->first();
         $id = $latestTask ? $latestTask->id : 0;
-
-        $allUsers = User::orderBy('nama_lengkap', 'asc')->get();
-        $eligiblePJs = User::getEligiblePJs();
 
         // 6. Notifikasi bawaan
         $notifications = Auth::user()->notifications()->latest()->take(5)->get();

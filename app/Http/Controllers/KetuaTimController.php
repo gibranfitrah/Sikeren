@@ -50,11 +50,13 @@ class KetuaTimController extends Controller
     public function create()
     {
         $masterGroups = master_group::all();
-        $allUsers = User::orderBy('nama_lengkap', 'asc')->get();
+        $allUsers = User::getPegawaiBps();
         $eligiblePJs = User::getEligiblePJs();
         
-        // Group employees by master group
+        // Group employees by master group (exclude admin)
         $usersByGroup = group::join('users', 'users.niplama', '=', 'groups.niplama')
+            ->where('users.username', '!=', 'admin')
+            ->where('users.nama_lengkap', '!=', 'Administrator')
             ->select('groups.grup', 'users.id', 'users.niplama', 'users.nama_lengkap', 'users.username')
             ->get()
             ->groupBy('grup');
