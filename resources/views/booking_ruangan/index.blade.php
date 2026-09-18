@@ -24,14 +24,101 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
          taskId: '{{ $selectedRapat->id ?? '' }}',
          keterangan: '',
          
-         // Sarpras State
+         // Sarpras & Layout State
          layoutMeja: 'Classroom',
+         sofaDepan: 'tanpa', // 'tanpa' | 'dengan'
          tipePodium: 'Podium Standar',
          jumlahKursiPodium: '4',
          pasangSpanduk: true,
          keteranganSpanduk: '',
          micCount: '2',
          specialLainnya: '',
+
+         // Data Kapasitas Resmi Ruang Pertemuan BPS Sultra
+         roomCapacities: {
+             1: {
+                 name: 'Ruang Rapat Lantai 1',
+                 floor: 'Lantai 1',
+                 max: 24,
+                 layouts: {
+                     'Theater': { tanpaSofa: 24, denganSofa: 20, hasSofaOption: true, desc: 'Barisan kursi rapat langsung menghadap layar utama/panggung. Sangat efisien untuk sosialisasi dan audiensi.' },
+                     'Classroom': { tanpaSofa: 18, denganSofa: 14, hasSofaOption: true, desc: 'Barisan meja dan kursi menghadap depan panggung. Ideal untuk pelatihan, bimtek, dan rapat teknis.' },
+                     'U-Shape': { tanpaSofa: 8, denganSofa: null, hasSofaOption: false, desc: 'Susunan meja berbentuk U / tapal kuda. Sangat baik untuk diskusi dua arah dan rapat pimpinan.' },
+                     'Boardroom': { tanpaSofa: 12, denganSofa: null, hasSofaOption: false, desc: 'Satu meja rapat besar di tengah. Efektif untuk rapat tertutup dan koordinasi tim inti.' },
+                     'Round Table': { tanpaSofa: 12, denganSofa: null, hasSofaOption: false, desc: 'Format meja bundar untuk diskusi kelompok / FGD.' },
+                     'Hollow Square': { tanpaSofa: 10, denganSofa: null, hasSofaOption: false, desc: 'Meja persegi dengan ruang terbuka di tengah.' },
+                     'Custom Layout': { tanpaSofa: 24, denganSofa: 20, hasSofaOption: true, desc: 'Tata letak khusus disesuaikan kebutuhan acara.' }
+                 }
+             },
+             2: {
+                 name: 'Vicon Lantai 3',
+                 floor: 'Lantai 3',
+                 max: 58,
+                 layouts: {
+                     'Theater': { tanpaSofa: 58, denganSofa: 48, hasSofaOption: true, desc: 'Kapasitas maksimal barisan kursi untuk video conference besar dan webinar hybrid.' },
+                     'Classroom': { tanpaSofa: 48, denganSofa: 40, hasSofaOption: true, desc: 'Meja kelas dengan akses langsung ke Smart TV Display dan Kamera Vicon 360°.' },
+                     'U-Shape': { tanpaSofa: 23, denganSofa: null, hasSofaOption: false, desc: 'Susunan meja U-Shape dengan jangkauan optimal Mic Conference Polycom dan kamera.' },
+                     'Boardroom': { tanpaSofa: 26, denganSofa: null, hasSofaOption: false, desc: 'Meja eksekutif panjang dengan fasilitas vicon dan audio terintegrasi.' },
+                     'Round Table': { tanpaSofa: 24, denganSofa: null, hasSofaOption: false, desc: 'Format meja bundar untuk workshop dan kolaborasi online-offline.' },
+                     'Hollow Square': { tanpaSofa: 20, denganSofa: null, hasSofaOption: false, desc: 'Susunan meja kotak untuk rapat komisi atau evaluasi.' },
+                     'Custom Layout': { tanpaSofa: 58, denganSofa: 48, hasSofaOption: true, desc: 'Tata letak custom disesuaikan kebutuhan zoom/vicon.' }
+                 }
+             },
+             3: {
+                 name: 'Aula Lantai 4',
+                 floor: 'Lantai 4',
+                 max: 100,
+                 layouts: {
+                     'Theater': { tanpaSofa: 100, denganSofa: 80, hasSofaOption: true, desc: 'Format teater aula megah dengan Videotron LED screen raksasa. Kapasitas hingga 100 orang.' },
+                     'Classroom': { tanpaSofa: 62, denganSofa: 52, hasSofaOption: true, desc: 'Susunan meja & kursi berkapasitas besar untuk pelatihan regional, bimtek, dan rapat dinas.' },
+                     'U-Shape': { tanpaSofa: 58, denganSofa: null, hasSofaOption: false, desc: 'Susunan meja U-Shape megah menghadap panggung utama dan videotron.' },
+                     'Boardroom': { tanpaSofa: 66, denganSofa: null, hasSofaOption: false, desc: 'Format meja gabungan konferensi besar untuk forum lintas instansi.' },
+                     'Round Table': { tanpaSofa: 60, denganSofa: null, hasSofaOption: false, desc: 'Format seminar meja bundar atau workshop pleno.' },
+                     'Hollow Square': { tanpaSofa: 50, denganSofa: null, hasSofaOption: false, desc: 'Susunan meja persegi besar untuk pleno komisi.' },
+                     'Custom Layout': { tanpaSofa: 100, denganSofa: 80, hasSofaOption: true, desc: 'Tata letak aula disesuaikan khusus untuk acara seremonial.' }
+                 }
+             }
+         },
+
+         getCurrentCapacity() {
+             let r = this.roomCapacities[this.selectedVenueId] || this.roomCapacities[1];
+             let l = r.layouts[this.layoutMeja] || r.layouts['Classroom'];
+             if (this.sofaDepan === 'dengan' && l.hasSofaOption && l.denganSofa) {
+                 return l.denganSofa;
+             }
+             return l.tanpaSofa;
+         },
+
+         getCurrentLayoutInfo() {
+             let r = this.roomCapacities[this.selectedVenueId] || this.roomCapacities[1];
+             return r.layouts[this.layoutMeja] || r.layouts['Classroom'];
+         },
+
+         getCurrentVenueName() {
+             let r = this.roomCapacities[this.selectedVenueId] || this.roomCapacities[1];
+             return r.name;
+         },
+
+         isSofaOptionAvailable() {
+             let info = this.getCurrentLayoutInfo();
+             return info && info.hasSofaOption && info.denganSofa !== null;
+         },
+
+         setLayout(layout) {
+             this.layoutMeja = layout;
+             let info = this.getCurrentLayoutInfo();
+             if (!info || !info.hasSofaOption) {
+                 this.sofaDepan = 'tanpa';
+             }
+         },
+
+         setSofaDepan(val) {
+             if (this.isSofaOptionAvailable()) {
+                 this.sofaDepan = val;
+             } else {
+                 this.sofaDepan = 'tanpa';
+             }
+         },
 
          openBookingModal(venueId = null, zoomAcc = null, time = null) {
              if (venueId) {
@@ -836,15 +923,24 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                             class="w-full px-3.5 py-2 text-xs rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                            Total Peserta (Orang) <span class="text-rose-500">*</span>
-                        </label>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                Total Peserta (Orang) <span class="text-rose-500">*</span>
+                            </label>
+                            <span class="text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded" x-text="'Maks ' + getCurrentCapacity() + ' Orang'"></span>
+                        </div>
                         <div class="relative">
-                            <input type="number" name="jumlah_peserta" min="1" max="500"
+                            <input type="number" name="jumlah_peserta" x-model="jumlahPeserta" min="1" max="500" required
                                 placeholder="Contoh: 30"
-                                class="w-full pl-8 pr-3.5 py-2 text-xs rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 font-bold text-gray-800">
+                                class="w-full pl-8 pr-3.5 py-2 text-xs rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 font-bold text-gray-800"
+                                :class="parseInt(jumlahPeserta) > getCurrentCapacity() ? 'border-rose-300 text-rose-700 bg-rose-50/50' : ''">
                             <span class="absolute left-2.5 top-2.5 text-xs text-gray-400">👥</span>
                         </div>
+                        <template x-if="parseInt(jumlahPeserta) > getCurrentCapacity()">
+                            <p class="text-[10.5px] font-bold text-rose-600 mt-1 flex items-center gap-1">
+                                <span>⚠️ Jumlah peserta (<span x-text="jumlahPeserta"></span> orang) melebihi kapasitas layout <span x-text="layoutMeja"></span> (<span x-text="getCurrentCapacity()"></span> orang).</span>
+                            </p>
+                        </template>
                     </div>
                 </div>
 
@@ -892,19 +988,32 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
 
                 {{-- Pilihan Ruangan Fisik (Jika Offline atau Hybrid) --}}
                 <div x-show="tipePertemuan === 'offline' || tipePertemuan === 'hybrid'" class="space-y-1.5">
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Pilih Ruangan Rapat Fisik <span class="text-rose-500">*</span>
-                    </label>
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                            Pilih Ruangan Rapat Fisik <span class="text-rose-500">*</span>
+                        </label>
+                        <span class="text-[10px] text-slate-500 font-semibold">Kapasitas menyesuaikan layout yang dipilih</span>
+                    </div>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                         @foreach($venues as $v)
                         <label class="p-3 rounded-xl border cursor-pointer text-xs transition"
-                            :class="selectedVenueId == {{ $v->id }} ? 'bg-blue-50 border-blue-500 text-blue-900 shadow-2xs' : 'bg-gray-50 border-gray-200 text-gray-700'">
-                            <div class="flex items-center gap-2">
-                                <input type="radio" name="venue_id" value="{{ $v->id }}" x-model="selectedVenueId"
-                                    class="text-blue-600">
-                                <span class="font-bold">{{ $v->name }}</span>
+                            :class="selectedVenueId == {{ $v->id }} ? 'bg-blue-50 border-blue-500 text-blue-900 shadow-2xs ring-1 ring-blue-500/50' : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-slate-100/70'">
+                            <div class="flex items-center justify-between gap-1 mb-1">
+                                <div class="flex items-center gap-2">
+                                    <input type="radio" name="venue_id" value="{{ $v->id }}" x-model="selectedVenueId"
+                                        class="text-blue-600">
+                                    <span class="font-bold text-xs">{{ $v->name }}</span>
+                                </div>
+                                <span class="text-[9.5px] font-extrabold text-blue-700 bg-blue-100/80 px-1.5 py-0.5 rounded">
+                                    Maks {{ $v->capacity }} Org
+                                </span>
                             </div>
-                            <p class="text-[10px] text-gray-500 mt-1">Kapasitas {{ $v->capacity }} Orang</p>
+                            <div class="flex items-center justify-between mt-1 pt-1.5 border-t border-slate-200/60 text-[10px]">
+                                <span class="text-slate-500">Format <span class="font-bold text-slate-700" x-text="layoutMeja"></span>:</span>
+                                <span class="font-extrabold text-blue-800"
+                                      x-text="(roomCapacities[{{ $v->id }}] ? (sofaDepan === 'dengan' && roomCapacities[{{ $v->id }}].layouts[layoutMeja]?.denganSofa ? roomCapacities[{{ $v->id }}].layouts[layoutMeja].denganSofa : roomCapacities[{{ $v->id }}].layouts[layoutMeja]?.tanpaSofa) : {{ $v->capacity }}) + ' Orang'">
+                                </span>
+                            </div>
                         </label>
                         @endforeach
                     </div>
@@ -917,83 +1026,505 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                             <span class="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-2xs">🏢</span>
                             <div>
                                 <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Manajemen Ruangan & Sarpras</h4>
-                                <p class="text-[11px] text-slate-500">Konfigurasi layout ruangan, setup panggung, dan kebutuhan khusus</p>
+                                <p class="text-[11px] text-slate-500">Konfigurasi layout ruangan, contoh gambar tata letak, dan kapasitas resmi BPS</p>
                             </div>
                         </div>
-                        <span class="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md">Sarpras BPS</span>
+                        <span class="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md">Sarpras BPS Sultra</span>
                     </div>
 
                     {{-- ========================================================
                         A. SET UP RUANGAN (LAYOUT TATA LETAK MEJA & KURSI)
                     ========================================================= --}}
-                    <div class="space-y-2">
-                        <label class="flex items-center gap-2 text-xs font-bold text-slate-800 uppercase tracking-wider">
-                            <span class="w-5 h-5 rounded-md bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-bold">A</span>
-                            <span>Set Up Ruangan (Layout / Tata Letak)</span>
-                        </label>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label class="flex items-center gap-2 text-xs font-bold text-slate-800 uppercase tracking-wider">
+                                <span class="w-5 h-5 rounded-md bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-bold">A</span>
+                                <span>Set Up Ruangan (Layout / Tata Letak)</span>
+                            </label>
+                            <span class="text-[11px] text-blue-600 font-bold flex items-center gap-1">
+                                <span>Kapasitas:</span>
+                                <span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md font-extrabold" x-text="getCurrentCapacity() + ' Orang'"></span>
+                            </span>
+                        </div>
+
+                        {{-- Tombol Pilihan Layout --}}
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            {{-- Classroom --}}
                             <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
-                                   :class="layoutMeja === 'Classroom' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'">
-                                <div class="flex items-center gap-1.5 mb-1">
-                                    <input type="radio" name="layout_meja" value="Classroom" x-model="layoutMeja" class="text-blue-600">
-                                    <span class="text-[11px]">Classroom</span>
+                                   :class="layoutMeja === 'Classroom' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'"
+                                   @click="setLayout('Classroom')">
+                                <div class="flex items-center justify-between mb-1">
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="radio" name="layout_meja" value="Classroom" x-model="layoutMeja" @change="setLayout('Classroom')" class="text-blue-600">
+                                        <span class="text-[11px] font-bold">Classroom</span>
+                                    </div>
+                                    <span class="text-[9px] px-1 bg-slate-100 rounded text-slate-600" x-text="(roomCapacities[selectedVenueId]?.layouts['Classroom'].tanpaSofa || 0) + ' Org'"></span>
                                 </div>
                                 <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Baris meja & kursi kelas (Default)</span>
                             </label>
 
+                            {{-- U-Shape --}}
                             <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
-                                   :class="layoutMeja === 'U-Shape' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'">
-                                <div class="flex items-center gap-1.5 mb-1">
-                                    <input type="radio" name="layout_meja" value="U-Shape" x-model="layoutMeja" class="text-blue-600">
-                                    <span class="text-[11px]">U-Shape</span>
+                                   :class="layoutMeja === 'U-Shape' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'"
+                                   @click="setLayout('U-Shape')">
+                                <div class="flex items-center justify-between mb-1">
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="radio" name="layout_meja" value="U-Shape" x-model="layoutMeja" @change="setLayout('U-Shape')" class="text-blue-600">
+                                        <span class="text-[11px] font-bold">U-Shape</span>
+                                    </div>
+                                    <span class="text-[9px] px-1 bg-slate-100 rounded text-slate-600" x-text="(roomCapacities[selectedVenueId]?.layouts['U-Shape'].tanpaSofa || 0) + ' Org'"></span>
                                 </div>
                                 <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Bentuk huruf U / tapal kuda</span>
                             </label>
 
+                            {{-- Theatre --}}
                             <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
-                                   :class="layoutMeja === 'Theater' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'">
-                                <div class="flex items-center gap-1.5 mb-1">
-                                    <input type="radio" name="layout_meja" value="Theater" x-model="layoutMeja" class="text-blue-600">
-                                    <span class="text-[11px]">Theatre / Teater</span>
+                                   :class="layoutMeja === 'Theater' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'"
+                                   @click="setLayout('Theater')">
+                                <div class="flex items-center justify-between mb-1">
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="radio" name="layout_meja" value="Theater" x-model="layoutMeja" @change="setLayout('Theater')" class="text-blue-600">
+                                        <span class="text-[11px] font-bold">Theatre / Teater</span>
+                                    </div>
+                                    <span class="text-[9px] px-1 bg-slate-100 rounded text-slate-600" x-text="(roomCapacities[selectedVenueId]?.layouts['Theater'].tanpaSofa || 0) + ' Org'"></span>
                                 </div>
                                 <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Hanya kursi berjejer tanpa meja</span>
                             </label>
 
+                            {{-- Boardroom --}}
                             <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
-                                   :class="layoutMeja === 'Round Table' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'">
-                                <div class="flex items-center gap-1.5 mb-1">
-                                    <input type="radio" name="layout_meja" value="Round Table" x-model="layoutMeja" class="text-blue-600">
-                                    <span class="text-[11px]">Round Table</span>
-                                </div>
-                                <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Meja bundar kelompok diskusi</span>
-                            </label>
-
-                            <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
-                                   :class="layoutMeja === 'Boardroom' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'">
-                                <div class="flex items-center gap-1.5 mb-1">
-                                    <input type="radio" name="layout_meja" value="Boardroom" x-model="layoutMeja" class="text-blue-600">
-                                    <span class="text-[11px]">Boardroom</span>
+                                   :class="layoutMeja === 'Boardroom' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'"
+                                   @click="setLayout('Boardroom')">
+                                <div class="flex items-center justify-between mb-1">
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="radio" name="layout_meja" value="Boardroom" x-model="layoutMeja" @change="setLayout('Boardroom')" class="text-blue-600">
+                                        <span class="text-[11px] font-bold">Boardroom</span>
+                                    </div>
+                                    <span class="text-[9px] px-1 bg-slate-100 rounded text-slate-600" x-text="(roomCapacities[selectedVenueId]?.layouts['Boardroom'].tanpaSofa || 0) + ' Org'"></span>
                                 </div>
                                 <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Satu meja rapat oval / panjang</span>
                             </label>
 
+                            {{-- Round Table --}}
                             <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
-                                   :class="layoutMeja === 'Hollow Square' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'">
-                                <div class="flex items-center gap-1.5 mb-1">
-                                    <input type="radio" name="layout_meja" value="Hollow Square" x-model="layoutMeja" class="text-blue-600">
-                                    <span class="text-[11px]">Hollow Square</span>
+                                   :class="layoutMeja === 'Round Table' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'"
+                                   @click="setLayout('Round Table')">
+                                <div class="flex items-center justify-between mb-1">
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="radio" name="layout_meja" value="Round Table" x-model="layoutMeja" @change="setLayout('Round Table')" class="text-blue-600">
+                                        <span class="text-[11px] font-bold">Round Table</span>
+                                    </div>
+                                    <span class="text-[9px] px-1 bg-slate-100 rounded text-slate-600" x-text="(roomCapacities[selectedVenueId]?.layouts['Round Table'].tanpaSofa || 0) + ' Org'"></span>
+                                </div>
+                                <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Meja bundar kelompok diskusi</span>
+                            </label>
+
+                            {{-- Hollow Square --}}
+                            <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
+                                   :class="layoutMeja === 'Hollow Square' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'"
+                                   @click="setLayout('Hollow Square')">
+                                <div class="flex items-center justify-between mb-1">
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="radio" name="layout_meja" value="Hollow Square" x-model="layoutMeja" @change="setLayout('Hollow Square')" class="text-blue-600">
+                                        <span class="text-[11px] font-bold">Hollow Square</span>
+                                    </div>
+                                    <span class="text-[9px] px-1 bg-slate-100 rounded text-slate-600" x-text="(roomCapacities[selectedVenueId]?.layouts['Hollow Square'].tanpaSofa || 0) + ' Org'"></span>
                                 </div>
                                 <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Persegi berongga tengah</span>
                             </label>
 
+                            {{-- Custom Layout --}}
                             <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between sm:col-span-2"
-                                   :class="layoutMeja === 'Custom Layout' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'">
-                                <div class="flex items-center gap-1.5 mb-1">
-                                    <input type="radio" name="layout_meja" value="Custom Layout" x-model="layoutMeja" class="text-blue-600">
-                                    <span class="text-[11px]">Custom / Menyesuaikan</span>
+                                   :class="layoutMeja === 'Custom Layout' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'"
+                                   @click="setLayout('Custom Layout')">
+                                <div class="flex items-center justify-between mb-1">
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="radio" name="layout_meja" value="Custom Layout" x-model="layoutMeja" @change="setLayout('Custom Layout')" class="text-blue-600">
+                                        <span class="text-[11px] font-bold">Custom / Menyesuaikan</span>
+                                    </div>
+                                    <span class="text-[9px] px-1 bg-slate-100 rounded text-slate-600" x-text="(roomCapacities[selectedVenueId]?.layouts['Custom Layout'].tanpaSofa || 0) + ' Org'"></span>
                                 </div>
                                 <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Tata letak khusus disesuaikan kebutuhan acara</span>
                             </label>
+                        </div>
+
+                        {{-- ====================================================================
+                            PREVIEW VISUAL ILUSTRASI CONTOH GAMBAR RUANGAN & KONTROL SOFA DEPAN
+                        ===================================================================== --}}
+                        <div class="mt-3 bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+                            {{-- Header Preview Layout --}}
+                            <div class="px-4 py-3 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-7 h-7 rounded-lg bg-blue-500 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                                        📐
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <h5 class="text-xs font-bold tracking-wide text-white">Contoh Visual Layout: <span class="text-amber-300" x-text="layoutMeja"></span></h5>
+                                            <span class="text-[9.5px] font-semibold bg-white/20 text-white px-2 py-0.5 rounded-full" x-text="getCurrentVenueName()"></span>
+                                        </div>
+                                        <p class="text-[10.5px] text-slate-300 mt-0.5" x-text="getCurrentLayoutInfo().desc"></p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <span class="text-[11px] text-slate-300">Kapasitas:</span>
+                                    <span class="px-2.5 py-1 bg-emerald-500 text-white text-xs font-black rounded-lg shadow-2xs flex items-center gap-1"
+                                          x-text="getCurrentCapacity() + ' Kursi'">
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                                {{-- KOLOM KIRI (LG: COL-7): DIAGRAM VISUAL RUANGAN (SVG INTERAKTIF) --}}
+                                <div class="lg:col-span-7 flex flex-col items-center justify-center bg-slate-50/70 p-3 sm:p-4 rounded-xl border border-slate-200 relative">
+                                    <div class="w-full max-w-[380px] aspect-[16/10] flex items-center justify-center">
+
+                                        {{-- 1. SVG PREVIEW: U-SHAPE --}}
+                                        <template x-if="layoutMeja === 'U-Shape'">
+                                            <svg viewBox="0 0 400 240" class="w-full h-full drop-shadow-xs select-none">
+                                                {{-- Room Frame --}}
+                                                <rect width="400" height="240" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+                                                {{-- Stage & Screen --}}
+                                                <rect x="90" y="12" width="220" height="26" rx="6" fill="#1e293b"/>
+                                                <text x="200" y="29" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="bold" font-family="sans-serif">📺 PANGGUNG & SCREEN PRESENTASI</text>
+                                                <rect x="98" y="16" width="20" height="18" rx="3" fill="#3b82f6"/>
+                                                <text x="108" y="29" text-anchor="middle" fill="#ffffff" font-size="8.5">🎤</text>
+
+                                                {{-- U-Shape Tables --}}
+                                                {{-- Top connector table --}}
+                                                <rect x="90" y="58" width="220" height="26" rx="4" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                                                {{-- Left arm table --}}
+                                                <rect x="90" y="84" width="30" height="110" rx="4" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                                                {{-- Right arm table --}}
+                                                <rect x="280" y="84" width="30" height="110" rx="4" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+
+                                                {{-- Table Labels --}}
+                                                <text x="200" y="74" text-anchor="middle" fill="#1e40af" font-size="9" font-weight="bold">Meja Pimpinan / Utama</text>
+                                                <text x="105" y="145" text-anchor="middle" fill="#1e40af" font-size="8" font-weight="bold" transform="rotate(-90 105 145)">Meja Peserta Sisi Kiri</text>
+                                                <text x="295" y="145" text-anchor="middle" fill="#1e40af" font-size="8" font-weight="bold" transform="rotate(90 295 145)">Meja Peserta Sisi Kanan</text>
+
+                                                {{-- Outer Chairs (Blue) --}}
+                                                {{-- Top outer chairs --}}
+                                                <rect x="110" y="44" width="16" height="10" rx="2" fill="#2563eb"/>
+                                                <rect x="140" y="44" width="16" height="10" rx="2" fill="#2563eb"/>
+                                                <rect x="170" y="44" width="16" height="10" rx="2" fill="#2563eb"/>
+                                                <rect x="200" y="44" width="16" height="10" rx="2" fill="#2563eb"/>
+                                                <rect x="230" y="44" width="16" height="10" rx="2" fill="#2563eb"/>
+                                                <rect x="260" y="44" width="16" height="10" rx="2" fill="#2563eb"/>
+
+                                                {{-- Left outer chairs --}}
+                                                <rect x="74" y="94" width="10" height="16" rx="2" fill="#2563eb"/>
+                                                <rect x="74" y="118" width="10" height="16" rx="2" fill="#2563eb"/>
+                                                <rect x="74" y="142" width="10" height="16" rx="2" fill="#2563eb"/>
+                                                <rect x="74" y="166" width="10" height="16" rx="2" fill="#2563eb"/>
+
+                                                {{-- Right outer chairs --}}
+                                                <rect x="316" y="94" width="10" height="16" rx="2" fill="#2563eb"/>
+                                                <rect x="316" y="118" width="10" height="16" rx="2" fill="#2563eb"/>
+                                                <rect x="316" y="142" width="10" height="16" rx="2" fill="#2563eb"/>
+                                                <rect x="316" y="166" width="10" height="16" rx="2" fill="#2563eb"/>
+
+                                                {{-- Center Presenter Area --}}
+                                                <rect x="135" y="105" width="130" height="60" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-dasharray="4 4"/>
+                                                <text x="200" y="132" text-anchor="middle" fill="#2563eb" font-size="9" font-weight="bold">Area Presenter / Pemateri</text>
+                                                <text x="200" y="146" text-anchor="middle" fill="#64748b" font-size="8">Format Interaktif U-Shape</text>
+
+                                                {{-- Door Entrance --}}
+                                                <text x="345" y="226" text-anchor="middle" fill="#64748b" font-size="9" font-weight="600">🚪 Pintu Masuk</text>
+                                            </svg>
+                                        </template>
+
+                                        {{-- 2. SVG PREVIEW: CLASSROOM --}}
+                                        <template x-if="layoutMeja === 'Classroom'">
+                                            <svg viewBox="0 0 400 240" class="w-full h-full drop-shadow-xs select-none">
+                                                <rect width="400" height="240" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+                                                {{-- Stage & Screen --}}
+                                                <rect x="70" y="12" width="260" height="26" rx="6" fill="#1e293b"/>
+                                                <text x="200" y="29" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="bold" font-family="sans-serif">📺 PANGGUNG & VIDEOTRON UTAMA</text>
+                                                <rect x="80" y="16" width="20" height="18" rx="3" fill="#3b82f6"/>
+                                                <text x="90" y="29" text-anchor="middle" fill="#ffffff" font-size="8.5">🎤</text>
+
+                                                {{-- Front Sofa VIP (Jika dengan Sofa Depan) --}}
+                                                <g x-show="sofaDepan === 'dengan'">
+                                                    <rect x="65" y="48" width="125" height="22" rx="5" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+                                                    <text x="127" y="62" text-anchor="middle" fill="#b45309" font-size="8.5" font-weight="bold">🛋️ SOFA VIP BARIS 1</text>
+                                                    <rect x="210" y="48" width="125" height="22" rx="5" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+                                                    <text x="272" y="62" text-anchor="middle" fill="#b45309" font-size="8.5" font-weight="bold">🛋️ SOFA VIP BARIS 2</text>
+                                                </g>
+
+                                                {{-- Classroom Desk Rows (Left & Right Column with Center Aisle) --}}
+                                                {{-- Row 1 --}}
+                                                <rect x="65" :y="sofaDepan === 'dengan' ? 82 : 56" width="125" height="18" rx="3" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+                                                <rect x="210" :y="sofaDepan === 'dengan' ? 82 : 56" width="125" height="18" rx="3" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+                                                {{-- Row 1 Chairs --}}
+                                                <rect x="75" :y="sofaDepan === 'dengan' ? 104 : 78" width="22" height="9" rx="2" fill="#2563eb"/>
+                                                <rect x="115" :y="sofaDepan === 'dengan' ? 104 : 78" width="22" height="9" rx="2" fill="#2563eb"/>
+                                                <rect x="155" :y="sofaDepan === 'dengan' ? 104 : 78" width="22" height="9" rx="2" fill="#2563eb"/>
+                                                <rect x="220" :y="sofaDepan === 'dengan' ? 104 : 78" width="22" height="9" rx="2" fill="#2563eb"/>
+                                                <rect x="260" :y="sofaDepan === 'dengan' ? 104 : 78" width="22" height="9" rx="2" fill="#2563eb"/>
+                                                <rect x="300" :y="sofaDepan === 'dengan' ? 104 : 78" width="22" height="9" rx="2" fill="#2563eb"/>
+
+                                                {{-- Row 2 --}}
+                                                <rect x="65" :y="sofaDepan === 'dengan' ? 122 : 98" width="125" height="18" rx="3" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+                                                <rect x="210" :y="sofaDepan === 'dengan' ? 122 : 98" width="125" height="18" rx="3" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+                                                {{-- Row 2 Chairs --}}
+                                                <rect x="75" :y="sofaDepan === 'dengan' ? 144 : 120" width="22" height="9" rx="2" fill="#2563eb"/>
+                                                <rect x="115" :y="sofaDepan === 'dengan' ? 144 : 120" width="22" height="9" rx="2" fill="#2563eb"/>
+                                                <rect x="155" :y="sofaDepan === 'dengan' ? 144 : 120" width="22" height="9" rx="2" fill="#2563eb"/>
+                                                <rect x="220" :y="sofaDepan === 'dengan' ? 144 : 120" width="22" height="9" rx="2" fill="#2563eb"/>
+                                                <rect x="260" :y="sofaDepan === 'dengan' ? 144 : 120" width="22" height="9" rx="2" fill="#2563eb"/>
+                                                <rect x="300" :y="sofaDepan === 'dengan' ? 144 : 120" width="22" height="9" rx="2" fill="#2563eb"/>
+
+                                                {{-- Row 3 --}}
+                                                <rect x="65" :y="sofaDepan === 'dengan' ? 162 : 140" width="125" height="18" rx="3" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+                                                <rect x="210" :y="sofaDepan === 'dengan' ? 162 : 140" width="125" height="18" rx="3" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+                                                {{-- Row 3 Chairs --}}
+                                                <rect x="75" :y="sofaDepan === 'dengan' ? 184 : 162" width="22" height="9" rx="2" fill="#2563eb"/>
+                                                <rect x="115" :y="sofaDepan === 'dengan' ? 184 : 162" width="22" height="9" rx="2" fill="#2563eb"/>
+                                                <rect x="155" :y="sofaDepan === 'dengan' ? 184 : 162" width="22" height="9" rx="2" fill="#2563eb"/>
+                                                <rect x="220" :y="sofaDepan === 'dengan' ? 184 : 162" width="22" height="9" rx="2" fill="#2563eb"/>
+                                                <rect x="260" :y="sofaDepan === 'dengan' ? 184 : 162" width="22" height="9" rx="2" fill="#2563eb"/>
+                                                <rect x="300" :y="sofaDepan === 'dengan' ? 184 : 162" width="22" height="9" rx="2" fill="#2563eb"/>
+
+                                                {{-- Center Aisle label --}}
+                                                <text x="200" y="145" text-anchor="middle" fill="#94a3b8" font-size="8" font-weight="600" transform="rotate(-90 200 145)">LORONG UTAMA</text>
+                                                {{-- Door --}}
+                                                <text x="345" y="226" text-anchor="middle" fill="#64748b" font-size="9" font-weight="600">🚪 Pintu Masuk</text>
+                                            </svg>
+                                        </template>
+
+                                        {{-- 3. SVG PREVIEW: THEATER --}}
+                                        <template x-if="layoutMeja === 'Theater'">
+                                            <svg viewBox="0 0 400 240" class="w-full h-full drop-shadow-xs select-none">
+                                                <rect width="400" height="240" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+                                                {{-- Stage & Screen --}}
+                                                <rect x="60" y="12" width="280" height="26" rx="6" fill="#1e293b"/>
+                                                <text x="200" y="29" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="bold" font-family="sans-serif">📺 PANGGUNG AULA & PODIUM PIDATO</text>
+
+                                                {{-- Front Sofa VIP --}}
+                                                <g x-show="sofaDepan === 'dengan'">
+                                                    <rect x="55" y="46" width="135" height="20" rx="4" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+                                                    <text x="122" y="60" text-anchor="middle" fill="#b45309" font-size="8.5" font-weight="bold">🛋️ SOFA VIP PANGGUNG 1</text>
+                                                    <rect x="210" y="46" width="135" height="20" rx="4" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+                                                    <text x="277" y="60" text-anchor="middle" fill="#b45309" font-size="8.5" font-weight="bold">🛋️ SOFA VIP PANGGUNG 2</text>
+                                                </g>
+
+                                                {{-- Dense Theater Chair Rows --}}
+                                                <g :transform="sofaDepan === 'dengan' ? 'translate(0, 24)' : 'translate(0, 0)'">
+                                                    {{-- Row 1 --}}
+                                                    <g fill="#2563eb">
+                                                        <rect x="55" y="52" width="18" height="12" rx="2"/><rect x="80" y="52" width="18" height="12" rx="2"/><rect x="105" y="52" width="18" height="12" rx="2"/><rect x="130" y="52" width="18" height="12" rx="2"/><rect x="155" y="52" width="18" height="12" rx="2"/><rect x="180" y="52" width="18" height="12" rx="2"/>
+                                                        <rect x="215" y="52" width="18" height="12" rx="2"/><rect x="240" y="52" width="18" height="12" rx="2"/><rect x="265" y="52" width="18" height="12" rx="2"/><rect x="290" y="52" width="18" height="12" rx="2"/><rect x="315" y="52" width="18" height="12" rx="2"/><rect x="340" y="52" width="18" height="12" rx="2"/>
+                                                    </g>
+                                                    {{-- Row 2 --}}
+                                                    <g fill="#2563eb">
+                                                        <rect x="55" y="74" width="18" height="12" rx="2"/><rect x="80" y="74" width="18" height="12" rx="2"/><rect x="105" y="74" width="18" height="12" rx="2"/><rect x="130" y="74" width="18" height="12" rx="2"/><rect x="155" y="74" width="18" height="12" rx="2"/><rect x="180" y="74" width="18" height="12" rx="2"/>
+                                                        <rect x="215" y="74" width="18" height="12" rx="2"/><rect x="240" y="74" width="18" height="12" rx="2"/><rect x="265" y="74" width="18" height="12" rx="2"/><rect x="290" y="74" width="18" height="12" rx="2"/><rect x="315" y="74" width="18" height="12" rx="2"/><rect x="340" y="74" width="18" height="12" rx="2"/>
+                                                    </g>
+                                                    {{-- Row 3 --}}
+                                                    <g fill="#2563eb">
+                                                        <rect x="55" y="96" width="18" height="12" rx="2"/><rect x="80" y="96" width="18" height="12" rx="2"/><rect x="105" y="96" width="18" height="12" rx="2"/><rect x="130" y="96" width="18" height="12" rx="2"/><rect x="155" y="96" width="18" height="12" rx="2"/><rect x="180" y="96" width="18" height="12" rx="2"/>
+                                                        <rect x="215" y="96" width="18" height="12" rx="2"/><rect x="240" y="96" width="18" height="12" rx="2"/><rect x="265" y="96" width="18" height="12" rx="2"/><rect x="290" y="96" width="18" height="12" rx="2"/><rect x="315" y="96" width="18" height="12" rx="2"/><rect x="340" y="96" width="18" height="12" rx="2"/>
+                                                    </g>
+                                                    {{-- Row 4 --}}
+                                                    <g fill="#2563eb">
+                                                        <rect x="55" y="118" width="18" height="12" rx="2"/><rect x="80" y="118" width="18" height="12" rx="2"/><rect x="105" y="118" width="18" height="12" rx="2"/><rect x="130" y="118" width="18" height="12" rx="2"/><rect x="155" y="118" width="18" height="12" rx="2"/><rect x="180" y="118" width="18" height="12" rx="2"/>
+                                                        <rect x="215" y="118" width="18" height="12" rx="2"/><rect x="240" y="118" width="18" height="12" rx="2"/><rect x="265" y="118" width="18" height="12" rx="2"/><rect x="290" y="118" width="18" height="12" rx="2"/><rect x="315" y="118" width="18" height="12" rx="2"/><rect x="340" y="118" width="18" height="12" rx="2"/>
+                                                    </g>
+                                                    {{-- Row 5 --}}
+                                                    <g fill="#2563eb">
+                                                        <rect x="55" y="140" width="18" height="12" rx="2"/><rect x="80" y="140" width="18" height="12" rx="2"/><rect x="105" y="140" width="18" height="12" rx="2"/><rect x="130" y="140" width="18" height="12" rx="2"/><rect x="155" y="140" width="18" height="12" rx="2"/><rect x="180" y="140" width="18" height="12" rx="2"/>
+                                                        <rect x="215" y="140" width="18" height="12" rx="2"/><rect x="240" y="140" width="18" height="12" rx="2"/><rect x="265" y="140" width="18" height="12" rx="2"/><rect x="290" y="140" width="18" height="12" rx="2"/><rect x="315" y="140" width="18" height="12" rx="2"/><rect x="340" y="140" width="18" height="12" rx="2"/>
+                                                    </g>
+                                                </g>
+
+                                                <text x="345" y="226" text-anchor="middle" fill="#64748b" font-size="9" font-weight="600">🚪 Pintu Masuk</text>
+                                            </svg>
+                                        </template>
+
+                                        {{-- 4. SVG PREVIEW: BOARDROOM --}}
+                                        <template x-if="layoutMeja === 'Boardroom'">
+                                            <svg viewBox="0 0 400 240" class="w-full h-full drop-shadow-xs select-none">
+                                                <rect width="400" height="240" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+                                                {{-- Smart Display --}}
+                                                <rect x="130" y="12" width="140" height="20" rx="4" fill="#334155"/>
+                                                <text x="200" y="26" text-anchor="middle" fill="#ffffff" font-size="9" font-weight="bold">🖥️ SMART TV DISPLAY VICON</text>
+
+                                                {{-- Large Central Executive Table --}}
+                                                <rect x="80" y="54" width="240" height="116" rx="24" fill="#dbeafe" stroke="#3b82f6" stroke-width="2.5"/>
+                                                <text x="200" y="106" text-anchor="middle" fill="#1e40af" font-size="12" font-weight="bold">MEJA RAPAT EKSEKUTIF</text>
+                                                <text x="200" y="124" text-anchor="middle" fill="#3b82f6" font-size="8.5">🎙️ Mic Conference Polycom 360°</text>
+
+                                                {{-- Leader Chair (Top & Bottom Head) --}}
+                                                <rect x="185" y="38" width="30" height="12" rx="3" fill="#1d4ed8"/>
+                                                <text x="200" y="47" text-anchor="middle" fill="#ffffff" font-size="7" font-weight="bold">Pimpinan</text>
+
+                                                <rect x="185" y="174" width="30" height="12" rx="3" fill="#1d4ed8"/>
+
+                                                {{-- Side Chairs --}}
+                                                {{-- Left Chairs --}}
+                                                <rect x="62" y="68" width="14" height="20" rx="3" fill="#2563eb"/>
+                                                <rect x="62" y="96" width="14" height="20" rx="3" fill="#2563eb"/>
+                                                <rect x="62" y="124" width="14" height="20" rx="3" fill="#2563eb"/>
+                                                <rect x="62" y="152" width="14" height="20" rx="3" fill="#2563eb"/>
+
+                                                {{-- Right Chairs --}}
+                                                <rect x="324" y="68" width="14" height="20" rx="3" fill="#2563eb"/>
+                                                <rect x="324" y="96" width="14" height="20" rx="3" fill="#2563eb"/>
+                                                <rect x="324" y="124" width="14" height="20" rx="3" fill="#2563eb"/>
+                                                <rect x="324" y="152" width="14" height="20" rx="3" fill="#2563eb"/>
+
+                                                <text x="345" y="226" text-anchor="middle" fill="#64748b" font-size="9" font-weight="600">🚪 Pintu Masuk</text>
+                                            </svg>
+                                        </template>
+
+                                        {{-- 5. SVG PREVIEW: ROUND TABLE / HOLLOW SQUARE / CUSTOM --}}
+                                        <template x-if="layoutMeja === 'Round Table' || layoutMeja === 'Hollow Square' || layoutMeja === 'Custom Layout'">
+                                            <svg viewBox="0 0 400 240" class="w-full h-full drop-shadow-xs select-none">
+                                                <rect width="400" height="240" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+                                                <rect x="90" y="12" width="220" height="24" rx="5" fill="#1e293b"/>
+                                                <text x="200" y="28" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="bold">📺 PANGGUNG PRESENTASI</text>
+
+                                                {{-- Round Tables --}}
+                                                <template x-if="layoutMeja === 'Round Table'">
+                                                    <g>
+                                                        {{-- Table 1 --}}
+                                                        <circle cx="110" cy="95" r="32" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                                                        <text x="110" y="98" text-anchor="middle" fill="#1e40af" font-size="8" font-weight="bold">Meja 1</text>
+                                                        <circle cx="110" cy="56" r="6" fill="#2563eb"/><circle cx="145" cy="80" r="6" fill="#2563eb"/><circle cx="145" cy="115" r="6" fill="#2563eb"/><circle cx="110" cy="134" r="6" fill="#2563eb"/><circle cx="75" cy="115" r="6" fill="#2563eb"/><circle cx="75" cy="80" r="6" fill="#2563eb"/>
+
+                                                        {{-- Table 2 --}}
+                                                        <circle cx="290" cy="95" r="32" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                                                        <text x="290" y="98" text-anchor="middle" fill="#1e40af" font-size="8" font-weight="bold">Meja 2</text>
+                                                        <circle cx="290" cy="56" r="6" fill="#2563eb"/><circle cx="325" cy="80" r="6" fill="#2563eb"/><circle cx="325" cy="115" r="6" fill="#2563eb"/><circle cx="290" cy="134" r="6" fill="#2563eb"/><circle cx="255" cy="115" r="6" fill="#2563eb"/><circle cx="255" cy="80" r="6" fill="#2563eb"/>
+
+                                                        {{-- Table 3 --}}
+                                                        <circle cx="200" cy="165" r="32" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                                                        <text x="200" y="168" text-anchor="middle" fill="#1e40af" font-size="8" font-weight="bold">Meja 3</text>
+                                                        <circle cx="200" cy="126" r="6" fill="#2563eb"/><circle cx="235" cy="150" r="6" fill="#2563eb"/><circle cx="235" cy="185" r="6" fill="#2563eb"/><circle cx="200" cy="204" r="6" fill="#2563eb"/><circle cx="165" cy="185" r="6" fill="#2563eb"/><circle cx="165" cy="150" r="6" fill="#2563eb"/>
+                                                    </g>
+                                                </template>
+
+                                                {{-- Hollow Square --}}
+                                                <template x-if="layoutMeja === 'Hollow Square'">
+                                                    <g>
+                                                        <rect x="100" y="60" width="200" height="120" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+                                                        <rect x="140" y="86" width="120" height="68" rx="4" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+                                                        <text x="200" y="124" text-anchor="middle" fill="#64748b" font-size="8.5" font-weight="bold">Ruang Terbuka Tengah</text>
+                                                    </g>
+                                                </template>
+
+                                                {{-- Custom Layout --}}
+                                                <template x-if="layoutMeja === 'Custom Layout'">
+                                                    <g>
+                                                        <rect x="70" y="60" width="260" height="120" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="6 4"/>
+                                                        <text x="200" y="115" text-anchor="middle" fill="#1e40af" font-size="11" font-weight="bold">TATA LETAK FLEKSIBEL (CUSTOM)</text>
+                                                        <text x="200" y="132" text-anchor="middle" fill="#64748b" font-size="8.5">Disesuaikan dengan permintaan khusus pemohon</text>
+                                                    </g>
+                                                </template>
+
+                                                <text x="345" y="226" text-anchor="middle" fill="#64748b" font-size="9" font-weight="600">🚪 Pintu Masuk</text>
+                                            </svg>
+                                        </template>
+
+                                    </div>
+
+                                    {{-- Legend Floorplan --}}
+                                    <div class="mt-2 flex items-center justify-center gap-3 flex-wrap text-[10px] text-slate-600 font-medium">
+                                        <span class="flex items-center gap-1"><span class="w-3 h-2 rounded-xs bg-slate-800 inline-block"></span> Panggung/Screen</span>
+                                        <span class="flex items-center gap-1"><span class="w-3 h-2 rounded-xs bg-blue-100 border border-blue-500 inline-block"></span> Meja Rapat</span>
+                                        <span class="flex items-center gap-1"><span class="w-3 h-2 rounded-xs bg-blue-600 inline-block"></span> Kursi Peserta</span>
+                                        <span class="flex items-center gap-1" x-show="isSofaOptionAvailable()"><span class="w-3 h-2 rounded-xs bg-amber-100 border border-amber-500 inline-block"></span> Sofa VIP Depan</span>
+                                    </div>
+                                </div>
+
+                                {{-- KOLOM KANAN (LG: COL-5): KONTROL SOFA DEPAN & PERBANDINGAN KAPASITAS RESMI --}}
+                                <div class="lg:col-span-5 space-y-3">
+                                    {{-- OPSI SOFA DEPAN PANGGUNG (SESUAI DOKUMEN KAPASITAS BPS) --}}
+                                    <div class="p-3 bg-slate-50/80 rounded-xl border border-slate-200 shadow-2xs space-y-2">
+                                        <div class="flex items-center justify-between">
+                                            <label class="block text-[11px] font-bold text-slate-800 uppercase tracking-wider">
+                                                🛋️ Opsi Sofa Depan Panggung
+                                            </label>
+                                            <template x-if="isSofaOptionAvailable()">
+                                                <span class="text-[9.5px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">Tersedia</span>
+                                            </template>
+                                            <template x-if="!isSofaOptionAvailable()">
+                                                <span class="text-[9.5px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded">Tidak Ada Opsi</span>
+                                            </template>
+                                        </div>
+
+                                        <div class="space-y-1.5">
+                                            {{-- Radio: Tanpa Sofa --}}
+                                            <label class="flex items-center justify-between p-2 rounded-lg border cursor-pointer text-xs transition"
+                                                   :class="sofaDepan === 'tanpa' ? 'bg-blue-50 border-blue-500 text-blue-900 font-bold shadow-2xs ring-1 ring-blue-500/50' : 'bg-white border-slate-200 hover:bg-slate-100 text-slate-700'"
+                                                   @click="setSofaDepan('tanpa')">
+                                                <div class="flex items-center gap-2">
+                                                    <input type="radio" name="sofa_depan" value="tanpa" :checked="sofaDepan === 'tanpa'" class="text-blue-600">
+                                                    <div>
+                                                        <span class="block text-[11px]">Tanpa Sofa Depan Panggung</span>
+                                                        <span class="text-[9.5px] text-slate-400 font-normal">Kapasitas maksimal baris kursi biasa</span>
+                                                    </div>
+                                                </div>
+                                                <span class="text-[11px] font-black text-blue-700 bg-blue-100/60 px-2 py-0.5 rounded border border-blue-200"
+                                                      x-text="(getCurrentLayoutInfo().tanpaSofa || 0) + ' Org'"></span>
+                                            </label>
+
+                                            {{-- Radio: Dengan Sofa --}}
+                                            <label class="flex items-center justify-between p-2 rounded-lg border text-xs transition"
+                                                   :class="!isSofaOptionAvailable() ? 'opacity-40 cursor-not-allowed bg-slate-100 border-slate-200 text-slate-400' : (sofaDepan === 'dengan' ? 'bg-amber-50 border-amber-500 text-amber-950 font-bold shadow-2xs ring-1 ring-amber-500/50 cursor-pointer' : 'bg-white border-slate-200 hover:bg-slate-100 text-slate-700 cursor-pointer')"
+                                                   @click="if(isSofaOptionAvailable()) setSofaDepan('dengan')">
+                                                <div class="flex items-center gap-2">
+                                                    <input type="radio" name="sofa_depan" value="dengan" :checked="sofaDepan === 'dengan'" :disabled="!isSofaOptionAvailable()" class="text-amber-600">
+                                                    <div>
+                                                        <span class="block text-[11px]">Dengan Sofa Depan Panggung</span>
+                                                        <span class="text-[9.5px] text-slate-400 font-normal">Sofa VIP khusus di baris depan</span>
+                                                    </div>
+                                                </div>
+                                                <span class="text-[11px] font-black px-2 py-0.5 rounded border"
+                                                      :class="sofaDepan === 'dengan' ? 'text-amber-900 bg-amber-100/80 border-amber-300' : 'text-slate-600 bg-slate-100 border-slate-200'"
+                                                      x-text="isSofaOptionAvailable() ? (getCurrentLayoutInfo().denganSofa + ' Org') : 'N/A'"></span>
+                                            </label>
+                                        </div>
+
+                                        <template x-if="!isSofaOptionAvailable()">
+                                            <p class="text-[10px] text-slate-500 italic bg-white p-2 rounded-lg border border-slate-200 mt-1">
+                                                ℹ️ Format <strong><span x-text="layoutMeja"></span></strong> menggunakan 1 formasi meja terpadu sehingga tidak menggunakan konfigurasi sofa depan panggung.
+                                            </p>
+                                        </template>
+                                    </div>
+
+                                    {{-- Tabel Mini Standar Kapasitas Resmi Ruangan Terpilih --}}
+                                    <div class="p-3 bg-slate-50/80 rounded-xl border border-slate-200 text-xs space-y-1.5">
+                                        <div class="flex items-center justify-between">
+                                            <span class="font-bold text-slate-800 text-[10.5px]">📋 Standar Kapasitas: <strong class="text-blue-700" x-text="getCurrentVenueName()"></strong></span>
+                                            <span class="text-[9.5px] text-slate-400">Tabel Resmi</span>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-1.5 text-center text-[10px]">
+                                            <div class="p-1.5 rounded-lg border transition" :class="layoutMeja === 'Theater' ? 'bg-blue-100/80 border-blue-400 font-bold text-blue-900' : 'bg-white border-slate-200 text-slate-600'">
+                                                <span class="block text-[9.5px] text-slate-500">Theatre</span>
+                                                <span class="text-[11px] font-black text-blue-700" x-text="(roomCapacities[selectedVenueId]?.layouts['Theater'].tanpaSofa || 0) + ' / ' + (roomCapacities[selectedVenueId]?.layouts['Theater'].denganSofa || 0) + ' Org'"></span>
+                                                <span class="block text-[8.5px] text-slate-400">Tanpa / Dgn Sofa</span>
+                                            </div>
+                                            <div class="p-1.5 rounded-lg border transition" :class="layoutMeja === 'Classroom' ? 'bg-blue-100/80 border-blue-400 font-bold text-blue-900' : 'bg-white border-slate-200 text-slate-600'">
+                                                <span class="block text-[9.5px] text-slate-500">Classroom</span>
+                                                <span class="text-[11px] font-black text-blue-700" x-text="(roomCapacities[selectedVenueId]?.layouts['Classroom'].tanpaSofa || 0) + ' / ' + (roomCapacities[selectedVenueId]?.layouts['Classroom'].denganSofa || 0) + ' Org'"></span>
+                                                <span class="block text-[8.5px] text-slate-400">Tanpa / Dgn Sofa</span>
+                                            </div>
+                                            <div class="p-1.5 rounded-lg border transition" :class="layoutMeja === 'U-Shape' ? 'bg-blue-100/80 border-blue-400 font-bold text-blue-900' : 'bg-white border-slate-200 text-slate-600'">
+                                                <span class="block text-[9.5px] text-slate-500">U-Shape</span>
+                                                <span class="text-[11px] font-black text-blue-700" x-text="(roomCapacities[selectedVenueId]?.layouts['U-Shape'].tanpaSofa || 0) + ' Org'"></span>
+                                                <span class="block text-[8.5px] text-slate-400">Tanpa Sofa Depan</span>
+                                            </div>
+                                            <div class="p-1.5 rounded-lg border transition" :class="layoutMeja === 'Boardroom' ? 'bg-blue-100/80 border-blue-400 font-bold text-blue-900' : 'bg-white border-slate-200 text-slate-600'">
+                                                <span class="block text-[9.5px] text-slate-500">Boardroom</span>
+                                                <span class="text-[11px] font-black text-blue-700" x-text="(roomCapacities[selectedVenueId]?.layouts['Boardroom'].tanpaSofa || 0) + ' Org'"></span>
+                                                <span class="block text-[8.5px] text-slate-400">Tanpa Sofa Depan</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1358,7 +1889,19 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                 <span class="w-5 h-5 rounded bg-blue-100 text-blue-700 font-bold text-[10px] flex items-center justify-center shrink-0">A</span>
                                 <div>
                                     <span class="text-slate-500 font-medium">Set Up Ruangan (Layout):</span>
-                                    <p class="font-bold text-slate-900" x-text="selectedBooking.layout_meja || 'Classroom (Default)'"></p>
+                                    <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                                        <p class="font-bold text-slate-900" x-text="selectedBooking.layout_meja || 'Classroom (Default)'"></p>
+                                        <template x-if="selectedBooking.setup_podium && selectedBooking.setup_podium.sofa_depan === 'dengan'">
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                                🛋️ Dengan Sofa Depan VIP
+                                            </span>
+                                        </template>
+                                        <template x-if="!selectedBooking.setup_podium || selectedBooking.setup_podium.sofa_depan !== 'dengan'">
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700">
+                                                Tanpa Sofa Depan
+                                            </span>
+                                        </template>
+                                    </div>
                                 </div>
                             </div>
 

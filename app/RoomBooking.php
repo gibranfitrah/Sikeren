@@ -98,6 +98,7 @@ class RoomBooking extends Model
             return [
                 'tipe'               => 'Tanpa Podium',
                 'jumlah_kursi'       => 0,
+                'sofa_depan'         => 'tanpa',
                 'pasang_spanduk'     => false,
                 'keterangan_spanduk' => null,
             ];
@@ -107,6 +108,7 @@ class RoomBooking extends Model
             return array_merge([
                 'tipe'               => 'Tanpa Podium',
                 'jumlah_kursi'       => 0,
+                'sofa_depan'         => 'tanpa',
                 'pasang_spanduk'     => false,
                 'keterangan_spanduk' => null,
             ], $decoded);
@@ -114,6 +116,7 @@ class RoomBooking extends Model
         return [
             'tipe'               => $this->setup_podium,
             'jumlah_kursi'       => 0,
+            'sofa_depan'         => 'tanpa',
             'pasang_spanduk'     => false,
             'keterangan_spanduk' => null,
         ];

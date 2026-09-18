@@ -30,21 +30,21 @@ class BookingRuanganController extends Controller
             $venues = collect([
                 (object)[
                     'id' => 1,
-                    'name' => 'Aula Lantai 1',
-                    'capacity' => 100,
-                    'description' => 'Lantai 1 Gedung BPS • Sound System, Proyektor, AC, Podium'
+                    'name' => 'Ruang Rapat Lantai 1',
+                    'capacity' => 24,
+                    'description' => 'Lantai 1 Gedung BPS • Sound System, Proyektor, AC, Podium (Kapasitas s.d 24 Orang)'
                 ],
                 (object)[
                     'id' => 2,
                     'name' => 'Vicon Lantai 3',
-                    'capacity' => 25,
-                    'description' => 'Lantai 3 Gedung BPS • Smart TV Display, Camera Vicon 360, Mic Conference, AC'
+                    'capacity' => 58,
+                    'description' => 'Lantai 3 Gedung BPS • Smart TV Display, Camera Vicon 360, Mic Conference Polycom, AC (Kapasitas s.d 58 Orang)'
                 ],
                 (object)[
                     'id' => 3,
                     'name' => 'Aula Lantai 4',
-                    'capacity' => 150,
-                    'description' => 'Lantai 4 Gedung BPS • Videotron LED Screen, Sound System Besar, AC Central, Panggung'
+                    'capacity' => 100,
+                    'description' => 'Lantai 4 Gedung BPS • Videotron LED Screen, Sound System Besar, AC Central, Panggung (Kapasitas s.d 100 Orang)'
                 ],
             ]);
         }
@@ -254,11 +254,13 @@ class BookingRuanganController extends Controller
 
         // Susun Data Section A, B, C Sarpras
         $layoutMeja = $request->input('layout_meja', 'Classroom');
+        $sofaDepan = $request->input('sofa_depan', 'tanpa');
 
         // Section B: Setup Podium
         $setupPodium = [
             'tipe'               => $request->input('tipe_podium', 'Tanpa Podium'),
             'jumlah_kursi'       => (int) $request->input('jumlah_kursi_podium', 0),
+            'sofa_depan'         => $sofaDepan,
             'pasang_spanduk'     => $request->boolean('pasang_spanduk'),
             'keterangan_spanduk' => $request->input('keterangan_spanduk'),
         ];
@@ -284,6 +286,9 @@ class BookingRuanganController extends Controller
         $summaryParts = [];
         if ($layoutMeja) {
             $summaryParts[] = 'Layout: ' . $layoutMeja;
+        }
+        if ($sofaDepan === 'dengan') {
+            $summaryParts[] = 'Dengan Sofa VIP Depan Panggung';
         }
         if (!empty($setupPodium['tipe']) && $setupPodium['tipe'] !== 'Tanpa Podium') {
             $podiumTxt = 'Podium: ' . $setupPodium['tipe'];
