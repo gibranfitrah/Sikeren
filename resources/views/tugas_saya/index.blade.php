@@ -94,80 +94,7 @@
         </div>
     </div>
 
-    {{-- SECTION 1: SUB KEGIATAN SAYA --}}
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                <h3 class="font-bold text-gray-900 text-sm">Tugas Sub Kegiatan Saya</h3>
-            </div>
-            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700">
-                {{ count($mySubKegiatans) }} Sub Kegiatan
-            </span>
-        </div>
-
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
-                <thead class="bg-gray-50 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-                    <tr>
-                        <th class="px-6 py-3.5">Sub Kegiatan</th>
-                        <th class="px-6 py-3.5">Kegiatan Induk</th>
-                        <th class="px-6 py-3.5">Batas Waktu (Deadline)</th>
-                        <th class="px-6 py-3.5">Status & Progress</th>
-                        <th class="px-6 py-3.5 text-right">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-100">
-                    @forelse($mySubKegiatans as $sub)
-                    @php $dl = $sub->deadline_status; @endphp
-                    <tr class="hover:bg-slate-50/60 transition-colors">
-                        <td class="px-6 py-4">
-                            <span class="font-bold text-gray-900 text-sm block">{{ $sub->nama_sub }}</span>
-                            <span class="text-[11px] text-gray-400">PJ: {{ $sub->pj ?: '-' }}</span>
-                        </td>
-                        <td class="px-6 py-4 text-gray-600 font-medium">
-                            {{ $sub->task ? $sub->task->text : '-' }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border {{ $dl['class'] }}">
-                                <span class="w-2 h-2 rounded-full {{ $dl['dot'] }}"></span>
-                                <span>{{ $dl['label'] }}</span>
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap min-w-[130px]">
-                            <div class="flex items-center gap-2">
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="h-2 rounded-full {{ $sub->progress >= 100 ? 'bg-emerald-500' : 'bg-blue-600' }}" style="width: {{ $sub->progress }}%"></div>
-                                </div>
-                                <span class="font-bold text-gray-700 text-[11px]">{{ $sub->progress }}%</span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right">
-                            <form action="{{ route('sub-kegiatan.progress', $sub->id) }}" method="POST" class="inline-flex items-center gap-1">
-                                @csrf
-                                <select name="progress" onchange="this.form.submit()" class="text-xs py-1 px-2 rounded-lg border border-gray-200 bg-white text-gray-700">
-                                    <option value="0" {{ $sub->progress == 0 ? 'selected' : '' }}>0%</option>
-                                    <option value="25" {{ $sub->progress == 25 ? 'selected' : '' }}>25%</option>
-                                    <option value="50" {{ $sub->progress == 50 ? 'selected' : '' }}>50%</option>
-                                    <option value="75" {{ $sub->progress == 75 ? 'selected' : '' }}>75%</option>
-                                    <option value="100" {{ $sub->progress == 100 ? 'selected' : '' }}>100% Selesai</option>
-                                </select>
-                            </form>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="5" class="px-6 py-8 text-center text-gray-400 text-xs">
-                            Belum ada sub kegiatan yang terdaftar untuk Anda.
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    {{-- SECTION 2: KEGIATAN & RAPAT UTAMA SAYA --}}
+    {{-- SECTION 1: KEGIATAN & RAPAT UTAMA SAYA --}}
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -290,6 +217,79 @@
                     <tr>
                         <td colspan="5" class="px-6 py-8 text-center text-gray-400 text-xs">
                             Belum ada kegiatan atau rapat utama yang terdaftar untuk Anda.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {{-- SECTION 2: SUB KEGIATAN SAYA --}}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                <h3 class="font-bold text-gray-900 text-sm">Tugas Sub Kegiatan Saya</h3>
+            </div>
+            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700">
+                {{ count($mySubKegiatans) }} Sub Kegiatan
+            </span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
+                <thead class="bg-gray-50 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                    <tr>
+                        <th class="px-6 py-3.5">Sub Kegiatan</th>
+                        <th class="px-6 py-3.5">Kegiatan Induk</th>
+                        <th class="px-6 py-3.5">Batas Waktu (Deadline)</th>
+                        <th class="px-6 py-3.5">Status & Progress</th>
+                        <th class="px-6 py-3.5 text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    @forelse($mySubKegiatans as $sub)
+                    @php $dl = $sub->deadline_status; @endphp
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="px-6 py-4">
+                            <span class="font-bold text-gray-900 text-sm block">{{ $sub->nama_sub }}</span>
+                            <span class="text-[11px] text-gray-400">PJ: {{ $sub->pj ?: '-' }}</span>
+                        </td>
+                        <td class="px-6 py-4 text-gray-600 font-medium">
+                            {{ $sub->task ? $sub->task->text : '-' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border {{ $dl['class'] }}">
+                                <span class="w-2 h-2 rounded-full {{ $dl['dot'] }}"></span>
+                                <span>{{ $dl['label'] }}</span>
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap min-w-[130px]">
+                            <div class="flex items-center gap-2">
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="h-2 rounded-full {{ $sub->progress >= 100 ? 'bg-emerald-500' : 'bg-blue-600' }}" style="width: {{ $sub->progress }}%"></div>
+                                </div>
+                                <span class="font-bold text-gray-700 text-[11px]">{{ $sub->progress }}%</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <form action="{{ route('sub-kegiatan.progress', $sub->id) }}" method="POST" class="inline-flex items-center gap-1">
+                                @csrf
+                                <select name="progress" onchange="this.form.submit()" class="text-xs py-1 px-2 rounded-lg border border-gray-200 bg-white text-gray-700">
+                                    <option value="0" {{ $sub->progress == 0 ? 'selected' : '' }}>0%</option>
+                                    <option value="25" {{ $sub->progress == 25 ? 'selected' : '' }}>25%</option>
+                                    <option value="50" {{ $sub->progress == 50 ? 'selected' : '' }}>50%</option>
+                                    <option value="75" {{ $sub->progress == 75 ? 'selected' : '' }}>75%</option>
+                                    <option value="100" {{ $sub->progress == 100 ? 'selected' : '' }}>100% Selesai</option>
+                                </select>
+                            </form>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-gray-400 text-xs">
+                            Belum ada sub kegiatan yang terdaftar untuk Anda.
                         </td>
                     </tr>
                     @endforelse
