@@ -156,7 +156,7 @@ class User extends Authenticatable
             return false;
         }
 
-        // 1. Cek jabatan Madya / Kepala / Ketua Tim
+        // 1. Cek jabatan TERAKHIR / AKTIF apakah berposisi pimpinan / ketua tim / madya
         if ($this->isEligiblePJ()) {
             return true;
         }
@@ -170,8 +170,10 @@ class User extends Authenticatable
 
             if (!$isPJ) {
                 $isPJ = \DB::table('tasks')
-                    ->where('penanggung_jawab', 'LIKE', '%' . $nama . '%')
-                    ->orWhere('pemimpin', 'LIKE', '%' . $nama . '%')
+                    ->where(function($q) use ($nama) {
+                        $q->where('penanggung_jawab', 'LIKE', '%' . $nama . '%')
+                          ->orWhere('pemimpin', 'LIKE', '%' . $nama . '%');
+                    })
                     ->exists();
             }
 
@@ -195,18 +197,21 @@ class User extends Authenticatable
             return false;
         }
 
-        // Check if user has jabatan containing Madya / Ahli Madya / Kepala / Ketua Tim
-        $hasMadyaJabatan = \DB::table('users_jabatan')
+        // Ambil jabatan TERAKHIR / AKTIF user dari users_jabatan (bukan histori lama)
+        $latestJabatan = \DB::table('users_jabatan')
             ->where('id_users', $this->id)
-            ->where(function($q) {
-                $q->where('nm_jabatan', 'LIKE', '%Madya%')
-                  ->orWhere('nm_jabatan', 'LIKE', '%Ketua Tim%')
-                  ->orWhere('nm_jabatan', 'LIKE', '%Kepala%')
-                  ->orWhere('nm_jabatan', 'LIKE', '%Koordinator%');
-            })
-            ->exists();
+            ->orderBy('id', 'desc')
+            ->value('nm_jabatan');
 
-        return $hasMadyaJabatan;
+        if (empty($latestJabatan)) {
+            return false;
+        }
+
+        $jLower = strtolower($latestJabatan);
+        return str_contains($jLower, 'madya') ||
+               str_contains($jLower, 'ketua tim') ||
+               str_contains($jLower, 'kepala') ||
+               str_contains($jLower, 'koordinator');
     }
 
     public function canAccessSimpati()
