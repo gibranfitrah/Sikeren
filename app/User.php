@@ -156,7 +156,37 @@ class User extends Authenticatable
             return false;
         }
 
-        return $this->isEligiblePJ();
+        // 1. Cek jabatan Madya / Kepala / Ketua Tim
+        if ($this->isEligiblePJ()) {
+            return true;
+        }
+
+        // 2. Cek apakah pernah/sedang ditunjuk sebagai PJ / Pemimpin di kegiatan / rapat
+        $nama = trim($this->nama_lengkap ?? '');
+        if (!empty($nama)) {
+            $isPJ = \DB::table('agenda_ketua_tim')
+                ->where('pj', 'LIKE', '%' . $nama . '%')
+                ->exists();
+
+            if (!$isPJ) {
+                $isPJ = \DB::table('tasks')
+                    ->where('penanggung_jawab', 'LIKE', '%' . $nama . '%')
+                    ->orWhere('pemimpin', 'LIKE', '%' . $nama . '%')
+                    ->exists();
+            }
+
+            if (!$isPJ) {
+                $isPJ = \DB::table('sub_kegiatans')
+                    ->where('pj', 'LIKE', '%' . $nama . '%')
+                    ->exists();
+            }
+
+            if ($isPJ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function isEligiblePJ()
@@ -177,6 +207,11 @@ class User extends Authenticatable
             ->exists();
 
         return $hasMadyaJabatan;
+    }
+
+    public function canAccessSimpati()
+    {
+        return $this->isAdmin() || $this->isKetuaTimOrPj();
     }
 
     /**

@@ -18,10 +18,23 @@ class SimpatiController extends Controller
     }
 
     /**
+     * Pastikan hanya Admin atau Ketua Tim/PJ resmi yang dapat mengakses Integrasi SIMPATI
+     */
+    protected function authorizeAccess()
+    {
+        $user = Auth::user();
+        if (!$user || !$user->canAccessSimpati()) {
+            abort(403, 'Akses terbatas! Menu Integrasi SIMPATI hanya dapat diakses oleh Administrator dan Ketua Tim / PJ yang ditunjuk.');
+        }
+    }
+
+    /**
      * Halaman manajemen Integrasi SIMPATI API
      */
     public function index()
     {
+        $this->authorizeAccess();
+
         $baseUrl = config('services.simpati.base_url', 'http://localhost:3000');
         $apiKey  = config('services.simpati.api_key', 'si-ke-ren74_K9xM2pL8vR5wQ1zY4tN7bC0jF3hG6dS8aE1uW4iO9qX2zV5mP0');
 
@@ -33,6 +46,8 @@ class SimpatiController extends Controller
      */
     public function updateConfig(Request $request)
     {
+        $this->authorizeAccess();
+
         $request->validate([
             'base_url' => 'required|string',
             'api_key'  => 'required|string',
@@ -63,6 +78,8 @@ class SimpatiController extends Controller
      */
     public function testConnection(Request $request)
     {
+        $this->authorizeAccess();
+
         if ($request->filled('base_url') && $request->filled('api_key')) {
             $this->simpatiService->setConfig(
                 $request->input('base_url'),
@@ -79,6 +96,8 @@ class SimpatiController extends Controller
      */
     public function syncData(Request $request)
     {
+        $this->authorizeAccess();
+
         if ($request->filled('base_url') && $request->filled('api_key')) {
             $this->simpatiService->setConfig(
                 $request->input('base_url'),
@@ -95,6 +114,8 @@ class SimpatiController extends Controller
      */
     public function syncMockData()
     {
+        $this->authorizeAccess();
+
         $result = $this->simpatiService->syncDummyData();
         return response()->json($result);
     }
@@ -104,6 +125,8 @@ class SimpatiController extends Controller
      */
     public function getPegawai(Request $request)
     {
+        $this->authorizeAccess();
+
         try {
             $data = $this->simpatiService->getPegawai($request->query('id_satker'));
             return response()->json(['status' => 'success', 'data' => $data]);
@@ -117,6 +140,8 @@ class SimpatiController extends Controller
      */
     public function getTimKerja(Request $request)
     {
+        $this->authorizeAccess();
+
         try {
             $data = $this->simpatiService->getTimKerja(
                 $request->query('id_satker'),
