@@ -9,6 +9,7 @@ use App\master_group;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
@@ -61,7 +62,7 @@ class SimpatiApiService
     {
         $msg = $e->getMessage();
         if (str_contains($msg, 'Failed to connect') || str_contains($msg, 'cURL error 7') || str_contains($msg, 'Connection refused')) {
-            return "Tidak dapat terhubung ke server SIMPATI di ({$this->baseUrl}). Pastikan aplikasi SIMPATI sudah dijalankan (misal: 'npm run dev' di port yang sesuai) atau periksa Base URL.";
+            return "Tidak dapat terhubung ke server SIMPATI di ({$this->baseUrl}). Pastikan aplikasi SIMPATI sudah dijalankan di port tersebut atau periksa Base URL.";
         }
         if (str_contains($msg, 'timed out') || str_contains($msg, 'cURL error 28')) {
             return "Koneksi ke SIMPATI timeout setelah {$this->timeout} detik. Pastikan server SIMPATI tidak sedang mengalami kendala.";
@@ -77,8 +78,6 @@ class SimpatiApiService
 
     /**
      * Test connection to SIMPATI API.
-     *
-     * @return array
      */
     public function testConnection(): array
     {
@@ -118,7 +117,6 @@ class SimpatiApiService
 
     /**
      * 1) GET /api/public/pegawai
-     * Mengambil daftar seluruh pegawai aktif dari SIMPATI.
      */
     public function getPegawai(?string $idSatker = null): array
     {
@@ -145,7 +143,6 @@ class SimpatiApiService
 
     /**
      * 2) GET /api/public/pegawai/{niplama}
-     * Mengambil data satu pegawai beserta tim dari SIMPATI.
      */
     public function getPegawaiByNip(string $niplama): ?array
     {
@@ -171,7 +168,6 @@ class SimpatiApiService
 
     /**
      * 3) GET /api/public/tim-kerja
-     * Mengambil daftar tim kerja beserta anggotanya dari SIMPATI.
      */
     public function getTimKerja(?string $idSatker = null, ?string $nmTim = null): array
     {
@@ -214,6 +210,11 @@ class SimpatiApiService
             'anggota_synced'   => 0,
             'errors'           => [],
         ];
+
+        // Cache column lists to prevent SQL Column not found errors
+        $userJabatanCols = Schema::getColumnListing('users_jabatan');
+        $masterGroupCols = Schema::getColumnListing('master_groups');
+        $groupCols       = Schema::getColumnListing('groups');
 
         // 1. Sinkronisasi Data Pegawai -> users & users_jabatan
         foreach ($pegawaiList as $item) {
@@ -267,27 +268,40 @@ class SimpatiApiService
                     $summary['pegawai_created']++;
                 }
 
-                // Update users_jabatan
-                if ($user && (!empty($jabatan) || !empty($idSatker) || !empty($nmSatker))) {
-                    $existingJabatan = DB::table('users_jabatan')
-                        ->where('id_users', $user->id)
-                        ->first();
+                // Update users_jabatan (hanya kolom yang ada di database)
+                if ($user && (!empty($jabatan) || !empty($idSatker))) {
+                    $jabatanData = [];
+                    if (in_array('id_users', $userJabatanCols)) {
+                        $jabatanData['id_users'] = $user->id;
+                    }
+                    if (in_array('nm_jabatan', $userJabatanCols)) {
+                        $jabatanData['nm_jabatan'] = $jabatan;
+                    }
+                    if (in_array('id_satker', $userJabatanCols)) {
+                        $jabatanData['id_satker'] = $idSatker;
+                    }
+                    if (in_array('nm_satker', $userJabatanCols)) {
+                        $jabatanData['nm_satker'] = $nmSatker;
+                    }
+                    if (in_array('updated_at', $userJabatanCols)) {
+                        $jabatanData['updated_at'] = now();
+                    }
 
-                    $jabatanData = [
-                        'id_users'   => $user->id,
-                        'nm_jabatan' => $jabatan,
-                        'id_satker'  => $idSatker,
-                        'nm_satker'  => $nmSatker,
-                        'updated_at' => now(),
-                    ];
+                    if (!empty($jabatanData)) {
+                        $existingJabatan = DB::table('users_jabatan')
+                            ->where('id_users', $user->id)
+                            ->first();
 
-                    if ($existingJabatan) {
-                        DB::table('users_jabatan')
-                            ->where('id', $existingJabatan->id)
-                            ->update($jabatanData);
-                    } else {
-                        $jabatanData['created_at'] = now();
-                        DB::table('users_jabatan')->insert($jabatanData);
+                        if ($existingJabatan) {
+                            DB::table('users_jabatan')
+                                ->where('id', $existingJabatan->id)
+                                ->update($jabatanData);
+                        } else {
+                            if (in_array('created_at', $userJabatanCols)) {
+                                $jabatanData['created_at'] = now();
+                            }
+                            DB::table('users_jabatan')->insert($jabatanData);
+                        }
                     }
                 }
             } catch (Exception $e) {
@@ -303,8 +317,17 @@ class SimpatiApiService
                     continue;
                 }
 
-                $masterGroup = master_group::firstOrCreate(['grup' => $nmTim]);
-                if ($masterGroup->wasRecentlyCreated) {
+                // Cek apakah tim sudah ada di master_groups
+                $existingGroup = DB::table('master_groups')->where('grup', $nmTim)->first();
+                if (!$existingGroup) {
+                    $insertGroup = ['grup' => $nmTim];
+                    if (in_array('created_at', $masterGroupCols)) {
+                        $insertGroup['created_at'] = now();
+                    }
+                    if (in_array('updated_at', $masterGroupCols)) {
+                        $insertGroup['updated_at'] = now();
+                    }
+                    DB::table('master_groups')->insert($insertGroup);
                     $summary['tim_created']++;
                 }
 
@@ -321,12 +344,17 @@ class SimpatiApiService
                         ->first();
 
                     if (!$groupRel) {
-                        DB::table('groups')->insert([
-                            'niplama'    => $nipAgt,
-                            'grup'       => $nmTim,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                        $insertAgt = [
+                            'niplama' => $nipAgt,
+                            'grup'    => $nmTim,
+                        ];
+                        if (in_array('created_at', $groupCols)) {
+                            $insertAgt['created_at'] = now();
+                        }
+                        if (in_array('updated_at', $groupCols)) {
+                            $insertAgt['updated_at'] = now();
+                        }
+                        DB::table('groups')->insert($insertAgt);
                     }
                     $summary['anggota_synced']++;
                 }
@@ -391,7 +419,7 @@ class SimpatiApiService
                 'niplama'      => '19920303',
                 'nipbaru'      => '199203032015022001',
                 'email'        => 'siti.aminah@bps.go.id',
-                'nm_jabatan'   => 'Statistisi Ahli Muda',
+                'nm_jabatan'   => 'Statistisi Ahli Muda / Ketua Tim Nerwilis',
                 'id_satker'    => '7400',
                 'nm_satker'    => 'BPS Provinsi Sulawesi Tenggara',
             ],
@@ -415,6 +443,16 @@ class SimpatiApiService
                 'id_satker'    => '7400',
                 'nm_satker'    => 'BPS Provinsi Sulawesi Tenggara',
             ],
+            [
+                'id'           => 6,
+                'nama_lengkap' => 'Ahmad Fauzi, S.Si.',
+                'niplama'      => '19900606',
+                'nipbaru'      => '199006062014031001',
+                'email'        => 'ahmad.fauzi@bps.go.id',
+                'nm_jabatan'   => 'Statistisi Ahli Pertama',
+                'id_satker'    => '7400',
+                'nm_satker'    => 'BPS Provinsi Sulawesi Tenggara',
+            ]
         ];
 
         $mockTims = [
@@ -460,6 +498,15 @@ class SimpatiApiService
                         'email'             => 'siti.aminah@bps.go.id',
                         'nm_jabatan'        => 'Statistisi Ahli Muda',
                         'jabatan_dalam_tim' => 'Ketua Tim',
+                    ],
+                    [
+                        'id'                => 6,
+                        'nama_lengkap'      => 'Ahmad Fauzi, S.Si.',
+                        'niplama'           => '19900606',
+                        'nipbaru'           => '199006062014031001',
+                        'email'             => 'ahmad.fauzi@bps.go.id',
+                        'nm_jabatan'        => 'Statistisi Ahli Pertama',
+                        'jabatan_dalam_tim' => 'Anggota',
                     ],
                 ],
             ],
