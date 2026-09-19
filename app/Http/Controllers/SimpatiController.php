@@ -22,11 +22,6 @@ class SimpatiController extends Controller
      */
     public function index()
     {
-        $user = Auth::user();
-        if (!$user || !$user->isAdmin()) {
-            return redirect('/dashboard')->with('error', 'Akses khusus Administrator.');
-        }
-
         $baseUrl = config('services.simpati.base_url', 'http://localhost:3000');
         $apiKey  = config('services.simpati.api_key', 'si-ke-ren74_K9xM2pL8vR5wQ1zY4tN7bC0jF3hG6dS8aE1uW4iO9qX2zV5mP0');
 
@@ -38,11 +33,6 @@ class SimpatiController extends Controller
      */
     public function updateConfig(Request $request)
     {
-        $user = Auth::user();
-        if (!$user || !$user->isAdmin()) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-
         $request->validate([
             'base_url' => 'required|string',
             'api_key'  => 'required|string',
@@ -73,11 +63,6 @@ class SimpatiController extends Controller
      */
     public function testConnection(Request $request)
     {
-        $user = Auth::user();
-        if (!$user || !$user->isAdmin()) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-
         if ($request->filled('base_url') && $request->filled('api_key')) {
             $this->simpatiService->setConfig(
                 $request->input('base_url'),
@@ -94,11 +79,6 @@ class SimpatiController extends Controller
      */
     public function syncData(Request $request)
     {
-        $user = Auth::user();
-        if (!$user || !$user->isAdmin()) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-
         if ($request->filled('base_url') && $request->filled('api_key')) {
             $this->simpatiService->setConfig(
                 $request->input('base_url'),
@@ -115,11 +95,6 @@ class SimpatiController extends Controller
      */
     public function syncMockData()
     {
-        $user = Auth::user();
-        if (!$user || !$user->isAdmin()) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-
         $result = $this->simpatiService->syncDummyData();
         return response()->json($result);
     }
