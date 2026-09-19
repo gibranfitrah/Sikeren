@@ -1,0 +1,170 @@
+{
+	"info": {
+		"_postman_id": "8f3b207a-4c28-48b5-9f20-d4cf23b49918",
+		"name": "SIMPATI Public API - SIKEREN BPS",
+		"description": "Koleksi Postman resmi untuk SIMPATI Public API yang terintegrasi dengan aplikasi SIKEREN BPS Sultra.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. GET Daftar Pegawai Aktif",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "{{API_KEY}}",
+						"type": "text",
+						"description": "API Key Otentikasi SIMPATI"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{SIMPATI_BASE_URL}}/api/public/pegawai?id_satker=",
+					"host": [
+						"{{SIMPATI_BASE_URL}}"
+					],
+					"path": [
+						"api",
+						"public",
+						"pegawai"
+					],
+					"query": [
+						{
+							"key": "id_satker",
+							"value": "",
+							"description": "Opsional: Filter pegawai berdasarkan ID Satker",
+							"disabled": true
+						}
+					]
+				},
+				"description": "Mengambil daftar seluruh pegawai aktif dari SIMPATI."
+			},
+			"response": []
+		},
+		{
+			"name": "2. GET Detail Pegawai by NIP Lama",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "{{API_KEY}}",
+						"type": "text",
+						"description": "API Key Otentikasi SIMPATI"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{SIMPATI_BASE_URL}}/api/public/pegawai/:niplama",
+					"host": [
+						"{{SIMPATI_BASE_URL}}"
+					],
+					"path": [
+						"api",
+						"public",
+						"pegawai",
+						":niplama"
+					],
+					"variable": [
+						{
+							"key": "niplama",
+							"value": "123456789",
+							"description": "NIP Lama pegawai yang ingin dicari"
+						}
+					]
+				},
+				"description": "Mengambil detail pegawai berdasarkan NIP Lama beserta daftar tim kerja yang diikuti (tims)."
+			},
+			"response": []
+		},
+		{
+			"name": "3. GET Daftar Tim Kerja & Anggota",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "{{API_KEY}}",
+						"type": "text",
+						"description": "API Key Otentikasi SIMPATI"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{SIMPATI_BASE_URL}}/api/public/tim-kerja?id_satker=&nm_tim=",
+					"host": [
+						"{{SIMPATI_BASE_URL}}"
+					],
+					"path": [
+						"api",
+						"public",
+						"tim-kerja"
+					],
+					"query": [
+						{
+							"key": "id_satker",
+							"value": "",
+							"description": "Opsional: Filter berdasarkan ID Satker",
+							"disabled": true
+						},
+						{
+							"key": "nm_tim",
+							"value": "",
+							"description": "Opsional: Filter berdasarkan Nama Tim",
+							"disabled": true
+						}
+					]
+				},
+				"description": "Mengambil daftar seluruh tim kerja di SIMPATI lengkap beserta daftar anggotanya (anggota)."
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"pm.test(\"Status code is 200\", function () {",
+					"    pm.response.to.have.status(200);",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "SIMPATI_BASE_URL",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "API_KEY",
+			"value": "si-ke-ren74_K9xM2pL8vR5wQ1zY4tN7bC0jF3hG6dS8aE1uW4iO9qX2zV5mP0",
+			"type": "string"
+		}
+	]
+}

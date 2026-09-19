@@ -69,6 +69,7 @@
                 $isQr = $currentRoute == 'qr';
                 $isReport = $currentRoute == 'report';
                 $isAbsen = $currentRoute == 'absen-kantor';
+                $isSimpati = str_starts_with($currentRoute, 'admin/simpati');
             @endphp
 
             <!-- Menu Group: Utama -->
@@ -157,8 +158,14 @@
                 <span>Presensi</span>
             </a>
             
-            <!-- Menu Group: Sistem -->
-            <p class="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3 mt-8">Sistem</p>
+            <!-- Menu Group: Sistem & Integrasi -->
+            <p class="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3 mt-8">Sistem & Integrasi</p>
+            @if(Auth::check() && Auth::user()->isAdmin())
+            <a href="{{ route('simpati.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ $isSimpati ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50 font-semibold' : 'text-slate-400 hover:bg-slate-800 hover:text-white font-medium' }}">
+                <svg class="w-5 h-5 mr-3 {{ $isSimpati ? 'text-white' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <span>Integrasi SIMPATI</span>
+            </a>
+            @endif
             <a href="{{ route('actionlogout') }}" class="flex items-center px-4 py-3 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 rounded-xl transition-colors font-medium">
                 <svg class="w-5 h-5 mr-3 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                 <span>Keluar</span>

@@ -34,4 +34,10 @@ return [
         'secret' => env('SPARKPOST_SECRET'),
     ],
 
+    'simpati' => [
+        'base_url' => env('SIMPATI_API_BASE_URL', 'http://localhost:3000'),
+        'api_key'  => env('SIMPATI_API_KEY', 'si-ke-ren74_K9xM2pL8vR5wQ1zY4tN7bC0jF3hG6dS8aE1uW4iO9qX2zV5mP0'),
+        'timeout'  => env('SIMPATI_API_TIMEOUT', 15),
+    ],
+
 ];

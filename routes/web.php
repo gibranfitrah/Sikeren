@@ -195,4 +195,11 @@ Route::post('/kegiatan/{id}/approve', [\App\Http\Controllers\KegiatanController:
 Route::post('/kegiatan/{id}/reject', [\App\Http\Controllers\KegiatanController::class, 'reject'])->name('kegiatan.reject');
 Route::post('/kegiatan/{id}/status', [\App\Http\Controllers\KegiatanController::class, 'updateStatus'])->name('kegiatan.updateStatus');
 
+    // SIMPATI API Integration
+    Route::get('/admin/simpati', [\App\Http\Controllers\SimpatiController::class, 'index'])->name('simpati.index');
+    Route::get('/admin/simpati/test', [\App\Http\Controllers\SimpatiController::class, 'testConnection'])->name('simpati.test');
+    Route::post('/admin/simpati/sync', [\App\Http\Controllers\SimpatiController::class, 'syncData'])->name('simpati.sync');
+    Route::get('/api/simpati/pegawai', [\App\Http\Controllers\SimpatiController::class, 'getPegawai'])->name('simpati.pegawai');
+    Route::get('/api/simpati/tim-kerja', [\App\Http\Controllers\SimpatiController::class, 'getTimKerja'])->name('simpati.tim_kerja');
+
 });
