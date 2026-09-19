@@ -64,7 +64,6 @@ class User extends Authenticatable
     {
         $username = strtolower(trim($this->username ?? ''));
         $email = strtolower(trim($this->email ?? ''));
-        $nama = strtolower(trim($this->nama_lengkap ?? ''));
 
         // 1. Check Admin
         if (
@@ -75,74 +74,58 @@ class User extends Authenticatable
             return 'Administrator';
         }
 
-        // 2. Check Jabatan from users_jabatan
+        // 2. Check Jabatan resmi from users_jabatan (misal: Kepala Bagian Umum, Statistisi Ahli Madya, dll)
         $jabatan = \DB::table('users_jabatan')
             ->where('id_users', $this->id)
             ->orderBy('id', 'desc')
             ->value('nm_jabatan');
 
         if (!empty($jabatan)) {
-            $jLow = strtolower($jabatan);
-            if (str_contains($jLow, 'kepala bps') || str_contains($jLow, 'kepala badan')) {
-                return 'Pimpinan / Kepala BPS';
-            }
-            if (str_contains($jLow, 'ketua tim') || str_contains($jLow, 'penanggung jawab')) {
-                return 'Ketua Tim / PJ';
-            }
-            if (str_contains($jLow, 'kepala bidang') || str_contains($jLow, 'kepala bagian') || str_contains($jLow, 'kepala seksi')) {
-                return $jabatan;
+            $jTrim = trim($jabatan);
+            if (!empty($jTrim)) {
+                return $jTrim;
             }
         }
 
-        // 3. Check if user is a designated Ketua Tim / PJ across system
-        $namaLengkap = trim($this->nama_lengkap ?? '');
-        $isPJ = false;
-
-        if (!empty($namaLengkap)) {
-            // (A) Check agenda_ketua_tim
-            $isPJ = \DB::table('agenda_ketua_tim')
-                ->where('pj', 'LIKE', '%' . $namaLengkap . '%')
-                ->exists();
-
-            // (B) Check tasks (penanggung_jawab or pemimpin)
-            if (!$isPJ) {
-                $isPJ = \DB::table('tasks')
-                    ->where('penanggung_jawab', 'LIKE', '%' . $namaLengkap . '%')
-                    ->orWhere('pemimpin', 'LIKE', '%' . $namaLengkap . '%')
-                    ->exists();
-            }
-
-            // (C) Check sub_kegiatans (pj)
-            if (!$isPJ) {
-                $isPJ = \DB::table('sub_kegiatans')
-                    ->where('pj', 'LIKE', '%' . $namaLengkap . '%')
-                    ->exists();
-            }
-        }
-
-        if ($isPJ || $nama === 'budi' || $nama === 'a. ranuwirawan rahim') {
-            return 'Ketua Tim / PJ';
-        }
-
-        // 4. Check Group / Team (Anggota Tim)
+        // 3. Check Group / Team (misal: Fungsi Neraca, Fungsi IPDS, Tim Nerwilis, Bagian Umum)
         $team = $this->team_name;
         if (!empty($team)) {
-            return 'Anggota Tim (' . $team . ')';
+            $tTrim = trim($team);
+            if (!empty($tTrim)) {
+                return $tTrim;
+            }
         }
 
-        return 'Pegawai BPS';
+        // Jika tidak diketahui bagian atau jabatannya, KOSONGKAN (jangan tulis Ketua Tim / PJ atau Pegawai BPS)
+        return '';
+    }
+
+    public function getSelectOptionLabelAttribute()
+    {
+        $nip = $this->formatted_nip;
+        $label = $this->nama_lengkap;
+        if (!empty($nip) && $nip !== '-') {
+            $label .= " ({$nip})";
+        }
+
+        $role = trim($this->role_label ?? '');
+        if (!empty($role)) {
+            $label .= " - {$role}";
+        }
+
+        return $label;
     }
 
     public function getRoleBadgeVariantAttribute()
     {
-        $role = $this->role_label;
-        if ($role === 'Administrator') {
+        $role = strtolower($this->role_label);
+        if ($role === 'administrator') {
             return 'danger';
-        } elseif (str_contains($role, 'Pimpinan') || str_contains($role, 'Kepala BPS')) {
+        } elseif (str_contains($role, 'pimpinan') || str_contains($role, 'kepala')) {
             return 'primary';
-        } elseif (str_contains($role, 'Ketua Tim') || str_contains($role, 'PJ')) {
+        } elseif (str_contains($role, 'ketua') || str_contains($role, 'madya') || str_contains($role, 'koordinator')) {
             return 'warning';
-        } elseif (str_contains($role, 'Anggota Tim')) {
+        } elseif (!empty($role)) {
             return 'success';
         }
         return 'neutral';
@@ -173,45 +156,7 @@ class User extends Authenticatable
             return false;
         }
 
-        $role = $this->role_label;
-        if (
-            str_contains($role, 'Pimpinan') ||
-            str_contains($role, 'Kepala') ||
-            str_contains($role, 'Ketua Tim') ||
-            str_contains($role, 'PJ')
-        ) {
-            return true;
-        }
-
-        // Check if user has jabatan containing Madya / Ahli Madya
-        $hasMadyaJabatan = \DB::table('users_jabatan')
-            ->where('id_users', $this->id)
-            ->where(function($q) {
-                $q->where('nm_jabatan', 'LIKE', '%Madya%')
-                  ->orWhere('nm_jabatan', 'LIKE', '%Ketua%')
-                  ->orWhere('nm_jabatan', 'LIKE', '%Kepala%')
-                  ->orWhere('nm_jabatan', 'LIKE', '%Koordinator%')
-                  ->orWhere('nm_jabatan', 'LIKE', '%Penanggung%');
-            })
-            ->exists();
-
-        if ($hasMadyaJabatan) {
-            return true;
-        }
-
-        // Check if user is assigned as PJ / Pemimpin in any task
-        $nama = trim($this->nama_lengkap ?? '');
-        if (!empty($nama)) {
-            $hasTaskAsPJ = \DB::table('tasks')
-                ->where('penanggung_jawab', 'LIKE', '%' . $nama . '%')
-                ->orWhere('pemimpin', 'LIKE', '%' . $nama . '%')
-                ->exists();
-            if ($hasTaskAsPJ) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->isEligiblePJ();
     }
 
     public function isEligiblePJ()
@@ -219,7 +164,19 @@ class User extends Authenticatable
         if ($this->isAdmin()) {
             return false;
         }
-        return $this->isKetuaTimOrPj();
+
+        // Check if user has jabatan containing Madya / Ahli Madya / Kepala / Ketua Tim
+        $hasMadyaJabatan = \DB::table('users_jabatan')
+            ->where('id_users', $this->id)
+            ->where(function($q) {
+                $q->where('nm_jabatan', 'LIKE', '%Madya%')
+                  ->orWhere('nm_jabatan', 'LIKE', '%Ketua Tim%')
+                  ->orWhere('nm_jabatan', 'LIKE', '%Kepala%')
+                  ->orWhere('nm_jabatan', 'LIKE', '%Koordinator%');
+            })
+            ->exists();
+
+        return $hasMadyaJabatan;
     }
 
     /**

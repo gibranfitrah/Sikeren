@@ -283,14 +283,14 @@
                                 <optgroup label="⭐ Pejabat, Ketua Tim, & Ahli Madya (Eligible PJ)">
                                     @foreach ($eligiblePJs as $u)
                                         <option value="{{ $u->nama_lengkap }}" {{ $defaultPj == $u->nama_lengkap ? 'selected' : '' }}>
-                                            {{ $u->nama_lengkap }} ({{ $u->formatted_nip }}) - {{ $u->role_label }}
+                                            {{ $u->select_option_label }}
                                         </option>
                                     @endforeach
                                 </optgroup>
-                                <optgroup label="👤 Seluruh Pegawai Lainnya">
+                                <optgroup label="📋 Pegawai BPS">
                                     @foreach ($allUsers->diff($eligiblePJs) as $u)
                                         <option value="{{ $u->nama_lengkap }}" {{ $defaultPj == $u->nama_lengkap ? 'selected' : '' }}>
-                                            {{ $u->nama_lengkap }} ({{ $u->formatted_nip }}) - {{ $u->role_label }}
+                                            {{ $u->select_option_label }}
                                         </option>
                                     @endforeach
                                 </optgroup>
@@ -329,14 +329,14 @@
                                 <optgroup label="⭐ Pejabat, Ketua Tim, & Ahli Madya (Eligible PJ)">
                                     @foreach ($eligiblePJs as $u)
                                         <option value="{{ $u->nama_lengkap }}" {{ $defaultPemimpin == $u->nama_lengkap ? 'selected' : '' }}>
-                                            {{ $u->nama_lengkap }} ({{ $u->formatted_nip }}) - {{ $u->role_label }}
+                                            {{ $u->select_option_label }}
                                         </option>
                                     @endforeach
                                 </optgroup>
-                                <optgroup label="👤 Seluruh Pegawai Lainnya">
+                                <optgroup label="📋 Pegawai BPS">
                                     @foreach ($allUsers->diff($eligiblePJs) as $u)
                                         <option value="{{ $u->nama_lengkap }}" {{ $defaultPemimpin == $u->nama_lengkap ? 'selected' : '' }}>
-                                            {{ $u->nama_lengkap }} ({{ $u->formatted_nip }}) - {{ $u->role_label }}
+                                            {{ $u->select_option_label }}
                                         </option>
                                     @endforeach
                                 </optgroup>
