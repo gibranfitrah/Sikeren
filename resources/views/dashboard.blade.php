@@ -282,7 +282,7 @@
                 target: {{ (int) $jumlah_kegiatan }},
                 init() {
                     if (this.target <= 0) { this.current = 0; return; }
-                    let start = 0, duration = 550, startTime = null;
+                    let start = 0, duration = 300, startTime = null;
                     const step = (timestamp) => {
                         if (!startTime) startTime = timestamp;
                         const progress = Math.min((timestamp - startTime) / duration, 1);
@@ -320,7 +320,7 @@
                 target: {{ (int) $jumlah_kegiatan_saya }},
                 init() {
                     if (this.target <= 0) { this.current = 0; return; }
-                    let start = 0, duration = 550, startTime = null;
+                    let start = 0, duration = 300, startTime = null;
                     const step = (timestamp) => {
                         if (!startTime) startTime = timestamp;
                         const progress = Math.min((timestamp - startTime) / duration, 1);
@@ -358,7 +358,7 @@
                 target: {{ (int) $jumlah_kegiatan_belum }},
                 init() {
                     if (this.target <= 0) { this.current = 0; return; }
-                    let start = 0, duration = 550, startTime = null;
+                    let start = 0, duration = 300, startTime = null;
                     const step = (timestamp) => {
                         if (!startTime) startTime = timestamp;
                         const progress = Math.min((timestamp - startTime) / duration, 1);
@@ -396,7 +396,7 @@
                 target: {{ (int) $jumlah_kegiatan_selesai }},
                 init() {
                     if (this.target <= 0) { this.current = 0; return; }
-                    let start = 0, duration = 550, startTime = null;
+                    let start = 0, duration = 300, startTime = null;
                     const step = (timestamp) => {
                         if (!startTime) startTime = timestamp;
                         const progress = Math.min((timestamp - startTime) / duration, 1);
