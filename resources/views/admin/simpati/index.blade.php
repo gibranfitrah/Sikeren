@@ -28,25 +28,27 @@
 @section('content')
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6" x-data="simpatiManager()">
     {{-- Banner Header Berdasarkan Alur SIMPATI --}}
-    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900 p-6 sm:p-8 text-white shadow-xl shadow-blue-500/10">
-        <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+    <div class="relative overflow-hidden rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-blue-500/30"
+         style="background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #2563eb 100%);">
+        {{-- Subtle Grid Watermark (Crisp, No Blurry Glows) --}}
+        <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(rgba(255,255,255,0.5) 1px, transparent 1px); background-size: 24px 24px;"></div>
         <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div class="space-y-2">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-semibold text-blue-100 border border-white/20">
-                    <span class="w-2 h-2 rounded-full" :class="connectionStatus === 'online' ? 'bg-emerald-400 animate-ping' : 'bg-amber-400'"></span>
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/20 text-xs font-semibold text-white border border-white/30 shadow-xs">
+                    <span class="w-2 h-2 rounded-full" :class="connectionStatus === 'online' ? 'bg-emerald-400 animate-ping' : 'bg-amber-300'"></span>
                     <span x-text="connectionStatus === 'online' ? 'SIMPATI API Terhubung (Online)' : 'Alur SDM SIMPATI Siap Digunakan'"></span>
                 </div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white">
                     Integrasi Data SIMPATI &harr; SIKEREN
                 </h1>
-                <p class="text-sm text-blue-100/90 max-w-2xl leading-relaxed">
+                <p class="text-sm text-blue-100 max-w-2xl leading-relaxed font-medium">
                     Alur SDM SIMPATI: Penarikan data per-Satker, Deteksi Pindah Satker, Generate QR Nametag, serta sinkronisasi Struktur Tim Kerja ke Database Tim & Kegiatan.
                 </p>
             </div>
             <div class="flex flex-wrap items-center gap-3">
                 <button @click="testConnection()" 
                         :disabled="isTesting || isSyncing || isSaving"
-                        class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-sm transition flex items-center gap-2 shadow-sm disabled:opacity-50">
+                        class="px-4 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 border border-white/40 text-white font-bold text-sm transition flex items-center gap-2 shadow-sm disabled:opacity-50">
                     <svg x-show="!isTesting" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>

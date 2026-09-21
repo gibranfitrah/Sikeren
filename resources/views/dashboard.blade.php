@@ -165,68 +165,68 @@
         $userRole = $currentUser->role_label ?? 'Pegawai BPS';
     @endphp
 
-    <div class="relative overflow-hidden bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900 rounded-3xl p-6 sm:p-7 text-white shadow-md border border-blue-500/20">
-        {{-- Background Soft Glows --}}
-        <div class="absolute -right-16 -top-16 w-64 h-64 bg-blue-400/20 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute right-1/3 -bottom-16 w-48 h-48 bg-indigo-400/20 rounded-full blur-2xl pointer-events-none"></div>
+    <div class="relative overflow-hidden rounded-3xl p-6 sm:p-7 text-white shadow-xl border border-blue-400/30"
+         style="background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #2563eb 100%);">
+        {{-- Subtle Grid Watermark (Crisp, No Blurry Glows) --}}
+        <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(rgba(255,255,255,0.5) 1px, transparent 1px); background-size: 24px 24px;"></div>
 
         <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
             {{-- Left: Avatar & Greeting Text --}}
             <div class="flex items-start sm:items-center gap-4">
-                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-3xl shadow-inner shrink-0">
+                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center text-3xl shadow-sm shrink-0">
                     <span>👋</span>
                 </div>
-                <div class="space-y-1">
+                <div class="space-y-1.5">
                     <div class="flex items-center gap-2 flex-wrap">
-                        <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-white/15 text-blue-100 backdrop-blur-xs border border-white/10 flex items-center gap-1">
+                        <span class="text-[11px] font-semibold px-3 py-1 rounded-full bg-white/20 text-white border border-white/30 flex items-center gap-1.5 shadow-xs">
                             <span>{{ $timeEmoji }}</span>
                             <span>{{ $timeGreeting }}</span>
                         </span>
                         @if($userRole === 'Administrator')
-                            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/30 text-rose-200 border border-rose-400/40">
+                            <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-rose-500/40 text-rose-100 border border-rose-300/50 shadow-xs">
                                 🛡️ Administrator Sistem
                             </span>
                         @elseif(str_contains(strtolower($userRole), 'ketua tim') || str_contains(strtolower($userRole), 'pj'))
-                            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-400/30 text-amber-200 border border-amber-300/40">
+                            <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-amber-400/35 text-amber-100 border border-amber-300/50 shadow-xs">
                                 ⭐ {{ $userRole }}
                             </span>
                         @elseif(str_contains(strtolower($userRole), 'anggota tim'))
-                            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-sky-400/30 text-sky-200 border border-sky-300/40">
+                            <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-sky-400/35 text-sky-100 border border-sky-300/50 shadow-xs">
                                 👥 {{ $userRole }}
                             </span>
                         @else
-                            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-400/30 text-emerald-200 border border-emerald-300/40">
+                            <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-400/35 text-emerald-100 border border-emerald-300/50 shadow-xs">
                                 👔 {{ $userRole }}
                             </span>
                         @endif
                     </div>
 
-                    <h1 class="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight">
-                        Hai, Selamat Datang <span class="bg-clip-text text-transparent bg-gradient-to-r from-amber-200 via-blue-100 to-white">{{ $userName }}</span>!
+                    <h1 class="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight leading-tight">
+                        Hai, Selamat Datang <span class="text-yellow-300 font-black drop-shadow-sm">{{ $userName }}</span>!
                     </h1>
                     
-                    <p class="text-xs sm:text-sm text-blue-100/80 max-w-2xl font-normal leading-relaxed">
+                    <p class="text-xs sm:text-sm text-blue-100 max-w-2xl font-medium leading-relaxed">
                         Pantau kalender jadwal kerja, rincian penugasan personal, dan aktivitas tim BPS secara terpadu.
                     </p>
                 </div>
             </div>
 
             {{-- Right: Date & Quick Action Chips --}}
-            <div class="flex sm:flex-row md:flex-col items-start md:items-end justify-between gap-2.5 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-white/10">
+            <div class="flex sm:flex-row md:flex-col items-start md:items-end justify-between gap-3 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-white/20">
                 <div class="text-left md:text-right">
-                    <span class="text-[11px] font-medium text-blue-200/80 block">📅 Hari Ini:</span>
-                    <span class="text-xs sm:text-sm font-bold text-white tracking-wide">
+                    <span class="text-[11px] font-semibold text-blue-200 block">📅 Hari Ini:</span>
+                    <span class="text-sm sm:text-base font-extrabold text-white tracking-wide block">
                         {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}
                     </span>
                 </div>
                 
                 <div class="flex items-center gap-2 flex-wrap">
                     <a href="{{ url('/tugas-saya') }}" 
-                       class="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition flex items-center gap-1.5 backdrop-blur-xs border border-white/20 shadow-xs">
+                       class="px-3.5 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition flex items-center gap-1.5 border border-white/40 shadow-sm">
                         <span>📋 {{ $jumlah_kegiatan_saya }} Tugas Saya</span>
                     </a>
                     <a href="{{ route('time-schedule.index') }}" 
-                       class="px-3 py-1.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs">
+                       class="px-3.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm border border-sky-300/40">
                         <span>⏰ Time Schedule</span>
                     </a>
                 </div>
@@ -242,7 +242,7 @@
                     Sistem Kegiatan Terencana
                 </span>
                 <span class="text-xs text-gray-400">•</span>
-                <span class="text-xs text-gray-500 font-medium">BPS Kabupaten/Kota</span>
+                <span class="text-xs text-gray-500 font-medium">BPS Provinsi Sulawesi Tenggara</span>
             </div>
             <h2 class="text-xl sm:text-2xl font-black text-gray-900 mt-1">Dashboard Utama & Kalender Kerja</h2>
             <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Pantau kalender jadwal, rincian kegiatan personal, dan aktivitas tim kerja secara real-time.</p>
