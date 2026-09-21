@@ -201,6 +201,7 @@ Route::post('/kegiatan/{id}/status', [\App\Http\Controllers\KegiatanController::
     Route::get('/admin/simpati/test', [\App\Http\Controllers\SimpatiController::class, 'testConnection'])->name('simpati.test');
     Route::post('/admin/simpati/sync', [\App\Http\Controllers\SimpatiController::class, 'syncData'])->name('simpati.sync');
     Route::post('/admin/simpati/sync-mock', [\App\Http\Controllers\SimpatiController::class, 'syncMockData'])->name('simpati.sync_mock');
+    Route::get('/admin/simpati/qr-nametag/{id}', [\App\Http\Controllers\SimpatiController::class, 'qrNametag'])->name('simpati.qr_nametag');
     Route::get('/api/simpati/pegawai', [\App\Http\Controllers\SimpatiController::class, 'getPegawai'])->name('simpati.pegawai');
     Route::get('/api/simpati/tim-kerja', [\App\Http\Controllers\SimpatiController::class, 'getTimKerja'])->name('simpati.tim_kerja');
 

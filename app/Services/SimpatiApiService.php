@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Exception;
 
 class SimpatiApiService
@@ -198,17 +200,32 @@ class SimpatiApiService
     /**
      * Core Sync Processing dari array data pegawai dan tim
      */
-    public function syncFromPayload(array $pegawaiList, array $timList): array
+    public function syncFromPayload(array $pegawaiList, array $timList, ?string $targetSatker = null): array
     {
+        // 0. Filter per SATKER jika parameter spesifik diberikan dan bukan 'all'
+        if ($targetSatker !== null && $targetSatker !== '' && $targetSatker !== 'all') {
+            $pegawaiList = array_values(array_filter($pegawaiList, function ($p) use ($targetSatker) {
+                return (string)($p['id_satker'] ?? '') === (string)$targetSatker;
+            }));
+
+            $timList = array_values(array_filter($timList, function ($t) use ($targetSatker) {
+                return empty($t['id_satker']) || (string)$t['id_satker'] === (string)$targetSatker;
+            }));
+        }
+
         $summary = [
-            'success'          => false,
-            'pegawai_created'  => 0,
-            'pegawai_updated'  => 0,
-            'pegawai_total'    => count($pegawaiList),
-            'tim_created'      => 0,
-            'tim_total'        => count($timList),
-            'anggota_synced'   => 0,
-            'errors'           => [],
+            'success'              => false,
+            'pegawai_created'      => 0,
+            'pegawai_updated'      => 0,
+            'pegawai_total'        => count($pegawaiList),
+            'pindah_satker_count'  => 0,
+            'pindah_satker_list'   => [],
+            'tim_created'          => 0,
+            'tim_total'            => count($timList),
+            'anggota_synced'       => 0,
+            'multi_tim_members'    => 0,
+            'target_satker'        => $targetSatker ?: 'Semua Satker',
+            'errors'               => [],
         ];
 
         // Cache column lists to prevent SQL Column not found errors
@@ -216,7 +233,7 @@ class SimpatiApiService
         $masterGroupCols = Schema::getColumnListing('master_groups');
         $groupCols       = Schema::getColumnListing('groups');
 
-        // 1. Sinkronisasi Data Pegawai -> users & users_jabatan
+        // 1. Sinkronisasi Data Pegawai -> users & users_jabatan (dengan deteksi Pindah SATKER)
         foreach ($pegawaiList as $item) {
             try {
                 $niplama  = trim($item['niplama'] ?? '');
@@ -243,13 +260,32 @@ class SimpatiApiService
                     $user = User::where('email', $email)->first();
                 }
 
+                // Cek status Pindah SATKER
+                $isPindahSatker = false;
+                $oldSatker = null;
+
                 if ($user) {
+                    $existingJabatan = DB::table('users_jabatan')
+                        ->where('id_users', $user->id)
+                        ->orderBy('id', 'desc')
+                        ->first();
+
+                    if ($existingJabatan && !empty($existingJabatan->id_satker)) {
+                        $oldSatker = $existingJabatan->id_satker;
+                        if (!empty($idSatker) && (string)$oldSatker !== (string)$idSatker) {
+                            $isPindahSatker = true;
+                        }
+                    }
+
                     if (!$user->isAdmin()) {
                         $user->nama_lengkap = $nama ?: $user->nama_lengkap;
                         $user->niplama      = $niplama ?: $user->niplama;
                         $user->nipbaru      = $nipbaru ?: $user->nipbaru;
                         if (!empty($email)) {
                             $user->email = $email;
+                        }
+                        if (empty($user->token_id)) {
+                            $user->token_id = md5($niplama . time() . Str::random(10));
                         }
                         $user->save();
                         $summary['pegawai_updated']++;
@@ -264,8 +300,64 @@ class SimpatiApiService
                     $user->nipbaru      = $nipbaru;
                     $user->email        = $email ?: ($niplama ? $niplama . '@bps.go.id' : 'user_' . time() . '@bps.go.id');
                     $user->password     = Hash::make($niplama ?: 'password');
+                    $user->token_id     = md5($niplama . time() . Str::random(10));
                     $user->save();
                     $summary['pegawai_created']++;
+                }
+
+                // Jika dari payload SIMPATI ditandai is_pindahsatker = 1
+                if (!empty($item['is_pindahsatker']) && $item['is_pindahsatker'] == 1) {
+                    $isPindahSatker = true;
+                    if (empty($oldSatker) && !empty($item['satker_asal'])) {
+                        $oldSatker = $item['satker_asal'];
+                    }
+                }
+
+                // Handle Peringatan Pindah Satker -> Notifikasi Admin
+                if ($isPindahSatker) {
+                    $summary['pindah_satker_count']++;
+                    $summary['pindah_satker_list'][] = [
+                        'nama'        => $nama,
+                        'niplama'     => $niplama,
+                        'satker_asal' => $oldSatker ?: ($item['satker_asal'] ?? 'Satker Sebelumnya'),
+                        'satker_baru' => $idSatker ?: 'Satker Baru',
+                        'catatan'     => $item['catatan_mutasi'] ?? 'Terdeteksi mutasi/pindah satker dari SIMPATI.',
+                    ];
+
+                    // Buat Notifikasi Error/Peringatan ke Admin Sistem
+                    $admins = User::where('username', 'admin')
+                        ->orWhere('email', 'LIKE', '%admin%')
+                        ->get();
+
+                    foreach ($admins as $admin) {
+                        // Hindari notifikasi ganda unread untuk pegawai yang sama dalam 24 jam
+                        $alreadyNotified = DB::table('notifications')
+                            ->where('notifiable_id', $admin->id)
+                            ->whereNull('read_at')
+                            ->where('data', 'LIKE', '%' . $niplama . '%')
+                            ->where('data', 'LIKE', '%Pindah SATKER%')
+                            ->exists();
+
+                        if (!$alreadyNotified) {
+                            DB::table('notifications')->insert([
+                                'id'              => (string) Str::uuid(),
+                                'type'            => 'App\Notifications\PegawaiStatusNotification',
+                                'notifiable_type' => 'App\User',
+                                'notifiable_id'   => $admin->id,
+                                'data'            => json_encode([
+                                    'judul'       => '⚠️ Peringatan: Status Pegawai Pindah SATKER',
+                                    'pesan'       => "Pegawai {$nama} (NIP: {$niplama}) terdeteksi Pindah SATKER (dari " . ($oldSatker ?: 'Satker Lama') . " ke " . ($idSatker ?: 'Satker Baru') . "). Status kepegawaian memerlukan verifikasi.",
+                                    'url'         => route('simpati.index'),
+                                    'id_satker'   => $idSatker,
+                                    'niplama'     => $niplama,
+                                    'status'      => 'error_pindah_satker',
+                                ]),
+                                'read_at'         => null,
+                                'created_at'      => now(),
+                                'updated_at'      => now(),
+                            ]);
+                        }
+                    }
                 }
 
                 // Update users_jabatan (hanya kolom yang ada di database)
@@ -283,6 +375,12 @@ class SimpatiApiService
                     if (in_array('nm_satker', $userJabatanCols)) {
                         $jabatanData['nm_satker'] = $nmSatker;
                     }
+                    if (in_array('is_pindahsatker', $userJabatanCols)) {
+                        $jabatanData['is_pindahsatker'] = $isPindahSatker ? 1 : 0;
+                    }
+                    if (in_array('is_active', $userJabatanCols)) {
+                        $jabatanData['is_active'] = 1;
+                    }
                     if (in_array('updated_at', $userJabatanCols)) {
                         $jabatanData['updated_at'] = now();
                     }
@@ -290,6 +388,7 @@ class SimpatiApiService
                     if (!empty($jabatanData)) {
                         $existingJabatan = DB::table('users_jabatan')
                             ->where('id_users', $user->id)
+                            ->orderBy('id', 'desc')
                             ->first();
 
                         if ($existingJabatan) {
@@ -309,7 +408,7 @@ class SimpatiApiService
             }
         }
 
-        // 2. Sinkronisasi Tim Kerja -> master_groups & groups
+        // 2. Sinkronisasi Tim Kerja -> master_groups & groups (Mendukung Anggota Punya Lebih dari 1 Tim)
         foreach ($timList as $tim) {
             try {
                 $nmTim = trim($tim['nm_tim'] ?? '');
@@ -338,6 +437,7 @@ class SimpatiApiService
                         continue;
                     }
 
+                    // Tambahkan anggota ke grup ini jika belum ada (multi-tim safe)
                     $groupRel = DB::table('groups')
                         ->where('niplama', $nipAgt)
                         ->where('grup', $nmTim)
@@ -363,6 +463,14 @@ class SimpatiApiService
             }
         }
 
+        // Hitung jumlah pegawai yang memiliki lebih dari 1 tim
+        $multiTimUsers = DB::table('groups')
+            ->select('niplama', DB::raw('count(grup) as total_tim'))
+            ->groupBy('niplama')
+            ->having('total_tim', '>', 1)
+            ->get();
+        $summary['multi_tim_members'] = $multiTimUsers->count();
+
         $summary['success'] = true;
         return $summary;
     }
@@ -370,13 +478,13 @@ class SimpatiApiService
     /**
      * Sinkronisasi live dari SIMPATI API ke database SIKEREN
      */
-    public function syncAll(): array
+    public function syncAll(?string $idSatker = null): array
     {
         try {
-            $pegawaiList = $this->getPegawai();
-            $timList     = $this->getTimKerja();
+            $pegawaiList = $this->getPegawai($idSatker && $idSatker !== 'all' ? $idSatker : null);
+            $timList     = $this->getTimKerja($idSatker && $idSatker !== 'all' ? $idSatker : null);
 
-            return $this->syncFromPayload($pegawaiList, $timList);
+            return $this->syncFromPayload($pegawaiList, $timList, $idSatker);
         } catch (Exception $e) {
             Log::error('SIMPATI live sync failed: ' . $e->getMessage());
             return [
@@ -390,7 +498,7 @@ class SimpatiApiService
     /**
      * Sinkronisasi data contoh / simulasi SIMPATI (Mock Data) untuk pengujian
      */
-    public function syncDummyData(): array
+    public function syncDummyData(?string $idSatker = null): array
     {
         $mockPegawai = [
             [
@@ -402,6 +510,7 @@ class SimpatiApiService
                 'nm_jabatan'   => 'Kepala Bagian Umum',
                 'id_satker'    => '7400',
                 'nm_satker'    => 'BPS Provinsi Sulawesi Tenggara',
+                'is_pindahsatker' => 0,
             ],
             [
                 'id'           => 2,
@@ -412,6 +521,7 @@ class SimpatiApiService
                 'nm_jabatan'   => 'Statistisi Ahli Madya / Ketua Tim IPDS',
                 'id_satker'    => '7400',
                 'nm_satker'    => 'BPS Provinsi Sulawesi Tenggara',
+                'is_pindahsatker' => 0,
             ],
             [
                 'id'           => 3,
@@ -422,6 +532,7 @@ class SimpatiApiService
                 'nm_jabatan'   => 'Statistisi Ahli Muda / Ketua Tim Nerwilis',
                 'id_satker'    => '7400',
                 'nm_satker'    => 'BPS Provinsi Sulawesi Tenggara',
+                'is_pindahsatker' => 0,
             ],
             [
                 'id'           => 4,
@@ -432,6 +543,7 @@ class SimpatiApiService
                 'nm_jabatan'   => 'Pranata Komputer Ahli Pertama',
                 'id_satker'    => '7400',
                 'nm_satker'    => 'BPS Provinsi Sulawesi Tenggara',
+                'is_pindahsatker' => 0,
             ],
             [
                 'id'           => 5,
@@ -442,6 +554,7 @@ class SimpatiApiService
                 'nm_jabatan'   => 'Pranata Keuangan APBN',
                 'id_satker'    => '7400',
                 'nm_satker'    => 'BPS Provinsi Sulawesi Tenggara',
+                'is_pindahsatker' => 0,
             ],
             [
                 'id'           => 6,
@@ -452,6 +565,20 @@ class SimpatiApiService
                 'nm_jabatan'   => 'Statistisi Ahli Pertama',
                 'id_satker'    => '7400',
                 'nm_satker'    => 'BPS Provinsi Sulawesi Tenggara',
+                'is_pindahsatker' => 0,
+            ],
+            [
+                'id'           => 7,
+                'nama_lengkap' => 'Hendra Wijaya, S.E.',
+                'niplama'      => '19910707',
+                'nipbaru'      => '199107072016011002',
+                'email'        => 'hendra.w@bps.go.id',
+                'nm_jabatan'   => 'Statistisi Ahli Pertama',
+                'id_satker'    => '7471',
+                'nm_satker'    => 'BPS Kota Kendari',
+                'satker_asal'  => '7400',
+                'is_pindahsatker' => 1,
+                'catatan_mutasi'  => 'Pindah SATKER dari BPS Provinsi Sulawesi Tenggara (7400) ke BPS Kota Kendari (7471)',
             ]
         ];
 
@@ -508,10 +635,29 @@ class SimpatiApiService
                         'nm_jabatan'        => 'Statistisi Ahli Pertama',
                         'jabatan_dalam_tim' => 'Anggota',
                     ],
+                    [
+                        'id'                => 4,
+                        'nama_lengkap'      => 'Muhammad Gibran Fitrah, S.Kom.',
+                        'niplama'           => '19990404',
+                        'nipbaru'           => '199904042022011001',
+                        'email'             => 'gibran.fitrah@bps.go.id',
+                        'nm_jabatan'        => 'Pranata Komputer',
+                        'jabatan_dalam_tim' => 'Anggota Tim Analis TI', // Multi-tim: Gibran ada di IPDS & Nerwilis
+                    ],
                 ],
             ],
         ];
 
-        return $this->syncFromPayload($mockPegawai, $mockTims);
+        return $this->syncFromPayload($mockPegawai, $mockTims, $idSatker);
+    }
+
+    /**
+     * Generate QR Nametag SVG/Code untuk Pegawai
+     */
+    public function generateQrCodeString(User $user, int $size = 200): string
+    {
+        // QR Code berisi identitas resmi pegawai untuk presensi/nametag di SIKEREN
+        $payload = $user->niplama ?: ($user->nipbaru ?: $user->username);
+        return (string) QrCode::size($size)->margin(1)->generate($payload);
     }
 }

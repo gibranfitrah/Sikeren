@@ -82,6 +82,21 @@ const PEGAWAI_DATA = [
         nm_jabatan: "Statistisi Ahli Pertama",
         id_satker: "7400",
         nm_satker: "BPS Provinsi Sulawesi Tenggara",
+        is_pindahsatker: 0,
+        is_active: 1
+    },
+    {
+        id: 7,
+        nama_lengkap: "Hendra Wijaya, S.E.",
+        niplama: "19910707",
+        nipbaru: "199107072016011002",
+        email: "hendra.w@bps.go.id",
+        nm_jabatan: "Statistisi Ahli Pertama",
+        id_satker: "7471",
+        nm_satker: "BPS Kota Kendari",
+        satker_asal: "7400",
+        is_pindahsatker: 1,
+        catatan_mutasi: "Pindah SATKER dari BPS Provinsi Sulawesi Tenggara (7400) ke BPS Kota Kendari (7471)",
         is_active: 1
     }
 ];
@@ -107,7 +122,8 @@ const TIMS_DATA = [
         deskripsi: "Penyusunan PDRB dan analisis statistik ekonomi",
         anggota_nips: [
             { niplama: "19920303", jabatan_dalam_tim: "Ketua Tim" },
-            { niplama: "19900606", jabatan_dalam_tim: "Anggota" }
+            { niplama: "19900606", jabatan_dalam_tim: "Anggota" },
+            { niplama: "19990404", jabatan_dalam_tim: "Anggota Tim Analis TI" } // Multi-tim (Gibran ada di IPDS dan Nerwilis)
         ]
     },
     {
@@ -176,7 +192,10 @@ const server = http.createServer((req, res) => {
             email: p.email,
             nm_jabatan: p.nm_jabatan,
             id_satker: p.id_satker,
-            nm_satker: p.nm_satker
+            nm_satker: p.nm_satker,
+            is_pindahsatker: p.is_pindahsatker || 0,
+            satker_asal: p.satker_asal || null,
+            catatan_mutasi: p.catatan_mutasi || null
         }));
 
         return sendJSON(res, 200, { data: formatted });

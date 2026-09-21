@@ -7,6 +7,9 @@ use App\Services\SimpatiApiService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
+use App\User;
+use Illuminate\Support\Facades\DB;
+
 class SimpatiController extends Controller
 {
     protected SimpatiApiService $simpatiService;
@@ -31,14 +34,94 @@ class SimpatiController extends Controller
     /**
      * Halaman manajemen Integrasi SIMPATI API
      */
-    public function index()
+    public function index(Request $request)
     {
         $this->authorizeAccess();
 
         $baseUrl = config('services.simpati.base_url', 'http://localhost:3000');
         $apiKey  = config('services.simpati.api_key', 'si-ke-ren74_K9xM2pL8vR5wQ1zY4tN7bC0jF3hG6dS8aE1uW4iO9qX2zV5mP0');
 
-        return view('admin.simpati.index', compact('baseUrl', 'apiKey'));
+        // Daftar Satker Resmi BPS se-Sulawesi Tenggara
+        $satkers = [
+            'all'  => 'Semua Satker BPS',
+            '7400' => '7400 - BPS Provinsi Sulawesi Tenggara',
+            '7401' => '7401 - BPS Kabupaten Buton',
+            '7402' => '7402 - BPS Kabupaten Muna',
+            '7403' => '7403 - BPS Kabupaten Konawe',
+            '7404' => '7404 - BPS Kabupaten Kolaka',
+            '7405' => '7405 - BPS Kabupaten Konawe Selatan',
+            '7406' => '7406 - BPS Kabupaten Bombana',
+            '7407' => '7407 - BPS Kabupaten Wakatobi',
+            '7408' => '7408 - BPS Kabupaten Kolaka Utara',
+            '7409' => '7409 - BPS Kabupaten Buton Utara',
+            '7410' => '7410 - BPS Kabupaten Konawe Utara',
+            '7411' => '7411 - BPS Kabupaten Kolaka Timur',
+            '7415' => '7415 - BPS Kabupaten Buton Selatan',
+            '7471' => '7471 - BPS Kota Kendari',
+            '7472' => '7472 - BPS Kota Baubau',
+        ];
+
+        $selectedSatker = $request->query('satker', '7400');
+
+        // Mengambil daftar pegawai tersinkronisasi sesuai satker
+        $pegawaiQuery = User::bpsStaff()
+            ->leftJoin(DB::raw('(SELECT uj1.* FROM users_jabatan uj1 INNER JOIN (SELECT id_users, MAX(id) as max_id FROM users_jabatan GROUP BY id_users) uj2 ON uj1.id = uj2.max_id) as latest_jabatan'), 'users.id', '=', 'latest_jabatan.id_users')
+            ->select(
+                'users.id',
+                'users.nama_lengkap',
+                'users.niplama',
+                'users.nipbaru',
+                'users.email',
+                'users.username',
+                'users.token_id',
+                'latest_jabatan.nm_jabatan',
+                'latest_jabatan.id_satker',
+                'latest_jabatan.nm_satker',
+                'latest_jabatan.is_pindahsatker'
+            );
+
+        if ($selectedSatker !== 'all') {
+            $pegawaiQuery->where('latest_jabatan.id_satker', $selectedSatker);
+        }
+
+        $syncedPegawai = $pegawaiQuery->orderBy('users.nama_lengkap', 'asc')->get();
+
+        // Mengisi data tim masing-masing pegawai (Mendukung Multi-Tim)
+        foreach ($syncedPegawai as $pegawai) {
+            $pegawai->tims = DB::table('groups')
+                ->where('niplama', $pegawai->niplama)
+                ->pluck('grup')
+                ->toArray();
+        }
+
+        // Mengambil seluruh Tim Kerja dari master_groups (Database Tim)
+        $syncedTims = DB::table('master_groups')->get();
+        foreach ($syncedTims as $tim) {
+            $tim->members = DB::table('groups')
+                ->join('users', 'groups.niplama', '=', 'users.niplama')
+                ->where('groups.grup', $tim->grup)
+                ->select('users.nama_lengkap', 'users.niplama', 'users.id')
+                ->get();
+        }
+
+        // Statistik
+        $totalPegawai     = $syncedPegawai->count();
+        $totalPindah      = $syncedPegawai->where('is_pindahsatker', 1)->count();
+        $totalMultiTim    = $syncedPegawai->filter(fn($p) => count($p->tims) > 1)->count();
+        $totalTimKerja    = $syncedTims->count();
+
+        return view('admin.simpati.index', compact(
+            'baseUrl',
+            'apiKey',
+            'satkers',
+            'selectedSatker',
+            'syncedPegawai',
+            'syncedTims',
+            'totalPegawai',
+            'totalPindah',
+            'totalMultiTim',
+            'totalTimKerja'
+        ));
     }
 
     /**
@@ -92,7 +175,7 @@ class SimpatiController extends Controller
     }
 
     /**
-     * AJAX Trigger Sinkronisasi Data SIMPATI -> SIKEREN
+     * AJAX Trigger Sinkronisasi Data SIMPATI -> SIKEREN (Mendukung Filter SATKER)
      */
     public function syncData(Request $request)
     {
@@ -105,19 +188,58 @@ class SimpatiController extends Controller
             );
         }
 
-        $result = $this->simpatiService->syncAll();
+        $idSatker = $request->input('id_satker');
+        $result   = $this->simpatiService->syncAll($idSatker);
         return response()->json($result);
     }
 
     /**
-     * AJAX Sinkronisasi Simulasi / Mock Data SIMPATI (Untuk Demo / Testing)
+     * AJAX Sinkronisasi Simulasi / Mock Data SIMPATI (Mendukung Filter SATKER)
      */
-    public function syncMockData()
+    public function syncMockData(Request $request)
     {
         $this->authorizeAccess();
 
-        $result = $this->simpatiService->syncDummyData();
+        $idSatker = $request->input('id_satker');
+        $result   = $this->simpatiService->syncDummyData($idSatker);
         return response()->json($result);
+    }
+
+    /**
+     * AJAX Generate QR Nametag Pegawai SIMPATI
+     */
+    public function qrNametag($id)
+    {
+        $this->authorizeAccess();
+
+        $user = User::findOrFail($id);
+        $qrSvg = $this->simpatiService->generateQrCodeString($user, 220);
+
+        // Ambil data jabatan & satker
+        $jabatan = DB::table('users_jabatan')
+            ->where('id_users', $user->id)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        // Ambil daftar tim
+        $tims = DB::table('groups')->where('niplama', $user->niplama)->pluck('grup')->toArray();
+
+        return response()->json([
+            'success'      => true,
+            'user'         => [
+                'id'            => $user->id,
+                'nama_lengkap'  => $user->nama_lengkap,
+                'niplama'       => $user->niplama,
+                'nipbaru'       => $user->nipbaru ?: '-',
+                'email'         => $user->email,
+                'nm_jabatan'    => $jabatan->nm_jabatan ?? ($user->role_label ?: 'Pegawai BPS'),
+                'id_satker'     => $jabatan->id_satker ?? '7400',
+                'nm_satker'     => $jabatan->nm_satker ?? 'BPS Provinsi Sulawesi Tenggara',
+                'tims'          => $tims,
+                'pindah_satker' => ($jabatan->is_pindahsatker ?? 0) == 1,
+            ],
+            'qr_svg'       => $qrSvg,
+        ]);
     }
 
     /**
