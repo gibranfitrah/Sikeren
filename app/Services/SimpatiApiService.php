@@ -347,7 +347,7 @@ class SimpatiApiService
                                 'data'            => json_encode([
                                     'judul'       => '⚠️ Peringatan: Status Pegawai Pindah SATKER',
                                     'pesan'       => "Pegawai {$nama} (NIP: {$niplama}) terdeteksi Pindah SATKER (dari " . ($oldSatker ?: 'Satker Lama') . " ke " . ($idSatker ?: 'Satker Baru') . "). Status kepegawaian memerlukan verifikasi.",
-                                    'url'         => route('simpati.index'),
+                                    'url'         => '/admin/simpati',
                                     'id_satker'   => $idSatker,
                                     'niplama'     => $niplama,
                                     'status'      => 'error_pindah_satker',

@@ -13,12 +13,25 @@ class NotificationController extends Controller
     {
         $targetUrl = url('/daftar_kegiatan');
 
+        $normalizeUrl = function ($url) {
+            if (!$url) return url('/daftar_kegiatan');
+            if (filter_var($url, FILTER_VALIDATE_URL)) {
+                $host = parse_url($url, PHP_URL_HOST);
+                if (in_array($host, ['localhost', '127.0.0.1'])) {
+                    $path = parse_url($url, PHP_URL_PATH) ?: '/';
+                    $query = parse_url($url, PHP_URL_QUERY);
+                    return $path . ($query ? '?' . $query : '');
+                }
+            }
+            return $url;
+        };
+
         if (Auth::check()) {
             $notif = Auth::user()->notifications()->where('id', $id)->first();
             if ($notif) {
                 $notif->markAsRead();
                 $data = is_array($notif->data) ? $notif->data : (json_decode($notif->data ?? '{}', true) ?: []);
-                $targetUrl = $data['url'] ?? ($data['link'] ?? $targetUrl);
+                $targetUrl = $normalizeUrl($data['url'] ?? ($data['link'] ?? $targetUrl));
                 return redirect($targetUrl);
             }
         }
@@ -31,7 +44,7 @@ class NotificationController extends Controller
                 'updated_at' => now(),
             ]);
             $data = is_array($legacy->data ?? null) ? $legacy->data : (json_decode($legacy->data ?? '{}', true) ?: []);
-            $targetUrl = $data['url'] ?? ($legacy->url ?? ($legacy->link ?? $targetUrl));
+            $targetUrl = $normalizeUrl($data['url'] ?? ($legacy->url ?? ($legacy->link ?? $targetUrl)));
         }
 
         return redirect($targetUrl);
