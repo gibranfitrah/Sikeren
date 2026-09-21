@@ -176,7 +176,7 @@
     <!-- Main Content wrapper -->
     <div class="flex-1 flex flex-col h-screen overflow-hidden">
         <!-- Top Header -->
-        <header class="h-20 bg-white shadow-sm flex items-center justify-between px-8 z-10">
+        <header class="relative z-40 h-20 bg-white shadow-sm flex items-center justify-between px-8">
             <div class="flex items-center gap-4">
                 <h1 class="text-2xl font-semibold text-gray-800">@yield('header_title', 'Dashboard')</h1>
             </div>
@@ -219,7 +219,8 @@
                          x-transition:leave="transition ease-in duration-100"
                          x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                          x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                         class="absolute right-0 mt-3 w-80 sm:w-96 bg-white rounded-3xl shadow-2xl border border-gray-100 p-4 z-50">
+                         class="absolute right-0 mt-3 w-80 sm:w-96 bg-white rounded-3xl shadow-2xl border border-gray-100 p-4 z-50"
+                         style="background-color: #ffffff !important;">
 
                         {{-- Header Notifikasi --}}
                         <div class="flex items-center justify-between pb-3 border-b border-gray-100 px-2">
