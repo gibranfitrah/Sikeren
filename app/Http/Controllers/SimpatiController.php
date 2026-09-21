@@ -42,24 +42,11 @@ class SimpatiController extends Controller
         $apiKey  = config('services.simpati.api_key', 'si-ke-ren74_K9xM2pL8vR5wQ1zY4tN7bC0jF3hG6dS8aE1uW4iO9qX2zV5mP0');
 
         // Daftar Satker Resmi BPS se-Sulawesi Tenggara
-        $satkers = [
-            'all'  => 'Semua Satker BPS',
-            '7400' => '7400 - BPS Provinsi Sulawesi Tenggara',
-            '7401' => '7401 - BPS Kabupaten Buton',
-            '7402' => '7402 - BPS Kabupaten Muna',
-            '7403' => '7403 - BPS Kabupaten Konawe',
-            '7404' => '7404 - BPS Kabupaten Kolaka',
-            '7405' => '7405 - BPS Kabupaten Konawe Selatan',
-            '7406' => '7406 - BPS Kabupaten Bombana',
-            '7407' => '7407 - BPS Kabupaten Wakatobi',
-            '7408' => '7408 - BPS Kabupaten Kolaka Utara',
-            '7409' => '7409 - BPS Kabupaten Buton Utara',
-            '7410' => '7410 - BPS Kabupaten Konawe Utara',
-            '7411' => '7411 - BPS Kabupaten Kolaka Timur',
-            '7415' => '7415 - BPS Kabupaten Buton Selatan',
-            '7471' => '7471 - BPS Kota Kendari',
-            '7472' => '7472 - BPS Kota Baubau',
-        ];
+        $satkerMap = self::getSatkerMap();
+        $satkers = ['all' => 'Semua Satker BPS'];
+        foreach ($satkerMap as $kode => $nama) {
+            $satkers[$kode] = "{$kode} - {$nama}";
+        }
 
         $selectedSatker = $request->query('satker', '7400');
 
@@ -76,7 +63,6 @@ class SimpatiController extends Controller
                 'users.token_id',
                 'latest_jabatan.nm_jabatan',
                 'latest_jabatan.id_satker',
-                'latest_jabatan.nm_satker',
                 'latest_jabatan.is_pindahsatker'
             );
 
@@ -86,8 +72,9 @@ class SimpatiController extends Controller
 
         $syncedPegawai = $pegawaiQuery->orderBy('users.nama_lengkap', 'asc')->get();
 
-        // Mengisi data tim masing-masing pegawai (Mendukung Multi-Tim)
+        // Mengisi data tim & nama satker masing-masing pegawai (Mendukung Multi-Tim)
         foreach ($syncedPegawai as $pegawai) {
+            $pegawai->nm_satker = $satkerMap[$pegawai->id_satker] ?? ($pegawai->id_satker ? "Satker {$pegawai->id_satker}" : 'BPS Provinsi Sulawesi Tenggara');
             $pegawai->tims = DB::table('groups')
                 ->where('niplama', $pegawai->niplama)
                 ->pluck('grup')
@@ -234,7 +221,7 @@ class SimpatiController extends Controller
                 'email'         => $user->email,
                 'nm_jabatan'    => $jabatan->nm_jabatan ?? ($user->role_label ?: 'Pegawai BPS'),
                 'id_satker'     => $jabatan->id_satker ?? '7400',
-                'nm_satker'     => $jabatan->nm_satker ?? 'BPS Provinsi Sulawesi Tenggara',
+                'nm_satker'     => self::getSatkerMap()[$jabatan->id_satker ?? '7400'] ?? 'BPS Provinsi Sulawesi Tenggara',
                 'tims'          => $tims,
                 'pindah_satker' => ($jabatan->is_pindahsatker ?? 0) == 1,
             ],
@@ -302,5 +289,29 @@ class SimpatiController extends Controller
         }
 
         return (bool) file_put_contents($envPath, $content);
+    }
+
+    /**
+     * Peta Satuan Kerja BPS se-Sulawesi Tenggara
+     */
+    public static function getSatkerMap(): array
+    {
+        return [
+            '7400' => 'BPS Provinsi Sulawesi Tenggara',
+            '7401' => 'BPS Kabupaten Buton',
+            '7402' => 'BPS Kabupaten Muna',
+            '7403' => 'BPS Kabupaten Konawe',
+            '7404' => 'BPS Kabupaten Kolaka',
+            '7405' => 'BPS Kabupaten Konawe Selatan',
+            '7406' => 'BPS Kabupaten Bombana',
+            '7407' => 'BPS Kabupaten Wakatobi',
+            '7408' => 'BPS Kabupaten Kolaka Utara',
+            '7409' => 'BPS Kabupaten Buton Utara',
+            '7410' => 'BPS Kabupaten Konawe Utara',
+            '7411' => 'BPS Kabupaten Kolaka Timur',
+            '7415' => 'BPS Kabupaten Buton Selatan',
+            '7471' => 'BPS Kota Kendari',
+            '7472' => 'BPS Kota Baubau',
+        ];
     }
 }
