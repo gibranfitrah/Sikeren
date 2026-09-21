@@ -22,6 +22,7 @@ class RoomBooking extends Model
         'nama_ruangan',
         'fasilitas',
         'layout_meja',
+        'sofa_config',
         'setup_podium',
         'special_requests',
         'zoom_account',

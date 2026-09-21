@@ -50,7 +50,63 @@ class SimpatiController extends Controller
 
         $selectedSatker = $request->query('satker', '7400');
 
-        // Mengambil daftar pegawai tersinkronisasi sesuai satker
+        $syncedPegawai = $this->getFilteredPegawai($selectedSatker, $satkerMap);
+
+        // Mengambil seluruh Tim Kerja dari master_groups (Database Tim)
+        $syncedTims = DB::table('master_groups')->get();
+        foreach ($syncedTims as $tim) {
+            $tim->members = DB::table('groups')
+                ->join('users', 'groups.niplama', '=', 'users.niplama')
+                ->where('groups.grup', $tim->grup)
+                ->select('users.nama_lengkap', 'users.niplama', 'users.id')
+                ->get();
+        }
+
+        // Statistik
+        $totalPegawai     = $syncedPegawai->count();
+        $totalPindah      = $syncedPegawai->where('is_pindahsatker', 1)->count();
+        $totalMultiTim    = $syncedPegawai->filter(fn($p) => count($p->tims) > 1)->count();
+        $totalTimKerja    = $syncedTims->count();
+
+        // Siapkan data siap-JSON untuk Alpine.js.
+        // Jangan lakukan map() + closure di dalam @json Blade karena
+        // compiler Blade gagal mengurai kurung/siku bersarang dan
+        // menimbulkan ParseError "Unclosed '[' ... does not match ')'".
+        $pegawaiList = $syncedPegawai->map(function ($p) {
+            return [
+                'id'              => $p->id,
+                'nama_lengkap'    => $p->nama_lengkap,
+                'formatted_nip'   => $p->formatted_nip,
+                'email'           => $p->email,
+                'nm_jabatan'      => $p->nm_jabatan ?: 'Pegawai BPS',
+                'nm_satker'       => $p->nm_satker,
+                'id_satker'       => $p->id_satker,
+                'is_pindahsatker' => (int) ($p->is_pindahsatker ?? 0),
+                'tims'            => array_values($p->tims ?? []),
+                'initial'         => strtoupper(substr($p->nama_lengkap ?? 'U', 0, 1)),
+            ];
+        })->values()->toArray();
+
+        return view('admin.simpati.index', compact(
+            'baseUrl',
+            'apiKey',
+            'satkers',
+            'selectedSatker',
+            'syncedPegawai',
+            'syncedTims',
+            'pegawaiList',
+            'totalPegawai',
+            'totalPindah',
+            'totalMultiTim',
+            'totalTimKerja'
+        ));
+    }
+
+    /**
+     * Query pegawai tersinkronisasi sesuai filter satker (dipakai index & filter AJAX).
+     */
+    protected function getFilteredPegawai(string $selectedSatker, array $satkerMap)
+    {
         $pegawaiQuery = User::bpsStaff()
             ->leftJoin(DB::raw('(SELECT uj1.* FROM users_jabatan uj1 INNER JOIN (SELECT id_users, MAX(id) as max_id FROM users_jabatan GROUP BY id_users) uj2 ON uj1.id = uj2.max_id) as latest_jabatan'), 'users.id', '=', 'latest_jabatan.id_users')
             ->select(
@@ -81,34 +137,60 @@ class SimpatiController extends Controller
                 ->toArray();
         }
 
-        // Mengambil seluruh Tim Kerja dari master_groups (Database Tim)
-        $syncedTims = DB::table('master_groups')->get();
-        foreach ($syncedTims as $tim) {
-            $tim->members = DB::table('groups')
-                ->join('users', 'groups.niplama', '=', 'users.niplama')
-                ->where('groups.grup', $tim->grup)
-                ->select('users.nama_lengkap', 'users.niplama', 'users.id')
-                ->get();
+        return $syncedPegawai;
+    }
+
+    /**
+     * AJAX Filter Satker tanpa reload (untuk penerapan smooth di halaman SIMPATI).
+     * GET /admin/simpati/filter?satker=7471
+     */
+    public function filter(Request $request)
+    {
+        $this->authorizeAccess();
+
+        $satkerMap = self::getSatkerMap();
+        $selectedSatker = $request->query('satker', $request->input('satker', '7400'));
+
+        // Validasi: 'all' atau kode satker resmi
+        if ($selectedSatker !== 'all' && !array_key_exists($selectedSatker, $satkerMap)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kode satker tidak dikenal.',
+            ], 422);
         }
 
-        // Statistik
-        $totalPegawai     = $syncedPegawai->count();
-        $totalPindah      = $syncedPegawai->where('is_pindahsatker', 1)->count();
-        $totalMultiTim    = $syncedPegawai->filter(fn($p) => count($p->tims) > 1)->count();
-        $totalTimKerja    = $syncedTims->count();
+        $syncedPegawai = $this->getFilteredPegawai($selectedSatker, $satkerMap);
+        $totalTimKerja = DB::table('master_groups')->count();
 
-        return view('admin.simpati.index', compact(
-            'baseUrl',
-            'apiKey',
-            'satkers',
-            'selectedSatker',
-            'syncedPegawai',
-            'syncedTims',
-            'totalPegawai',
-            'totalPindah',
-            'totalMultiTim',
-            'totalTimKerja'
-        ));
+        $pegawai = $syncedPegawai->map(function ($p) {
+            return [
+                'id'              => $p->id,
+                'nama_lengkap'    => $p->nama_lengkap,
+                'formatted_nip'   => $p->formatted_nip,
+                'email'           => $p->email,
+                'nm_jabatan'      => $p->nm_jabatan ?: 'Pegawai BPS',
+                'nm_satker'       => $p->nm_satker,
+                'id_satker'       => $p->id_satker,
+                'is_pindahsatker' => (int) ($p->is_pindahsatker ?? 0),
+                'tims'            => array_values($p->tims ?? []),
+                'initial'         => strtoupper(substr($p->nama_lengkap ?? 'U', 0, 1)),
+            ];
+        })->values();
+
+        return response()->json([
+            'success'         => true,
+            'selected_satker' => $selectedSatker,
+            'satker_label'    => $selectedSatker === 'all'
+                ? 'Semua Satker BPS'
+                : ($selectedSatker . ' - ' . ($satkerMap[$selectedSatker] ?? '')),
+            'stats' => [
+                'totalPegawai'  => $syncedPegawai->count(),
+                'totalPindah'   => $syncedPegawai->where('is_pindahsatker', 1)->count(),
+                'totalMultiTim' => $syncedPegawai->filter(fn($p) => count($p->tims ?? []) > 1)->count(),
+                'totalTimKerja' => $totalTimKerja,
+            ],
+            'pegawai' => $pegawai,
+        ]);
     }
 
     /**

@@ -134,6 +134,7 @@ Route::get('/booking-ruangan', [BookingRuanganController::class, 'index'])->name
 Route::post('/booking-ruangan', [BookingRuanganController::class, 'store'])->name('booking-ruangan.store');
 Route::delete('/booking-ruangan/{id}', [BookingRuanganController::class, 'destroy'])->name('booking-ruangan.destroy');
 Route::get('/api/booking-ruangan/schedule', [BookingRuanganController::class, 'apiSchedule'])->name('booking-ruangan.apiSchedule');
+Route::get('/api/room-capacity', [BookingRuanganController::class, 'apiCapacity'])->name('booking-ruangan.apiCapacity');
 
 Route::get('lihatkegiatan/{id}', [KegiatanController::class, 'displayKegiatan'])->where('id','(.*)');
 Route::post('/notulen', [KegiatanController::class, 'upload_notulen'])->name('notulen.upload_notulen');
@@ -197,6 +198,7 @@ Route::post('/kegiatan/{id}/status', [\App\Http\Controllers\KegiatanController::
 
     // SIMPATI API Integration
     Route::get('/admin/simpati', [\App\Http\Controllers\SimpatiController::class, 'index'])->name('simpati.index');
+    Route::get('/admin/simpati/filter', [\App\Http\Controllers\SimpatiController::class, 'filter'])->name('simpati.filter');
     Route::post('/admin/simpati/config', [\App\Http\Controllers\SimpatiController::class, 'updateConfig'])->name('simpati.update_config');
     Route::get('/admin/simpati/test', [\App\Http\Controllers\SimpatiController::class, 'testConnection'])->name('simpati.test');
     Route::post('/admin/simpati/sync', [\App\Http\Controllers\SimpatiController::class, 'syncData'])->name('simpati.sync');

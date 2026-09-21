@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\RoomBooking;
+use App\RoomCapacity;
 use App\Venue;
 use App\Task;
 use App\User;
@@ -178,6 +179,7 @@ class BookingRuanganController extends Controller
             'mic_count'         => 'nullable|string',
             'fasilitas_list'    => 'nullable|array',
             'layout_meja'       => 'nullable|string',
+            'sofa_config'       => 'nullable|in:tanpa_sofa,dengan_sofa',
             'keterangan'        => 'nullable|string',
         ], [
             'nama_acara.required'     => 'Nama agenda / rapat wajib diisi.',
@@ -254,7 +256,38 @@ class BookingRuanganController extends Controller
 
         // Susun Data Section A, B, C Sarpras
         $layoutMeja = $request->input('layout_meja', 'Classroom');
+        // Normalisasi ejaan lama remote (Theater) ke kanonis backend (Theatre)
+        if ($layoutMeja === 'Theater') {
+            $layoutMeja = 'Theatre';
+        }
         $sofaDepan = $request->input('sofa_depan', 'tanpa');
+
+        // Validasi Matriks Kapasitas Ruangan x Layout x Sofa (grandfathered).
+        // Hanya berlaku bila venue memiliki baris matriks; booking lama
+        // (layout NULL / venue tanpa matriks) dilewati agar tidak error.
+        $sofaConfig = $request->input('sofa_config', RoomCapacity::SOFA_TANPA);
+        // Fallback sinkron: bila hanya sofa_depan dikirim (form remote lama), petakan ke sofa_config
+        if (!$request->filled('sofa_config') && $request->filled('sofa_depan')) {
+            $sofaConfig = ($sofaDepan === 'dengan') ? RoomCapacity::SOFA_DENGAN : RoomCapacity::SOFA_TANPA;
+        }
+        $capacityInfo = null;
+        if ($venueId && RoomCapacity::where('venue_id', $venueId)->exists()) {
+            if (!in_array($layoutMeja, RoomCapacity::LAYOUTS, true)) {
+                return back()->withInput()->with('error', 'Layout "' . $layoutMeja . '" tidak tersedia untuk ' . ($namaRuangan ?: 'ruangan ini') . '. Pilihan yang tersedia: ' . implode(', ', RoomCapacity::LAYOUTS) . '.');
+            }
+            $capacityInfo = RoomCapacity::lookup($venueId, $layoutMeja, $sofaConfig);
+            if (!$capacityInfo['found']) {
+                return back()->withInput()->with('error', 'Konfigurasi kapasitas untuk ' . ($namaRuangan ?: 'ruangan ini') . ' – ' . $layoutMeja . ' belum tersedia.');
+            }
+            $sofaLabel = $sofaConfig === RoomCapacity::SOFA_DENGAN ? 'dengan sofa' : 'tanpa sofa';
+            if ($sofaConfig === RoomCapacity::SOFA_DENGAN && !$capacityInfo['available']) {
+                return back()->withInput()->with('error', $layoutMeja . ' di ' . ($namaRuangan ?: 'ruangan ini') . ' tidak tersedia dengan sofa depan panggung. Silakan pilih tanpa sofa.');
+            }
+            $jumlahPesertaInput = $request->input('jumlah_peserta');
+            if (!is_null($jumlahPesertaInput) && $jumlahPesertaInput !== '' && !is_null($capacityInfo['capacity']) && (int) $jumlahPesertaInput > $capacityInfo['capacity']) {
+                return back()->withInput()->with('error', 'Jumlah peserta (' . (int) $jumlahPesertaInput . ') melebihi kapasitas ' . ($namaRuangan ?: 'ruangan') . ' – ' . $layoutMeja . ' ' . $sofaLabel . ' (maks ' . $capacityInfo['capacity'] . ' orang).');
+            }
+        }
 
         // Section B: Setup Podium
         $setupPodium = [
@@ -319,6 +352,7 @@ class BookingRuanganController extends Controller
             'nama_ruangan'     => $namaRuangan,
             'fasilitas'        => $fasilitasString,
             'layout_meja'      => $layoutMeja,
+            'sofa_config'      => $venueId ? $sofaConfig : null,
             'setup_podium'     => $setupPodiumJson,
             'special_requests' => $specialRequestsJson,
             'zoom_account'     => $zoomAccount,
@@ -424,5 +458,59 @@ class BookingRuanganController extends Controller
         });
 
         return response()->json($bookings);
+    }
+
+    /**
+     * API JSON Matriks Kapasitas untuk Form Booking Dinamis.
+     * GET /api/room-capacity?venue_id=1&layout=Theatre&sofa_config=tanpa_sofa
+     */
+    public function apiCapacity(Request $request)
+    {
+        $venueId = $request->query('venue_id');
+        $layout = $request->query('layout');
+        if ($layout === 'Theater') {
+            $layout = 'Theatre';
+        }
+        $sofa = $request->query('sofa_config', RoomCapacity::SOFA_TANPA);
+
+        $venue = $venueId ? Venue::find($venueId) : null;
+
+        $layouts = [];
+        if ($venueId) {
+            $layouts = RoomCapacity::layoutsForVenue($venueId)->map(function ($row) {
+                return [
+                    'layout'              => $row->layout,
+                    'capacity_without_sofa' => (int) $row->capacity_without_sofa,
+                    'capacity_with_sofa'    => is_null($row->capacity_with_sofa) ? null : (int) $row->capacity_with_sofa,
+                    'with_sofa_available'   => (bool) $row->with_sofa_available,
+                ];
+            })->values();
+        }
+
+        $lookup = ($venueId && $layout)
+            ? RoomCapacity::lookup($venueId, $layout, $sofa)
+            : ['found' => false, 'available' => false, 'capacity' => null, 'capacity_without_sofa' => null, 'capacity_with_sofa' => null, 'with_sofa_available' => false];
+
+        $sofaOptions = [];
+        if ($lookup['found']) {
+            $sofaOptions = [
+                ['value' => RoomCapacity::SOFA_TANPA, 'label' => 'Tanpa Sofa', 'available' => true, 'capacity' => $lookup['capacity_without_sofa']],
+                ['value' => RoomCapacity::SOFA_DENGAN, 'label' => 'Dengan Sofa Depan Panggung', 'available' => $lookup['with_sofa_available'], 'capacity' => $lookup['capacity_with_sofa']],
+            ];
+        }
+
+        return response()->json([
+            'venue_id'              => $venueId ? (int) $venueId : null,
+            'venue_name'            => $venue ? $venue->name : null,
+            'layout'                => $layout,
+            'sofa_config'           => $sofa,
+            'layouts'               => $layouts,
+            'sofa_options'          => $sofaOptions,
+            'capacity_without_sofa' => $lookup['capacity_without_sofa'],
+            'capacity_with_sofa'    => $lookup['capacity_with_sofa'],
+            'with_sofa_available'   => $lookup['with_sofa_available'],
+            'capacity'              => $lookup['capacity'],
+            'available'             => $lookup['found'] && ($sofa !== RoomCapacity::SOFA_DENGAN || $lookup['available']),
+        ]);
     }
 }

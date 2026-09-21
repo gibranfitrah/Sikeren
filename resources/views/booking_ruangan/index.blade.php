@@ -24,9 +24,12 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
          taskId: '{{ $selectedRapat->id ?? '' }}',
          keterangan: '',
          
-         // Sarpras & Layout State
+         // Sarpras & Layout State (Hybrid: statis + dinamis backend)
          layoutMeja: 'Classroom',
-         sofaDepan: 'tanpa', // 'tanpa' | 'dengan'
+         sofaDepan: 'tanpa', // 'tanpa' | 'dengan' (UI statis / SVG)
+         sofaConfig: 'tanpa_sofa', // 'tanpa_sofa' | 'dengan_sofa' (backend, sinkron dengan sofaDepan)
+         capacityInfo: null,
+         capacityLoading: false,
          tipePodium: 'Podium Standar',
          jumlahKursiPodium: '4',
          pasangSpanduk: true,
@@ -41,7 +44,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                  floor: 'Lantai 1',
                  max: 24,
                  layouts: {
-                     'Theater': { tanpaSofa: 24, denganSofa: 20, hasSofaOption: true, desc: 'Barisan kursi rapat langsung menghadap layar utama/panggung. Sangat efisien untuk sosialisasi dan audiensi.' },
+                     'Theatre': { tanpaSofa: 24, denganSofa: 20, hasSofaOption: true, desc: 'Barisan kursi rapat langsung menghadap layar utama/panggung. Sangat efisien untuk sosialisasi dan audiensi.' },
                      'Classroom': { tanpaSofa: 18, denganSofa: 14, hasSofaOption: true, desc: 'Barisan meja dan kursi menghadap depan panggung. Ideal untuk pelatihan, bimtek, dan rapat teknis.' },
                      'U-Shape': { tanpaSofa: 8, denganSofa: null, hasSofaOption: false, desc: 'Susunan meja berbentuk U / tapal kuda. Sangat baik untuk diskusi dua arah dan rapat pimpinan.' },
                      'Boardroom': { tanpaSofa: 12, denganSofa: null, hasSofaOption: false, desc: 'Satu meja rapat besar di tengah. Efektif untuk rapat tertutup dan koordinasi tim inti.' },
@@ -55,7 +58,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                  floor: 'Lantai 3',
                  max: 58,
                  layouts: {
-                     'Theater': { tanpaSofa: 58, denganSofa: 48, hasSofaOption: true, desc: 'Kapasitas maksimal barisan kursi untuk video conference besar dan webinar hybrid.' },
+                     'Theatre': { tanpaSofa: 58, denganSofa: 48, hasSofaOption: true, desc: 'Kapasitas maksimal barisan kursi untuk video conference besar dan webinar hybrid.' },
                      'Classroom': { tanpaSofa: 48, denganSofa: 40, hasSofaOption: true, desc: 'Meja kelas dengan akses langsung ke Smart TV Display dan Kamera Vicon 360°.' },
                      'U-Shape': { tanpaSofa: 23, denganSofa: null, hasSofaOption: false, desc: 'Susunan meja U-Shape dengan jangkauan optimal Mic Conference Polycom dan kamera.' },
                      'Boardroom': { tanpaSofa: 26, denganSofa: null, hasSofaOption: false, desc: 'Meja eksekutif panjang dengan fasilitas vicon dan audio terintegrasi.' },
@@ -69,7 +72,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                  floor: 'Lantai 4',
                  max: 100,
                  layouts: {
-                     'Theater': { tanpaSofa: 100, denganSofa: 80, hasSofaOption: true, desc: 'Format teater aula megah dengan Videotron LED screen raksasa. Kapasitas hingga 100 orang.' },
+                     'Theatre': { tanpaSofa: 100, denganSofa: 80, hasSofaOption: true, desc: 'Format teater aula megah dengan Videotron LED screen raksasa. Kapasitas hingga 100 orang.' },
                      'Classroom': { tanpaSofa: 62, denganSofa: 52, hasSofaOption: true, desc: 'Susunan meja & kursi berkapasitas besar untuk pelatihan regional, bimtek, dan rapat dinas.' },
                      'U-Shape': { tanpaSofa: 58, denganSofa: null, hasSofaOption: false, desc: 'Susunan meja U-Shape megah menghadap panggung utama dan videotron.' },
                      'Boardroom': { tanpaSofa: 66, denganSofa: null, hasSofaOption: false, desc: 'Format meja gabungan konferensi besar untuk forum lintas instansi.' },
@@ -110,6 +113,9 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
              if (!info || !info.hasSofaOption) {
                  this.sofaDepan = 'tanpa';
              }
+             // Sinkron ke backend + refresh kapasitas dinamis
+             this.sofaConfig = (this.sofaDepan === 'dengan' ? 'dengan_sofa' : 'tanpa_sofa');
+             this.fetchCapacity();
          },
 
          setSofaDepan(val) {
@@ -118,6 +124,9 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
              } else {
                  this.sofaDepan = 'tanpa';
              }
+             // Sinkron ke backend + refresh kapasitas dinamis
+             this.sofaConfig = (this.sofaDepan === 'dengan' ? 'dengan_sofa' : 'tanpa_sofa');
+             this.fetchCapacity();
          },
 
          openBookingModal(venueId = null, zoomAcc = null, time = null) {
@@ -134,8 +143,27 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                  let h = parseInt(time.split(':')[0]) + 2;
                  this.endTime = (h < 10 ? '0' : '') + h + ':00';
              }
-             this.modalOpen = true;
-         },
+              this.modalOpen = true;
+              this.fetchCapacity();
+          },
+          fetchCapacity() {
+              if (this.tipePertemuan !== 'offline' && this.tipePertemuan !== 'hybrid') { this.capacityInfo = null; return; }
+              if (!this.selectedVenueId || !this.layoutMeja) { this.capacityInfo = null; return; }
+              this.capacityLoading = true;
+              fetch('{{ route('booking-ruangan.apiCapacity') }}?venue_id=' + encodeURIComponent(this.selectedVenueId) + '&layout=' + encodeURIComponent(this.layoutMeja) + '&sofa_config=' + encodeURIComponent(this.sofaConfig))
+                  .then(r => r.json())
+                  .then(d => {
+                      if (this.sofaConfig === 'dengan_sofa' && d && !d.available && d.capacity_without_sofa) {
+                          this.sofaConfig = 'tanpa_sofa';
+                          this.sofaDepan = 'tanpa';
+                          d.capacity = d.capacity_without_sofa;
+                          d.available = true;
+                      }
+                      this.capacityInfo = d;
+                      this.capacityLoading = false;
+                  })
+                  .catch(() => { this.capacityInfo = null; this.capacityLoading = false; });
+          },
          openDetail(booking) {
              this.selectedBooking = booking;
              this.detailModalOpen = true;
@@ -965,21 +993,21 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                         <label
                             class="flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer text-xs font-bold transition"
                             :class="tipePertemuan === 'offline' ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-2xs' : 'bg-gray-50 border-gray-200 text-gray-700'">
-                            <input type="radio" name="tipe_pertemuan" value="offline" x-model="tipePertemuan"
+                            <input type="radio" name="tipe_pertemuan" value="offline" x-model="tipePertemuan" @change="fetchCapacity()"
                                 class="text-blue-600">
                             <span>Offline (Ruangan)</span>
                         </label>
                         <label
                             class="flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer text-xs font-bold transition"
                             :class="tipePertemuan === 'online' ? 'bg-sky-50 border-sky-500 text-sky-700 shadow-2xs' : 'bg-gray-50 border-gray-200 text-gray-700'">
-                            <input type="radio" name="tipe_pertemuan" value="online" x-model="tipePertemuan"
+                            <input type="radio" name="tipe_pertemuan" value="online" x-model="tipePertemuan" @change="fetchCapacity()"
                                 class="text-sky-600">
                             <span>Online (Zoom)</span>
                         </label>
                         <label
                             class="flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer text-xs font-bold transition"
                             :class="tipePertemuan === 'hybrid' ? 'bg-purple-50 border-purple-500 text-purple-700 shadow-2xs' : 'bg-gray-50 border-gray-200 text-gray-700'">
-                            <input type="radio" name="tipe_pertemuan" value="hybrid" x-model="tipePertemuan"
+                            <input type="radio" name="tipe_pertemuan" value="hybrid" x-model="tipePertemuan" @change="fetchCapacity()"
                                 class="text-purple-600">
                             <span>Hybrid (Campuran)</span>
                         </label>
@@ -1000,7 +1028,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                             :class="selectedVenueId == {{ $v->id }} ? 'bg-blue-50 border-blue-500 text-blue-900 shadow-2xs ring-1 ring-blue-500/50' : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-slate-100/70'">
                             <div class="flex items-center justify-between gap-1 mb-1">
                                 <div class="flex items-center gap-2">
-                                    <input type="radio" name="venue_id" value="{{ $v->id }}" x-model="selectedVenueId"
+                                    <input type="radio" name="venue_id" value="{{ $v->id }}" x-model="selectedVenueId" @change="fetchCapacity()"
                                         class="text-blue-600">
                                     <span class="font-bold text-xs">{{ $v->name }}</span>
                                 </div>
@@ -1049,6 +1077,20 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
 
                         {{-- Tombol Pilihan Layout --}}
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            {{-- Theatre (kanonis backend) --}}
+                            <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
+                                   :class="layoutMeja === 'Theatre' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'"
+                                   @click="setLayout('Theatre')">
+                                <div class="flex items-center justify-between mb-1">
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="radio" name="layout_meja" value="Theatre" x-model="layoutMeja" @change="setLayout('Theatre')" class="text-blue-600">
+                                        <span class="text-[11px] font-bold">Theatre</span>
+                                    </div>
+                                    <span class="text-[9px] px-1 bg-slate-100 rounded text-slate-600" x-text="(roomCapacities[selectedVenueId]?.layouts['Theatre'].tanpaSofa || 0) + ' Org'"></span>
+                                </div>
+                                <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Hanya kursi berjejer tanpa meja</span>
+                            </label>
+
                             {{-- Classroom --}}
                             <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
                                    :class="layoutMeja === 'Classroom' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'"
@@ -1077,20 +1119,6 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                 <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Bentuk huruf U / tapal kuda</span>
                             </label>
 
-                            {{-- Theatre --}}
-                            <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
-                                   :class="layoutMeja === 'Theater' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'"
-                                   @click="setLayout('Theater')">
-                                <div class="flex items-center justify-between mb-1">
-                                    <div class="flex items-center gap-1.5">
-                                        <input type="radio" name="layout_meja" value="Theater" x-model="layoutMeja" @change="setLayout('Theater')" class="text-blue-600">
-                                        <span class="text-[11px] font-bold">Theatre / Teater</span>
-                                    </div>
-                                    <span class="text-[9px] px-1 bg-slate-100 rounded text-slate-600" x-text="(roomCapacities[selectedVenueId]?.layouts['Theater'].tanpaSofa || 0) + ' Org'"></span>
-                                </div>
-                                <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Hanya kursi berjejer tanpa meja</span>
-                            </label>
-
                             {{-- Boardroom --}}
                             <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
                                    :class="layoutMeja === 'Boardroom' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'"
@@ -1104,6 +1132,8 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                 </div>
                                 <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Satu meja rapat oval / panjang</span>
                             </label>
+                        </div>
+                    </div>
 
                             {{-- Round Table --}}
                             <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
@@ -1130,9 +1160,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                     </div>
                                     <span class="text-[9px] px-1 bg-slate-100 rounded text-slate-600" x-text="(roomCapacities[selectedVenueId]?.layouts['Hollow Square'].tanpaSofa || 0) + ' Org'"></span>
                                 </div>
-                                <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Persegi berongga tengah</span>
                             </label>
-
                             {{-- Custom Layout --}}
                             <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between sm:col-span-2"
                                    :class="layoutMeja === 'Custom Layout' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'"
@@ -1147,7 +1175,52 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                 <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Tata letak khusus disesuaikan kebutuhan acara</span>
                             </label>
                         </div>
+                    </div>
 
+                    {{-- ========================================================
+                        A2. KONFIGURASI SOFA & INFORMASI KAPASITAS (Hybrid: sinkron + backend dinamis)
+                    ========================================================= --}}
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2 text-xs font-bold text-slate-800 uppercase tracking-wider">
+                            <span class="w-5 h-5 rounded-md bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-bold">A2</span>
+                            <span>Konfigurasi Sofa & Kapasitas Maksimum (Backend)</span>
+                        </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition"
+                                   :class="sofaConfig === 'tanpa_sofa' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'">
+                                <div class="flex items-center gap-1.5">
+                                    <input type="radio" name="sofa_config" value="tanpa_sofa" x-model="sofaConfig" @change="sofaDepan = 'tanpa'; fetchCapacity()" class="text-blue-600">
+                                    <span class="text-[11px]">Tanpa Sofa Depan Panggung</span>
+                                </div>
+                            </label>
+                            <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition"
+                                   :class="sofaConfig === 'dengan_sofa' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'">
+                                <div class="flex items-center gap-1.5">
+                                    <input type="radio" name="sofa_config" value="dengan_sofa" x-model="sofaConfig" @change="sofaDepan = 'dengan'; fetchCapacity()" :disabled="capacityInfo && !capacityInfo.with_sofa_available" class="text-blue-600 disabled:opacity-40">
+                                    <span class="text-[11px]">Dengan Sofa Depan Panggung</span>
+                                </div>
+                                <span x-show="capacityInfo && !capacityInfo.with_sofa_available" class="text-[10px] text-rose-600 font-bold">Tidak tersedia untuk layout ini</span>
+                            </label>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-white border border-slate-200 text-xs space-y-1">
+                            <div x-show="capacityLoading" class="text-slate-500">Memuat kapasitas...</div>
+                            <div x-show="!capacityLoading && capacityInfo && capacityInfo.capacity !== null && capacityInfo.capacity !== undefined">
+                                <span class="text-slate-500">Kapasitas maksimum (backend):</span>
+                                <strong class="text-blue-700" x-text="capacityInfo.capacity + ' orang'"></strong>
+                                <span class="text-slate-400" x-text="'(' + layoutMeja + ' • ' + (sofaConfig === 'dengan_sofa' ? 'dengan sofa' : 'tanpa sofa') + ')'"></span>
+                            </div>
+                            <div x-show="!capacityLoading && capacityInfo && (capacityInfo.capacity === null || capacityInfo.capacity === undefined) && capacityInfo.layouts && capacityInfo.layouts.length">
+                                <span class="text-rose-600 font-bold">Kombinasi layout + sofa ini tidak tersedia (backend). Menggunakan kapasitas statis di atas.</span>
+                            </div>
+                            <div x-show="!capacityLoading && capacityInfo && (!capacityInfo.layouts || !capacityInfo.layouts.length)">
+                                <span class="text-amber-600 font-medium">Kapasitas ruangan ini belum dikonfigurasi di backend.</span>
+                            </div>
+                            <div x-show="!capacityLoading && capacityInfo && capacityInfo.capacity !== null && capacityInfo.capacity !== undefined && parseInt(jumlahPeserta) > 0">
+                                <span x-show="parseInt(jumlahPeserta) <= capacityInfo.capacity" class="text-emerald-600 font-bold">✓ Jumlah peserta masih dalam kapasitas (backend).</span>
+                                <span x-show="parseInt(jumlahPeserta) > capacityInfo.capacity" class="text-rose-600 font-bold">⚠ Jumlah peserta melebihi kapasitas maksimum backend!</span>
+                            </div>
+                        </div>
+                    </div>
                         {{-- ====================================================================
                             PREVIEW VISUAL ILUSTRASI CONTOH GAMBAR RUANGAN & KONTROL SOFA DEPAN
                         ===================================================================== --}}
@@ -1293,8 +1366,8 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                             </svg>
                                         </template>
 
-                                        {{-- 3. SVG PREVIEW: THEATER --}}
-                                        <template x-if="layoutMeja === 'Theater'">
+                                        {{-- 3. SVG PREVIEW: THEATRE --}}
+                                        <template x-if="layoutMeja === 'Theatre'">
                                             <svg viewBox="0 0 400 240" class="w-full h-full drop-shadow-xs select-none">
                                                 <rect width="400" height="240" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
                                                 {{-- Stage & Screen --}}
@@ -1309,7 +1382,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                                     <text x="277" y="60" text-anchor="middle" fill="#b45309" font-size="8.5" font-weight="bold">🛋️ SOFA VIP PANGGUNG 2</text>
                                                 </g>
 
-                                                {{-- Dense Theater Chair Rows --}}
+                                                {{-- Dense Theatre Chair Rows --}}
                                                 <g :transform="sofaDepan === 'dengan' ? 'translate(0, 24)' : 'translate(0, 0)'">
                                                     {{-- Row 1 --}}
                                                     <g fill="#2563eb">
@@ -1501,9 +1574,9 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                             <span class="text-[9.5px] text-slate-400">Tabel Resmi</span>
                                         </div>
                                         <div class="grid grid-cols-2 gap-1.5 text-center text-[10px]">
-                                            <div class="p-1.5 rounded-lg border transition" :class="layoutMeja === 'Theater' ? 'bg-blue-100/80 border-blue-400 font-bold text-blue-900' : 'bg-white border-slate-200 text-slate-600'">
+                                            <div class="p-1.5 rounded-lg border transition" :class="layoutMeja === 'Theatre' ? 'bg-blue-100/80 border-blue-400 font-bold text-blue-900' : 'bg-white border-slate-200 text-slate-600'">
                                                 <span class="block text-[9.5px] text-slate-500">Theatre</span>
-                                                <span class="text-[11px] font-black text-blue-700" x-text="(roomCapacities[selectedVenueId]?.layouts['Theater'].tanpaSofa || 0) + ' / ' + (roomCapacities[selectedVenueId]?.layouts['Theater'].denganSofa || 0) + ' Org'"></span>
+                                                <span class="text-[11px] font-black text-blue-700" x-text="(roomCapacities[selectedVenueId]?.layouts['Theatre'].tanpaSofa || 0) + ' / ' + (roomCapacities[selectedVenueId]?.layouts['Theatre'].denganSofa || 0) + ' Org'"></span>
                                                 <span class="block text-[8.5px] text-slate-400">Tanpa / Dgn Sofa</span>
                                             </div>
                                             <div class="p-1.5 rounded-lg border transition" :class="layoutMeja === 'Classroom' ? 'bg-blue-100/80 border-blue-400 font-bold text-blue-900' : 'bg-white border-slate-200 text-slate-600'">

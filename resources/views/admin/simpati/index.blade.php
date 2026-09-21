@@ -5,6 +5,33 @@
 
 @push('styles')
 <style>
+    /* Smooth filter satker: fade + skeleton tanpa reload */
+    #simpati-filter-area, #simpati-stats, #simpati-pegawai-wrap {
+        transition: opacity .25s ease, transform .25s ease, filter .25s ease;
+    }
+    .simpati-filtering {
+        opacity: .55;
+        pointer-events: none;
+        filter: saturate(.85);
+    }
+    .simpati-skeleton-row {
+        animation: simpati-pulse 1.1s ease-in-out infinite;
+    }
+    @keyframes simpati-pulse {
+        0%, 100% { opacity: .45; }
+        50% { opacity: 1; }
+    }
+    #simpati-pegawai-tbody tr {
+        animation: simpati-fadein .3s ease;
+    }
+    @keyframes simpati-fadein {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    select[name="satker"]:disabled {
+        opacity: .7;
+        cursor: wait;
+    }
     @media print {
         body * {
             visibility: hidden !important;
@@ -75,7 +102,7 @@
     </div>
 
     {{-- Filter Pilihan SATKER & Statistik Ringkas --}}
-    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-4">
+    <div id="simpati-filter-area" class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-4">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-100 pb-4">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-lg">
@@ -84,34 +111,55 @@
                 <div>
                     <h3 class="text-base font-bold text-gray-900">Diambil Sesuai Dari SATKER</h3>
                     <p class="text-xs text-gray-400">Pilih unit kerja BPS untuk memfilter data SDM dan penugasan</p>
+                    <p class="text-[11px] mt-1 font-medium transition-colors"
+                       :class="isFiltering ? 'text-blue-600' : (selectedSatker !== appliedSatker ? 'text-amber-600' : 'text-gray-400')">
+                        <span x-show="isFiltering" class="inline-flex items-center gap-1.5">
+                            <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                            Memuat data satker <span class="font-bold" x-text="satkerLabel(selectedSatker)"></span>...
+                        </span>
+                        <span x-show="!isFiltering && selectedSatker !== appliedSatker">Ada perubahan belum diterapkan — klik “Terapkan” untuk memuat.</span>
+                        <span x-show="!isFiltering && selectedSatker === appliedSatker">Menampilkan: <span class="font-bold text-gray-700" x-text="satkerLabel(appliedSatker)"></span></span>
+                    </p>
                 </div>
             </div>
 
-            <form method="GET" action="{{ route('simpati.index') }}" class="flex flex-wrap items-center gap-3">
-                <select name="satker" 
-                        onchange="this.form.submit()"
+            <form method="GET" action="{{ route('simpati.index') }}" @submit.prevent="applySatker()" class="flex flex-wrap items-center gap-3">
+                <select name="satker"
                         x-model="selectedSatker"
-                        class="bg-gray-50 border border-gray-200 text-gray-800 text-xs font-semibold rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        :disabled="isFiltering"
+                        class="bg-gray-50 border border-gray-200 text-gray-800 text-xs font-semibold rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition min-w-[220px]">
                     @foreach($satkers as $code => $name)
                         <option value="{{ $code }}" {{ $selectedSatker == $code ? 'selected' : '' }}>
                             {{ $name }}
                         </option>
                     @endforeach
                 </select>
-                <button type="submit" class="px-3.5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition">
-                    Terapkan
+                <button type="submit"
+                        :disabled="isFiltering || selectedSatker === appliedSatker"
+                        :class="(isFiltering || selectedSatker === appliedSatker)
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-600/30'"
+                        class="px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 min-w-[110px] justify-center">
+                    <svg x-show="isFiltering" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    <span x-text="isFiltering ? 'Memuat...' : (selectedSatker === appliedSatker ? 'Diterapkan ✓' : 'Terapkan')"></span>
                 </button>
             </form>
         </div>
 
         {{-- Statistik Alur SDM --}}
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+        <div id="simpati-stats" class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1" :class="isFiltering ? 'simpati-filtering' : ''">
             <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-semibold text-gray-500">Total SDM Pegawai</span>
                     <span class="text-base">👔</span>
                 </div>
-                <div class="text-2xl font-black text-slate-800 mt-2">{{ $totalPegawai }}</div>
+                <div class="text-2xl font-black text-slate-800 mt-2 tabular-nums" x-text="stats.totalPegawai">{{ $totalPegawai }}</div>
                 <span class="text-[11px] text-gray-400 mt-1 block">Tersinkron di Satker ini</span>
             </div>
 
@@ -120,7 +168,7 @@
                     <span class="text-xs font-semibold text-indigo-700">Database Tim Kerja</span>
                     <span class="text-base">👥</span>
                 </div>
-                <div class="text-2xl font-black text-indigo-700 mt-2">{{ $totalTimKerja }}</div>
+                <div class="text-2xl font-black text-indigo-700 mt-2 tabular-nums" x-text="stats.totalTimKerja">{{ $totalTimKerja }}</div>
                 <span class="text-[11px] text-indigo-500/80 mt-1 block">Struktur Tim Aktif</span>
             </div>
 
@@ -129,23 +177,25 @@
                     <span class="text-xs font-semibold text-purple-700">Pegawai Multi-Tim</span>
                     <span class="text-base">🔄</span>
                 </div>
-                <div class="text-2xl font-black text-purple-700 mt-2">{{ $totalMultiTim }}</div>
+                <div class="text-2xl font-black text-purple-700 mt-2 tabular-nums" x-text="stats.totalMultiTim">{{ $totalMultiTim }}</div>
                 <span class="text-[11px] text-purple-500/80 mt-1 block">Anggota di &gt; 1 Tim</span>
             </div>
 
-            <div class="p-4 rounded-2xl {{ $totalPindah > 0 ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-emerald-50 border-emerald-100 text-emerald-900' }}">
+            <div class="p-4 rounded-2xl border transition-colors duration-300"
+                 :class="stats.totalPindah > 0 ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-emerald-50 border-emerald-100 text-emerald-900'">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-semibold {{ $totalPindah > 0 ? 'text-amber-800' : 'text-emerald-700' }}">Pindah SATKER</span>
-                    <span class="text-base">{{ $totalPindah > 0 ? '⚠️' : '✅' }}</span>
+                    <span class="text-xs font-semibold" :class="stats.totalPindah > 0 ? 'text-amber-800' : 'text-emerald-700'">Pindah SATKER</span>
+                    <span class="text-base" x-text="stats.totalPindah > 0 ? '⚠️' : '✅'">{{ $totalPindah > 0 ? '⚠️' : '✅' }}</span>
                 </div>
-                <div class="text-2xl font-black {{ $totalPindah > 0 ? 'text-amber-700' : 'text-emerald-700' }} mt-2">
-                    {{ $totalPindah }}
-                </div>
-                <span class="text-[11px] {{ $totalPindah > 0 ? 'text-amber-700 font-semibold' : 'text-emerald-600' }} mt-1 block">
-                    {{ $totalPindah > 0 ? 'Perlu Verifikasi Status!' : 'Semua Status Normal' }}
-                </span>
+                <div class="text-2xl font-black mt-2 tabular-nums"
+                     :class="stats.totalPindah > 0 ? 'text-amber-700' : 'text-emerald-700'"
+                     x-text="stats.totalPindah">{{ $totalPindah }}</div>
+                <span class="text-[11px] mt-1 block"
+                      :class="stats.totalPindah > 0 ? 'text-amber-700 font-semibold' : 'text-emerald-600'"
+                      x-text="stats.totalPindah > 0 ? 'Perlu Verifikasi Status!' : 'Semua Status Normal'">{{ $totalPindah > 0 ? 'Perlu Verifikasi Status!' : 'Semua Status Normal' }}</span>
             </div>
         </div>
+        <p x-show="filterError" x-text="filterError" class="text-xs font-semibold text-rose-600 pt-1"></p>
     </div>
 
     {{-- Notification Alert Box --}}
@@ -193,13 +243,13 @@
                     :class="activeTab === 'pegawai' ? 'border-blue-600 text-blue-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 font-medium'"
                     class="pb-3 border-b-2 text-sm flex items-center gap-2 transition">
                 <span>Daftar SDM Pegawai</span>
-                <span class="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700">{{ $totalPegawai }}</span>
+                <span class="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700 tabular-nums" x-text="stats.totalPegawai">{{ $totalPegawai }}</span>
             </button>
             <button @click="activeTab = 'tim'"
                     :class="activeTab === 'tim' ? 'border-blue-600 text-blue-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 font-medium'"
                     class="pb-3 border-b-2 text-sm flex items-center gap-2 transition">
                 <span>Database Tim Kerja</span>
-                <span class="px-2 py-0.5 text-xs rounded-full bg-indigo-100 text-indigo-700">{{ $totalTimKerja }}</span>
+                <span class="px-2 py-0.5 text-xs rounded-full bg-indigo-100 text-indigo-700 tabular-nums" x-text="stats.totalTimKerja">{{ $totalTimKerja }}</span>
             </button>
             <button @click="activeTab = 'config'"
                     :class="activeTab === 'config' ? 'border-blue-600 text-blue-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 font-medium'"
@@ -224,7 +274,7 @@
                 </div>
             </div>
 
-            <div class="overflow-x-auto rounded-2xl border border-gray-100">
+            <div id="simpati-pegawai-wrap" class="overflow-x-auto rounded-2xl border border-gray-100 transition-opacity duration-300" :class="isFiltering ? 'simpati-filtering' : ''">
                 <table class="w-full text-left text-xs text-gray-600">
                     <thead class="bg-gray-50 text-gray-700 uppercase font-bold text-[11px] border-b border-gray-100">
                         <tr>
@@ -235,57 +285,51 @@
                             <th class="px-4 py-3.5 text-center">Aksi (QR Nametag)</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @forelse($syncedPegawai as $p)
+                    <tbody id="simpati-pegawai-tbody" class="divide-y divide-gray-100">
+                        <template x-for="p in pegawaiList" :key="p.id">
                             <tr class="hover:bg-gray-50/70 transition">
                                 <td class="px-4 py-3.5">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 font-bold flex items-center justify-center shrink-0">
-                                            {{ strtoupper(substr($p->nama_lengkap ?? 'U', 0, 1)) }}
-                                        </div>
+                                        <div class="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 font-bold flex items-center justify-center shrink-0" x-text="p.initial"></div>
                                         <div>
-                                            <div class="font-bold text-gray-900 text-sm">{{ $p->nama_lengkap }}</div>
-                                            <div class="text-[11px] text-gray-400 font-mono">
-                                                NIP: {{ $p->formatted_nip }} • {{ $p->email }}
-                                            </div>
+                                            <div class="font-bold text-gray-900 text-sm" x-text="p.nama_lengkap"></div>
+                                            <div class="text-[11px] text-gray-400 font-mono" x-text="'NIP: ' + p.formatted_nip + ' • ' + (p.email || '-')"></div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-4 py-3.5">
-                                    <div class="font-semibold text-gray-800">{{ $p->nm_jabatan ?: 'Pegawai BPS' }}</div>
-                                    <div class="text-[11px] text-gray-400">{{ $p->nm_satker ?: ('Satker ' . ($p->id_satker ?: '7400')) }}</div>
+                                    <div class="font-semibold text-gray-800" x-text="p.nm_jabatan"></div>
+                                    <div class="text-[11px] text-gray-400" x-text="p.nm_satker"></div>
                                 </td>
                                 <td class="px-4 py-3.5">
-                                    @if(!empty($p->tims) && count($p->tims) > 0)
+                                    <template x-if="p.tims && p.tims.length > 0">
                                         <div class="flex flex-wrap gap-1.5 items-center">
-                                            @foreach($p->tims as $timName)
-                                                <span class="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 text-[11px] font-medium">
-                                                    {{ $timName }}
-                                                </span>
-                                            @endforeach
-                                            @if(count($p->tims) > 1)
-                                                <span class="px-1.5 py-0.5 rounded-md bg-purple-100 text-purple-700 text-[10px] font-bold" title="Pegawai tergabung di lebih dari 1 tim kerja">
-                                                    Multi-Tim ({{ count($p->tims) }})
-                                                </span>
-                                            @endif
+                                            <template x-for="timName in p.tims" :key="timName">
+                                                <span class="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 text-[11px] font-medium" x-text="timName"></span>
+                                            </template>
+                                            <template x-if="p.tims.length > 1">
+                                                <span class="px-1.5 py-0.5 rounded-md bg-purple-100 text-purple-700 text-[10px] font-bold" title="Pegawai tergabung di lebih dari 1 tim kerja" x-text="'Multi-Tim (' + p.tims.length + ')'"></span>
+                                            </template>
                                         </div>
-                                    @else
+                                    </template>
+                                    <template x-if="!p.tims || p.tims.length === 0">
                                         <span class="text-gray-400 italic text-[11px]">- Belum ada tim -</span>
-                                    @endif
+                                    </template>
                                 </td>
                                 <td class="px-4 py-3.5 text-center">
-                                    @if(($p->is_pindahsatker ?? 0) == 1)
+                                    <template x-if="p.is_pindahsatker == 1">
                                         <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold border border-amber-200" title="Pegawai terdeteksi pindah/mutasi Satker dari data SIMPATI">
                                             <span>⚠️</span> Pindah SATKER
                                         </span>
-                                    @else
+                                    </template>
+                                    <template x-if="p.is_pindahsatker != 1">
                                         <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-semibold">
                                             <span>✓</span> Aktif
                                         </span>
-                                    @endif
+                                    </template>
                                 </td>
                                 <td class="px-4 py-3.5 text-center">
-                                    <button @click="openQrNametag({{ $p->id }})" 
+                                    <button @click="openQrNametag(p.id)"
                                             type="button"
                                             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold transition shadow-2xs">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -295,13 +339,23 @@
                                     </button>
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="px-4 py-8 text-center text-gray-400">
-                                    Belum ada data pegawai di Satker ini. Klik <strong>"Sinkronkan Sesuai SATKER"</strong> atau <strong>"Sinkronkan Simulasi BPS"</strong> untuk menarik data.
+                        </template>
+                        <template x-if="isFiltering">
+                            <tr class="simpati-skeleton-row">
+                                <td colspan="5" class="px-4 py-4">
+                                    <div class="space-y-2.5">
+                                        <div class="h-10 rounded-xl bg-gray-100"></div>
+                                        <div class="h-10 rounded-xl bg-gray-100"></div>
+                                        <div class="h-10 rounded-xl bg-gray-100"></div>
+                                    </div>
                                 </td>
                             </tr>
-                        @endforelse
+                        </template>
+                        <tr x-show="!isFiltering && pegawaiList.length === 0" x-cloak>
+                            <td colspan="5" class="px-4 py-8 text-center text-gray-400">
+                                Belum ada data pegawai di <span class="font-bold" x-text="satkerLabel(appliedSatker)"></span>. Klik <strong>"Sinkronkan Sesuai SATKER"</strong> atau <strong>"Sinkronkan Simulasi BPS"</strong> untuk menarik data.
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -519,9 +573,20 @@ function simpatiManager() {
         isTesting: false,
         isSyncing: false,
         isSaving: false,
+        isFiltering: false,
         showKey: false,
         connectionStatus: 'unknown',
         selectedSatker: '{{ $selectedSatker }}',
+        appliedSatker: '{{ $selectedSatker }}',
+        filterError: '',
+        satkerNames: @json($satkers),
+        stats: {
+            totalPegawai: {{ $totalPegawai }},
+            totalPindah: {{ $totalPindah }},
+            totalMultiTim: {{ $totalMultiTim }},
+            totalTimKerja: {{ $totalTimKerja }}
+        },
+        pegawaiList: @json($pegawaiList ?? []),
         form: {
             base_url: '{{ $baseUrl }}',
             api_key: '{{ $apiKey }}'
@@ -537,6 +602,65 @@ function simpatiManager() {
             show: false,
             user: null,
             qr_svg: ''
+        },
+
+        init() {
+            // Sinkron dari URL saat back/forward browser agar tetap smooth tanpa reload
+            window.addEventListener('popstate', () => {
+                const satkerFromUrl = new URL(window.location.href).searchParams.get('satker') || this.appliedSatker;
+                if (satkerFromUrl && satkerFromUrl !== this.appliedSatker) {
+                    this.selectedSatker = satkerFromUrl;
+                    this.applySatker();
+                }
+            });
+        },
+
+        satkerLabel(code) {
+            return this.satkerNames[code] || ('Satker ' + code);
+        },
+
+        async applySatker() {
+            if (this.isFiltering) return;
+            // Tombol nonaktif saat tidak ada perubahan; cegah fetch ganda
+            if (this.selectedSatker === this.appliedSatker && this.pegawaiList !== null) {
+                // Tetap selaraskan URL bila belum ada query (misal akses awal tanpa ?satker=)
+                const cur = new URL(window.location.href);
+                if (cur.searchParams.get('satker') !== this.appliedSatker) {
+                    cur.searchParams.set('satker', this.appliedSatker);
+                    window.history.replaceState({}, '', cur);
+                }
+                return;
+            }
+            this.isFiltering = true;
+            this.filterError = '';
+            // Jeda kecil agar transisi fade/skeleton terlihat smooth, bukan kedip
+            await new Promise(r => setTimeout(r, 120));
+            try {
+                const url = new URL("{{ route('simpati.filter') }}", window.location.origin);
+                url.searchParams.append('satker', this.selectedSatker);
+                const res = await fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || 'Gagal memuat data satker.');
+                }
+                this.stats = data.stats;
+                this.pegawaiList = data.pegawai;
+                this.appliedSatker = data.selected_satker;
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.set('satker', data.selected_satker);
+                window.history.pushState({}, '', newUrl);
+            } catch (err) {
+                this.filterError = err.message || 'Gagal memuat data. Coba lagi.';
+                // Kembalikan pilihan ke yang sedang diterapkan agar tidak menggantung
+                this.selectedSatker = this.appliedSatker;
+            } finally {
+                this.isFiltering = false;
+            }
         },
 
         showAlert(type, title, message, showTroubleshoot = false) {
@@ -608,7 +732,7 @@ function simpatiManager() {
         },
 
         async syncData() {
-            const satkerLabel = this.selectedSatker === 'all' ? 'Semua Satker' : 'Satker ' + this.selectedSatker;
+            const satkerLabel = this.satkerLabel(this.selectedSatker);
             if (!confirm('Jalankan sinkronisasi langsung dari SIMPATI API untuk ' + satkerLabel + '?')) {
                 return;
             }
@@ -638,7 +762,11 @@ function simpatiManager() {
                     } else {
                         this.showAlert('success', 'Sinkronisasi Berhasil!', msg, false);
                     }
-                    setTimeout(() => window.location.reload(), 1500);
+                    setTimeout(() => {
+                        const u = new URL(window.location.href);
+                        u.searchParams.set('satker', this.selectedSatker);
+                        window.location.href = u.toString();
+                    }, 1500);
                 } else {
                     this.showAlert('error', 'Sinkronisasi Gagal', data.message || 'Gagal mengambil data dari SIMPATI API.', true);
                 }
@@ -673,7 +801,11 @@ function simpatiManager() {
                     } else {
                         this.showAlert('success', 'Simulasi Selesai', msg, false);
                     }
-                    setTimeout(() => window.location.reload(), 1500);
+                    setTimeout(() => {
+                        const u = new URL(window.location.href);
+                        u.searchParams.set('satker', this.selectedSatker);
+                        window.location.href = u.toString();
+                    }, 1500);
                 } else {
                     this.showAlert('error', 'Simulasi Gagal', data.message || 'Terjadi kesalahan.', false);
                 }
