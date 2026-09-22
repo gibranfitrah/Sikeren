@@ -889,6 +889,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
             <form action="{{ route('booking-ruangan.store') }}" method="POST" class="flex flex-col h-full max-h-[90vh]">
                 @csrf
                 <input type="hidden" name="task_id" :value="taskId">
+                <input type="hidden" name="sofa_config" :value="sofaDepan === 'dengan' ? 'dengan_sofa' : 'tanpa_sofa'">
 
                 {{-- Sticky Header --}}
                 <div class="flex items-center justify-between p-4 sm:p-5 border-b border-gray-100 shrink-0 bg-white">
@@ -1132,8 +1133,6 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                 </div>
                                 <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Satu meja rapat oval / panjang</span>
                             </label>
-                        </div>
-                    </div>
 
                             {{-- Round Table --}}
                             <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
@@ -1160,7 +1159,9 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                     </div>
                                     <span class="text-[9px] px-1 bg-slate-100 rounded text-slate-600" x-text="(roomCapacities[selectedVenueId]?.layouts['Hollow Square'].tanpaSofa || 0) + ' Org'"></span>
                                 </div>
+                                <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Persegi berongga tengah</span>
                             </label>
+
                             {{-- Custom Layout --}}
                             <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between sm:col-span-2"
                                    :class="layoutMeja === 'Custom Layout' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'"
@@ -1175,52 +1176,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                 <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Tata letak khusus disesuaikan kebutuhan acara</span>
                             </label>
                         </div>
-                    </div>
 
-                    {{-- ========================================================
-                        A2. KONFIGURASI SOFA & INFORMASI KAPASITAS (Hybrid: sinkron + backend dinamis)
-                    ========================================================= --}}
-                    <div class="space-y-2">
-                        <label class="flex items-center gap-2 text-xs font-bold text-slate-800 uppercase tracking-wider">
-                            <span class="w-5 h-5 rounded-md bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-bold">A2</span>
-                            <span>Konfigurasi Sofa & Kapasitas Maksimum (Backend)</span>
-                        </label>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition"
-                                   :class="sofaConfig === 'tanpa_sofa' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'">
-                                <div class="flex items-center gap-1.5">
-                                    <input type="radio" name="sofa_config" value="tanpa_sofa" x-model="sofaConfig" @change="sofaDepan = 'tanpa'; fetchCapacity()" class="text-blue-600">
-                                    <span class="text-[11px]">Tanpa Sofa Depan Panggung</span>
-                                </div>
-                            </label>
-                            <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition"
-                                   :class="sofaConfig === 'dengan_sofa' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'">
-                                <div class="flex items-center gap-1.5">
-                                    <input type="radio" name="sofa_config" value="dengan_sofa" x-model="sofaConfig" @change="sofaDepan = 'dengan'; fetchCapacity()" :disabled="capacityInfo && !capacityInfo.with_sofa_available" class="text-blue-600 disabled:opacity-40">
-                                    <span class="text-[11px]">Dengan Sofa Depan Panggung</span>
-                                </div>
-                                <span x-show="capacityInfo && !capacityInfo.with_sofa_available" class="text-[10px] text-rose-600 font-bold">Tidak tersedia untuk layout ini</span>
-                            </label>
-                        </div>
-                        <div class="p-2.5 rounded-xl bg-white border border-slate-200 text-xs space-y-1">
-                            <div x-show="capacityLoading" class="text-slate-500">Memuat kapasitas...</div>
-                            <div x-show="!capacityLoading && capacityInfo && capacityInfo.capacity !== null && capacityInfo.capacity !== undefined">
-                                <span class="text-slate-500">Kapasitas maksimum (backend):</span>
-                                <strong class="text-blue-700" x-text="capacityInfo.capacity + ' orang'"></strong>
-                                <span class="text-slate-400" x-text="'(' + layoutMeja + ' • ' + (sofaConfig === 'dengan_sofa' ? 'dengan sofa' : 'tanpa sofa') + ')'"></span>
-                            </div>
-                            <div x-show="!capacityLoading && capacityInfo && (capacityInfo.capacity === null || capacityInfo.capacity === undefined) && capacityInfo.layouts && capacityInfo.layouts.length">
-                                <span class="text-rose-600 font-bold">Kombinasi layout + sofa ini tidak tersedia (backend). Menggunakan kapasitas statis di atas.</span>
-                            </div>
-                            <div x-show="!capacityLoading && capacityInfo && (!capacityInfo.layouts || !capacityInfo.layouts.length)">
-                                <span class="text-amber-600 font-medium">Kapasitas ruangan ini belum dikonfigurasi di backend.</span>
-                            </div>
-                            <div x-show="!capacityLoading && capacityInfo && capacityInfo.capacity !== null && capacityInfo.capacity !== undefined && parseInt(jumlahPeserta) > 0">
-                                <span x-show="parseInt(jumlahPeserta) <= capacityInfo.capacity" class="text-emerald-600 font-bold"><svg class="w-3.5 h-3.5 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Jumlah peserta masih dalam kapasitas (backend).</span>
-                                <span x-show="parseInt(jumlahPeserta) > capacityInfo.capacity" class="text-rose-600 font-bold"><svg class="w-3.5 h-3.5 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg> Jumlah peserta melebihi kapasitas maksimum backend!</span>
-                            </div>
-                        </div>
-                    </div>
                         {{-- ====================================================================
                             PREVIEW VISUAL ILUSTRASI CONTOH GAMBAR RUANGAN & KONTROL SOFA DEPAN
                         ===================================================================== --}}
@@ -1565,6 +1521,18 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                                 <svg class="w-3.5 h-3.5 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg> Format <strong><span x-text="layoutMeja"></span></strong> menggunakan 1 formasi meja terpadu sehingga tidak menggunakan konfigurasi sofa depan panggung.
                                             </p>
                                         </template>
+
+                                        {{-- Indikator Kapasitas & Validasi Peserta --}}
+                                        <div x-show="parseInt(jumlahPeserta) > 0" class="pt-2 border-t border-slate-200/70 text-[11px]">
+                                            <div x-show="parseInt(jumlahPeserta) > getCurrentCapacity()" class="flex items-center gap-1.5 text-rose-600 font-bold bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-200">
+                                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                                                <span>Peserta (<span x-text="jumlahPeserta"></span> org) melebihi kapasitas maksimum (<span x-text="getCurrentCapacity()"></span> org)!</span>
+                                            </div>
+                                            <div x-show="parseInt(jumlahPeserta) <= getCurrentCapacity()" class="flex items-center gap-1.5 text-emerald-700 font-medium bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 text-[10.5px]">
+                                                <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                <span>Peserta sesuai kapasitas (<span x-text="jumlahPeserta"></span> / <span x-text="getCurrentCapacity()"></span> org)</span>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {{-- Tabel Mini Standar Kapasitas Resmi Ruangan Terpilih --}}
