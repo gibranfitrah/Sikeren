@@ -308,7 +308,6 @@
                                 </x-badge>
                             @endif
                         </div>
-                        <p class="text-gray-400 text-[11px]">{{ Auth::user()->formatted_nip }} • {{ Auth::user()->email }}</p>
                     </div>
                 </div>
 

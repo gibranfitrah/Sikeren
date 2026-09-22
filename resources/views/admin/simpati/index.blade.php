@@ -254,6 +254,12 @@
                 <span>Database Tim Kerja</span>
                 <span class="px-2 py-0.5 text-xs rounded-full bg-indigo-100 text-indigo-700 tabular-nums" x-text="stats.totalTimKerja">{{ $totalTimKerja }}</span>
             </button>
+            <button @click="activeTab = 'kegiatan'"
+                    :class="activeTab === 'kegiatan' ? 'border-blue-600 text-blue-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 font-medium'"
+                    class="pb-3 border-b-2 text-sm flex items-center gap-2 transition">
+                <span>Database Kegiatan & Projek</span>
+                <span class="px-2 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-700 tabular-nums">{{ count($kegiatanList ?? []) }}</span>
+            </button>
             <button @click="activeTab = 'config'"
                     :class="activeTab === 'config' ? 'border-blue-600 text-blue-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 font-medium'"
                     class="pb-3 border-b-2 text-sm flex items-center gap-2 transition">
@@ -285,7 +291,7 @@
                             <th class="px-4 py-3.5">Jabatan & Satker</th>
                             <th class="px-4 py-3.5">Tim Kerja (Multi-Tim)</th>
                             <th class="px-4 py-3.5 text-center">Status Kepegawaian</th>
-                            <th class="px-4 py-3.5 text-center">Aksi (QR Nametag)</th>
+                            <th class="px-4 py-3.5 text-center">Aksi & Manajemen</th>
                         </tr>
                     </thead>
                     <tbody id="simpati-pegawai-tbody" class="divide-y divide-gray-100">
@@ -332,14 +338,35 @@
                                     </template>
                                 </td>
                                 <td class="px-4 py-3.5 text-center">
-                                    <button @click="openQrNametag(p.id)"
-                                            type="button"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold transition shadow-2xs">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                                        </svg>
-                                        <span>QR Nametag</span>
-                                    </button>
+                                    <div class="flex items-center justify-center gap-1.5">
+                                        <button @click="openQrNametag(p.id)"
+                                                type="button"
+                                                title="Cetak QR Nametag"
+                                                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold transition shadow-2xs">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                                            </svg>
+                                            <span class="hidden sm:inline">QR</span>
+                                        </button>
+                                        <button @click="openEditPegawai(p)"
+                                                type="button"
+                                                title="Ubah Data Pegawai"
+                                                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold transition shadow-2xs">
+                                            <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            </svg>
+                                            <span class="hidden sm:inline">Ubah</span>
+                                        </button>
+                                        <button @click="deletePegawai(p.id, p.nama_lengkap)"
+                                                type="button"
+                                                title="Hapus Pegawai"
+                                                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition shadow-2xs">
+                                            <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                            <span class="hidden sm:inline">Hapus</span>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         </template>
@@ -496,6 +523,105 @@
                 </div>
             </div>
         </div>
+
+        {{-- TAB 4: DATABASE KEGIATAN & PROJEK (DENGAN MONITORING 1 PJ PER KEGIATAN) --}}
+        <div x-show="activeTab === 'kegiatan'" class="p-6 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">Database Kegiatan & Projek BPS</h3>
+                    <p class="text-xs text-slate-500">Daftar seluruh agenda kegiatan dan penugasan 1 Penanggung Jawab (PJ) resmi</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
+                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Aturan: 1 PJ Wajib Terdaftar</span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                <table class="w-full text-left text-xs text-slate-600">
+                    <thead class="bg-slate-50 text-slate-700 uppercase font-bold text-[11px] border-b border-slate-200">
+                        <tr>
+                            <th class="px-4 py-3.5">Nama Kegiatan / Projek</th>
+                            <th class="px-4 py-3.5">Jenis</th>
+                            <th class="px-4 py-3.5">Penanggung Jawab (1 PJ)</th>
+                            <th class="px-4 py-3.5">Tim Pelaksana</th>
+                            <th class="px-4 py-3.5">Jadwal Pelaksanaan</th>
+                            <th class="px-4 py-3.5 text-center">Status</th>
+                            <th class="px-4 py-3.5 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @forelse($kegiatanList ?? [] as $keg)
+                            @php
+                                $pjNama = $keg->penanggung_jawab ?: ($keg->pemimpin ?: null);
+                                $hasPj = !empty($pjNama);
+                                $stLower = strtolower(trim($keg->status ?? ''));
+                            @endphp
+                            <tr class="hover:bg-slate-50/70 transition">
+                                <td class="px-4 py-3.5">
+                                    <div class="font-bold text-slate-900 text-sm max-w-xs">{{ $keg->text }}</div>
+                                    @if(!empty($keg->agenda))
+                                        <div class="text-[11px] text-slate-400 truncate max-w-xs">{{ $keg->agenda }}</div>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3.5">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold {{ $keg->jenis === 'Rapat' ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-blue-50 text-blue-700 border border-blue-100' }}">
+                                        {{ $keg->jenis ?: 'Kegiatan' }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3.5">
+                                    @if($hasPj)
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[10px]">
+                                                {{ strtoupper(substr($pjNama, 0, 1)) }}
+                                            </div>
+                                            <div>
+                                                <span class="font-bold text-slate-800">{{ $pjNama }}</span>
+                                                <span class="inline-block ml-1 text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-extrabold">1 PJ Terdaftar</span>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 text-[11px] text-amber-700 font-bold bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                                            <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                            <span>Belum Ada PJ</span>
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3.5">
+                                    <span class="text-xs font-semibold text-slate-700">{{ $keg->tim ?: 'BPS Sulawesi Tenggara' }}</span>
+                                </td>
+                                <td class="px-4 py-3.5 text-[11px] text-slate-600">
+                                    <div>{{ $keg->start_date ? \Carbon\Carbon::parse($keg->start_date)->translatedFormat('d M Y') : '-' }}</div>
+                                    @if(!empty($keg->start_jam))
+                                        <div class="text-[10px] text-slate-400">{{ substr($keg->start_jam, 0, 5) }} WITA</div>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3.5 text-center">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold {{ $stLower === 'selesai' ? 'bg-emerald-100 text-emerald-800' : ($stLower === 'tertunda' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800') }}">
+                                        {{ $keg->status ?: 'Sedang Berjalan' }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3.5 text-center">
+                                    <a href="{{ url('/detail_kegiatan/' . $keg->id) }}"
+                                       class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 text-xs font-bold transition">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        <span>Detail</span>
+                                    </a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="px-4 py-8 text-center text-slate-400">
+                                    Belum ada data kegiatan atau projek yang tercatat.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     {{-- MODAL INTERAKTIF: GENERATE & CETAK QR NAMETAG PEGAWAI --}}
@@ -567,6 +693,67 @@
             </div>
         </div>
     </div>
+
+    {{-- MODAL INTERAKTIF: EDIT DATA PEGAWAI SIMPATI (AKSES ADMIN) --}}
+    <div x-show="modalEditPegawai.show" 
+         x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-100"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+        <div @click.away="modalEditPegawai.show = false" class="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    <h4 class="font-bold text-sm">Ubah Data Pegawai SIMPATI</h4>
+                </div>
+                <button @click="modalEditPegawai.show = false" class="text-slate-400 hover:text-white transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <form @submit.prevent="submitEditPegawai()" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nama Lengkap Pegawai</label>
+                    <input type="text" x-model="modalEditPegawai.form.nama_lengkap" required class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 text-slate-800 text-xs font-semibold rounded-xl px-3.5 py-2.5 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Email Resmi BPS</label>
+                    <input type="email" x-model="modalEditPegawai.form.email" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 text-slate-800 text-xs font-semibold rounded-xl px-3.5 py-2.5 transition">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nama Jabatan</label>
+                        <input type="text" x-model="modalEditPegawai.form.nm_jabatan" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 text-slate-800 text-xs font-semibold rounded-xl px-3.5 py-2.5 transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Satuan Kerja (Satker)</label>
+                        <select x-model="modalEditPegawai.form.id_satker" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 text-slate-800 text-xs font-semibold rounded-xl px-3 py-2.5 transition">
+                            <template x-for="(name, code) in satkerNames" :key="code">
+                                <option :value="code" x-text="code + ' - ' + name"></option>
+                            </template>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Tim Kerja Utama</label>
+                    <input type="text" x-model="modalEditPegawai.form.tim_utama" placeholder="Contoh: Tim IPDS, Tim Nerwilis, dll" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 text-slate-800 text-xs font-semibold rounded-xl px-3.5 py-2.5 transition">
+                </div>
+
+                <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+                    <button type="button" @click="modalEditPegawai.show = false" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 text-xs font-semibold transition">
+                        Batal
+                    </button>
+                    <button type="submit" :disabled="modalEditPegawai.isSaving" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                        <span x-text="modalEditPegawai.isSaving ? 'Menyimpan...' : 'Simpan Perubahan'"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 @push('scripts')
@@ -605,6 +792,18 @@ function simpatiManager() {
             show: false,
             user: null,
             qr_svg: ''
+        },
+        modalEditPegawai: {
+            show: false,
+            isSaving: false,
+            form: {
+                id: null,
+                nama_lengkap: '',
+                email: '',
+                nm_jabatan: '',
+                id_satker: '7400',
+                tim_utama: ''
+            }
         },
 
         init() {
@@ -837,6 +1036,84 @@ function simpatiManager() {
                 }
             } catch (e) {
                 alert('Terjadi kesalahan memuat QR: ' + e.message);
+            }
+        },
+
+        openEditPegawai(p) {
+            this.modalEditPegawai.form = {
+                id: p.id,
+                nama_lengkap: p.nama_lengkap || '',
+                email: p.email || '',
+                nm_jabatan: p.nm_jabatan || '',
+                id_satker: p.id_satker || '7400',
+                tim_utama: (p.tims && p.tims.length > 0) ? p.tims[0] : ''
+            };
+            this.modalEditPegawai.show = true;
+        },
+
+        async submitEditPegawai() {
+            this.modalEditPegawai.isSaving = true;
+            try {
+                const id = this.modalEditPegawai.form.id;
+                const res = await fetch("{{ url('/admin/simpati/pegawai') }}/" + id + "/update", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(this.modalEditPegawai.form)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.modalEditPegawai.show = false;
+                    this.showAlert('success', 'Berhasil', data.message);
+                    const item = this.pegawaiList.find(x => x.id === id);
+                    if (item) {
+                        item.nama_lengkap = this.modalEditPegawai.form.nama_lengkap;
+                        item.email = this.modalEditPegawai.form.email;
+                        item.nm_jabatan = this.modalEditPegawai.form.nm_jabatan;
+                        item.id_satker = this.modalEditPegawai.form.id_satker;
+                        item.nm_satker = this.satkerLabel(this.modalEditPegawai.form.id_satker);
+                        if (this.modalEditPegawai.form.tim_utama) {
+                            item.tims = [this.modalEditPegawai.form.tim_utama];
+                        }
+                    }
+                } else {
+                    alert(data.message || 'Gagal menyimpan perubahan.');
+                }
+            } catch (e) {
+                alert('Terjadi kesalahan: ' + e.message);
+            } finally {
+                this.modalEditPegawai.isSaving = false;
+            }
+        },
+
+        async deletePegawai(id, nama) {
+            if (!confirm(`Apakah Anda yakin ingin menghapus data pegawai "${nama}" dari database SIKEREN?`)) {
+                return;
+            }
+            try {
+                const res = await fetch("{{ url('/admin/simpati/pegawai') }}/" + id, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.pegawaiList = this.pegawaiList.filter(x => x.id !== id);
+                    this.stats.totalPegawai = Math.max(0, this.stats.totalPegawai - 1);
+                    this.showAlert('success', 'Dihapus', data.message);
+                } else {
+                    alert(data.message || 'Gagal menghapus data pegawai.');
+                }
+            } catch (e) {
+                alert('Terjadi kesalahan: ' + e.message);
             }
         }
     };

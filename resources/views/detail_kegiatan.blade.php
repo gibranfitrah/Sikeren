@@ -70,22 +70,36 @@
             </x-button>
 
             @if(!empty($task->id))
-                <x-button 
-                    variant="secondary" 
-                    size="sm"
-                    href="{{ url('/employee/pdf_kegiatan/' . $task->id) }}"
-                    target="_blank"
-                    icon='<svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>'>
-                    Unduh PDF
-                </x-button>
-
-                <x-button 
-                    variant="secondary" 
-                    size="sm"
-                    href="{{ route('kegiatan.downloadWord', $task->id) }}"
-                    icon='<svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>'>
-                    Unduh Word (.docx)
-                </x-button>
+                <div class="relative" x-data="{ unduhOpen: false }">
+                    <button type="button" 
+                            @click="unduhOpen = !unduhOpen"
+                            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition shadow-2xs cursor-pointer">
+                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        <span>Unduh Dokumen</span>
+                        <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="unduhOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="unduhOpen" 
+                         @click.away="unduhOpen = false"
+                         x-cloak
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95"
+                         class="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-100 py-1.5 z-30">
+                        <a href="{{ url('/employee/pdf_kegiatan/' . $task->id) }}" target="_blank"
+                           class="flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition">
+                            <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            <span>Unduh Dokumen PDF (.pdf)</span>
+                        </a>
+                        <a href="{{ route('kegiatan.downloadWord', $task->id) }}"
+                           class="flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition">
+                            <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            <span>Unduh Berkas Word (.docx)</span>
+                        </a>
+                    </div>
+                </div>
             @endif
 
             <x-button 
@@ -109,169 +123,108 @@
     @endif
 
     {{-- =========================================================================
-        APPROVAL STATUS & EXECUTION LIFECYCLE BANNER
+        UNIFIED ACTIVITY OVERVIEW & LIFECYCLE (CLEAN & MINIMALIST)
     ========================================================================== --}}
-    @php
-        $bannerBg = $isDone ? 'bg-emerald-50/90 border-emerald-200' :
-                   ($isDelayed ? 'bg-amber-50/90 border-amber-300' :
-                   ($isInactive || $isRejected ? 'bg-rose-50/90 border-rose-200' :
-                   ($isApproved ? 'bg-blue-50/90 border-blue-200' : 'bg-amber-50/90 border-amber-200')));
-
-        $iconBg = $isDone ? 'bg-emerald-600 text-white shadow-xs' :
-                 ($isDelayed ? 'bg-amber-500 text-white shadow-xs' :
-                 ($isInactive || $isRejected ? 'bg-rose-600 text-white shadow-xs' :
-                 ($isApproved ? 'bg-blue-600 text-white shadow-xs' : 'bg-amber-500 text-white shadow-xs animate-pulse')));
-    @endphp
-
-    <div class="p-4 sm:p-5 rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 {{ $bannerBg }}">
-        <div class="flex items-start sm:items-center gap-3.5">
-            <div class="w-11 h-11 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 {{ $iconBg }}">
-                @if($isDone)
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                @elseif($isDelayed)
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                @elseif($isInactive || $isRejected)
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                @elseif($isApproved)
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                @else
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                @endif
-            </div>
-            <div class="space-y-1">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <h4 class="text-xs font-bold uppercase tracking-wider {{ $isDone ? 'text-emerald-900' : ($isDelayed ? 'text-amber-900' : ($isInactive || $isRejected ? 'text-rose-900' : ($isApproved ? 'text-blue-900' : 'text-amber-900'))) }}">
-                        Status Pelaksanaan Kegiatan
-                    </h4>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold uppercase {{ $isDone ? 'bg-emerald-200 text-emerald-800' : ($isDelayed ? 'bg-amber-200 text-amber-800' : ($isInactive || $isRejected ? 'bg-rose-200 text-rose-800' : ($isApproved ? 'bg-blue-200 text-blue-800' : 'bg-amber-200 text-amber-800'))) }}">
-                        {{ $statusText }}
-                    </span>
-                </div>
-                <p class="text-xs {{ $isDone ? 'text-emerald-700' : ($isDelayed ? 'text-amber-700' : ($isInactive || $isRejected ? 'text-rose-700' : ($isApproved ? 'text-blue-700' : 'text-amber-700'))) }}">
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div class="flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 {{ $isDone ? 'bg-emerald-100 text-emerald-700' : ($isDelayed ? 'bg-amber-100 text-amber-700' : ($isInactive || $isRejected ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700')) }}">
                     @if($isDone)
-                        Kegiatan telah <strong>Selesai</strong> dan seluruh target pengerjaan telah tuntas 100%.
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                     @elseif($isDelayed)
-                        Pelaksanaan kegiatan saat ini berstatus <strong>Tertunda</strong>.
-                    @elseif($isInactive)
-                        Kegiatan berstatus <strong>Tidak Berjalan / Dibatalkan</strong>.
-                    @elseif($isRejected)
-                        Kegiatan ini telah <strong>Ditolak</strong> oleh Penanggung Jawab ({{ $pjNama }}).
-                    @elseif($isApproved)
-                        Kegiatan telah disetujui oleh Penanggung Jawab ({{ $pjNama }}) dan <strong>Sedang Berjalan</strong> aktif.
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    @elseif($isInactive || $isRejected)
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                     @else
-                        Menunggu keputusan persetujuan dari Penanggung Jawab (<strong>{{ $pjNama }}</strong>).
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     @endif
-                </p>
-
-                @if(!empty($task->alasan_status) && ($isDelayed || $isInactive || $isRejected))
-                    <div class="mt-2 p-2.5 rounded-xl bg-white/90 border border-amber-200/80 text-xs text-gray-700 flex items-start gap-2 shadow-2xs">
-                        <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <div>
-                            <span class="font-bold text-gray-800">Catatan / Alasan:</span>
-                            <span class="text-gray-600">{{ $task->alasan_status }}</span>
-                        </div>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-semibold text-slate-500">Status:</span>
+                        <x-badge :variant="$statusVariant" size="xs" :dot="true">{{ $statusText }}</x-badge>
                     </div>
+                    <p class="text-xs text-slate-600 mt-0.5">
+                        @if($isDone)
+                            Kegiatan telah selesai dan seluruh target tuntas 100%.
+                        @elseif($isDelayed)
+                            Pelaksanaan kegiatan berstatus tertunda.
+                        @elseif($isInactive)
+                            Kegiatan tidak berjalan / dibatalkan.
+                        @elseif($isRejected)
+                            Kegiatan ini ditolak oleh Penanggung Jawab.
+                        @elseif($isApproved)
+                            Kegiatan disetujui oleh Penanggung Jawab dan sedang berjalan.
+                        @else
+                            Menunggu persetujuan Penanggung Jawab ({{ $pjNama }}).
+                        @endif
+                    </p>
+                </div>
+            </div>
+
+            {{-- Action Buttons for PJ --}}
+            <div class="flex items-center gap-2 shrink-0">
+                @if($isPj && $isWaiting)
+                    <form action="{{ url('/setuju_rapat') }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menolak kegiatan ini?')">
+                        @csrf
+                        <input type="hidden" name="id" value="{{ $task->id }}">
+                        <input type="hidden" name="setuju_rapat" value="3">
+                        <button type="submit" class="px-3.5 py-1.5 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            Tolak
+                        </button>
+                    </form>
+                    <form action="{{ url('/setuju_rapat') }}" method="POST" class="inline">
+                        @csrf
+                        <input type="hidden" name="id" value="{{ $task->id }}">
+                        <input type="hidden" name="setuju_rapat" value="1">
+                        <button type="submit" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                            Setujui Kegiatan
+                        </button>
+                    </form>
+                @elseif($isPj)
+                    <button type="button" 
+                            @click="modalUpdateStatus = true"
+                            class="px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
+                        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        <span>Ubah Status</span>
+                    </button>
                 @endif
             </div>
         </div>
 
-        {{-- Action Buttons for PJ / Pemimpin --}}
-        <div class="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
-            @if($isPj && $isWaiting)
-                <form action="{{ url('/setuju_rapat') }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menolak kegiatan ini?')">
-                    @csrf
-                    <input type="hidden" name="id" value="{{ $task->id }}">
-                    <input type="hidden" name="setuju_rapat" value="3">
-                    <button type="submit" class="px-4 py-2 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                        Tolak Kegiatan
-                    </button>
-                </form>
-                <form action="{{ url('/setuju_rapat') }}" method="POST" class="inline">
-                    @csrf
-                    <input type="hidden" name="id" value="{{ $task->id }}">
-                    <input type="hidden" name="setuju_rapat" value="1">
-                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                        Setujui Kegiatan
-                    </button>
-                </form>
-            @elseif($isPj)
-                <button type="button" 
-                        @click="modalUpdateStatus = true"
-                        class="px-4 py-2 bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
-                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                    <span>Update Status Pelaksanaan</span>
-                </button>
-            @endif
-        </div>
-    </div>
-
-    {{-- =========================================================================
-        2. SUMMARY KPI METRIC CARDS
-    ========================================================================== --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {{-- Card 1: Status Pelaksanaan --}}
-        <div class="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs flex items-center justify-between">
-            <div class="space-y-1">
-                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Status Kegiatan</p>
+        @if(!empty($task->alasan_status) && ($isDelayed || $isInactive || $isRejected))
+            <div class="p-3 rounded-xl bg-amber-50 border border-amber-200/80 text-xs text-amber-900 flex items-start gap-2">
+                <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <div>
-                    <x-badge :variant="$statusVariant" size="sm" :dot="true">
-                        {{ $statusText }}
-                    </x-badge>
+                    <span class="font-bold">Catatan:</span>
+                    <span>{{ $task->alasan_status }}</span>
                 </div>
             </div>
-            <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-            </div>
-        </div>
+        @endif
 
-        {{-- Card 2: Durasi & Rentang Waktu --}}
-        <div class="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs flex items-center justify-between">
-            <div class="space-y-1">
-                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Durasi Pelaksanaan</p>
-                <p class="text-base font-black text-gray-900">{{ $durasiHari }} Hari Kerja</p>
-                <p class="text-[10px] text-gray-500 font-medium truncate max-w-[170px]">{{ $startFormatted }}</p>
+        {{-- Metrics row --}}
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+            <div class="bg-slate-50/70 rounded-xl p-3.5 border border-slate-100">
+                <span class="text-[11px] font-semibold text-slate-500 block mb-1">Durasi Pelaksanaan</span>
+                <p class="text-sm font-bold text-slate-900">{{ $durasiHari }} Hari Kerja</p>
+                <p class="text-[11px] text-slate-500 mt-0.5">{{ $startFormatted }} &ndash; {{ $endFormatted }}</p>
             </div>
-            <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-            </div>
-        </div>
-
-        {{-- Card 3: Progres Keseluruhan --}}
-        <div class="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs flex items-center justify-between">
-            <div class="space-y-1.5 flex-1 pr-3">
-                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Progres Sub Kegiatan</p>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-lg font-black text-gray-900">{{ $overallProgress }}%</span>
-                    <span class="text-[10px] text-gray-500 font-medium">({{ $completedSub }}/{{ $totalSub }} selesai)</span>
+            <div class="bg-slate-50/70 rounded-xl p-3.5 border border-slate-100">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-[11px] font-semibold text-slate-500">Progres Capaian</span>
+                    <span class="text-xs font-bold text-slate-900">{{ $overallProgress }}%</span>
                 </div>
-                <div class="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                <div class="w-full bg-slate-200 rounded-full h-1.5 mt-2 overflow-hidden">
                     <div class="h-1.5 rounded-full {{ $overallProgress >= 100 ? 'bg-emerald-500' : 'bg-blue-600' }}" style="width: {{ $overallProgress }}%"></div>
                 </div>
+                <p class="text-[11px] text-slate-500 mt-1.5">{{ $completedSub }} dari {{ $totalSub }} sub kegiatan selesai</p>
             </div>
-            <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                </svg>
-            </div>
-        </div>
-
-        {{-- Card 4: Tim & Penugasan --}}
-        <div class="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs flex items-center justify-between">
-            <div class="space-y-1">
-                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Tim Pelaksana</p>
-                <p class="text-base font-black text-gray-900">{{ $assignedUsers->count() }} Anggota Ditugaskan</p>
-                <p class="text-[10px] text-gray-500 font-medium truncate max-w-[170px]">PJ: {{ $pjNama }}</p>
-            </div>
-            <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
+            <div class="bg-slate-50/70 rounded-xl p-3.5 border border-slate-100">
+                <span class="text-[11px] font-semibold text-slate-500 block mb-1">Penanggung Jawab</span>
+                <p class="text-sm font-bold text-slate-900 truncate">{{ $pjNama }}</p>
+                <p class="text-[11px] text-slate-500 mt-0.5">{{ $task->tim ?? 'Tim BPS' }}</p>
             </div>
         </div>
     </div>
@@ -540,28 +493,14 @@
                 subtitle="Koordinator utama pelaksanaan kegiatan"
                 tag="PJ">
                 
-                <div class="p-4 rounded-2xl bg-slate-900 text-white space-y-3 relative overflow-hidden shadow-md">
-                    {{-- Decorative background glow --}}
-                    <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-blue-500/20 rounded-full blur-xl pointer-events-none"></div>
-
-                    <div class="flex items-center gap-3.5 relative z-10">
-                        <div class="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black text-lg shadow-inner">
+                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                    <div class="flex items-center gap-3.5">
+                        <div class="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-base shadow-xs">
                             {{ strtoupper(substr($pjNama, 0, 1)) }}
                         </div>
-                        <div class="space-y-0.5">
-                            <h4 class="font-bold text-white text-sm sm:text-base">{{ $pjNama }}</h4>
-                            <p class="text-xs text-blue-300 font-medium">{{ $task->tim ?? 'Ketua Tim / Penanggung Jawab' }}</p>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2 text-[11px] pt-2 border-t border-slate-800 text-slate-300 relative z-10">
-                        <div>
-                            <span class="text-slate-500 block text-[10px]">NIP:</span>
-                            <span class="font-mono text-slate-200">{{ $pjUser->nipbaru ?? ($pjUser->niplama ?? '-') }}</span>
-                        </div>
-                        <div>
-                            <span class="text-slate-500 block text-[10px]">Email:</span>
-                            <span class="truncate block text-slate-200">{{ $pjUser->email ?? ($pjNama ? strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $pjNama)) . '@bps.go.id' : '-') }}</span>
+                        <div class="space-y-0.5 min-w-0">
+                            <h4 class="font-bold text-slate-900 text-sm truncate">{{ $pjNama }}</h4>
+                            <p class="text-xs text-slate-500 font-medium truncate">{{ $task->tim ?? 'Penanggung Jawab' }}</p>
                         </div>
                     </div>
                 </div>
@@ -577,22 +516,19 @@
                     <x-badge variant="neutral" size="xs">{{ $assignedUsers->count() }} Anggota</x-badge>
                 </x-slot>
 
-                <div class="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+                <div class="space-y-2 max-h-80 overflow-y-auto pr-1">
                     @forelse($assignedUsers as $usr)
-                        <div class="p-3 rounded-xl bg-gray-50 hover:bg-white border border-gray-100 hover:border-blue-200 transition flex items-center justify-between gap-3">
-                            <div class="flex items-center gap-3 min-w-0">
-                                <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0">
+                        <div class="p-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-100 transition flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0">
                                     {{ strtoupper(substr($usr->nama_lengkap ?? ($usr->username ?? 'U'), 0, 1)) }}
                                 </div>
-                                <div class="min-w-0">
-                                    <p class="text-xs font-bold text-gray-900 truncate">{{ $usr->nama_lengkap ?? $usr->username }}</p>
-                                    <p class="text-[10px] text-gray-400 font-mono">NIP: {{ $usr->nipbaru ?? ($usr->niplama ?? '-') }}</p>
-                                </div>
+                                <p class="text-xs font-semibold text-slate-800 truncate">{{ $usr->nama_lengkap ?? $usr->username }}</p>
                             </div>
-                            <x-badge variant="success" size="xs" :dot="true">Ditugaskan</x-badge>
+                            <x-badge variant="success" size="xs">Ditugaskan</x-badge>
                         </div>
                     @empty
-                        <div class="p-6 text-center text-gray-400 text-xs">
+                        <div class="p-6 text-center text-slate-400 text-xs">
                             <p>Tidak ada anggota tambahan yang tercatat di penugasan.</p>
                         </div>
                     @endforelse

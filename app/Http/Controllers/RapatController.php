@@ -222,7 +222,7 @@ class RapatController extends Controller
                     'data'            => json_encode([
                         'judul' => 'Undangan Rapat: ' . $request->text,
                         'pesan' => 'Anda diundang oleh ' . $pjNama . ' (Ketua Tim / PJ) untuk mengikuti rapat "' . $request->text . '" pada ' . date('d M Y', strtotime($request->start_date)) . ' pukul ' . substr($request->start_jam, 0, 5) . ' WITA. Tempat: ' . $tempatDesc,
-                        'url'   => '/tugas-saya',
+                        'url'   => '/rapat/tiket-qr/' . $taskId,
                     ]),
                     'read_at'         => null,
                     'created_at'      => now(),

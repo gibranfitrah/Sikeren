@@ -196,6 +196,10 @@ Route::post('/kegiatan/{id}/approve', [\App\Http\Controllers\KegiatanController:
 Route::post('/kegiatan/{id}/reject', [\App\Http\Controllers\KegiatanController::class, 'reject'])->name('kegiatan.reject');
 Route::post('/kegiatan/{id}/status', [\App\Http\Controllers\KegiatanController::class, 'updateStatus'])->name('kegiatan.updateStatus');
 
+    // Presensi & Tiket QR Rapat
+    Route::get('/rapat/tiket-qr/{id}', [\App\Http\Controllers\KegiatanController::class, 'tiketQr'])->name('rapat.tiketQr');
+    Route::get('/rapat/verifikasi-kehadiran/{id}', [\App\Http\Controllers\KegiatanController::class, 'verifikasiKehadiran'])->name('rapat.verifikasiKehadiran');
+
     // SIMPATI API Integration
     Route::get('/admin/simpati', [\App\Http\Controllers\SimpatiController::class, 'index'])->name('simpati.index');
     Route::get('/admin/simpati/filter', [\App\Http\Controllers\SimpatiController::class, 'filter'])->name('simpati.filter');
@@ -204,6 +208,8 @@ Route::post('/kegiatan/{id}/status', [\App\Http\Controllers\KegiatanController::
     Route::post('/admin/simpati/sync', [\App\Http\Controllers\SimpatiController::class, 'syncData'])->name('simpati.sync');
     Route::post('/admin/simpati/sync-mock', [\App\Http\Controllers\SimpatiController::class, 'syncMockData'])->name('simpati.sync_mock');
     Route::get('/admin/simpati/qr-nametag/{id}', [\App\Http\Controllers\SimpatiController::class, 'qrNametag'])->name('simpati.qr_nametag');
+    Route::post('/admin/simpati/pegawai/{id}/update', [\App\Http\Controllers\SimpatiController::class, 'updatePegawai'])->name('simpati.pegawai.update');
+    Route::delete('/admin/simpati/pegawai/{id}', [\App\Http\Controllers\SimpatiController::class, 'destroyPegawai'])->name('simpati.pegawai.destroy');
     Route::get('/api/simpati/pegawai', [\App\Http\Controllers\SimpatiController::class, 'getPegawai'])->name('simpati.pegawai');
     Route::get('/api/simpati/tim-kerja', [\App\Http\Controllers\SimpatiController::class, 'getTimKerja'])->name('simpati.tim_kerja');
 

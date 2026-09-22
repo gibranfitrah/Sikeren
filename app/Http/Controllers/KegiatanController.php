@@ -383,7 +383,7 @@ class KegiatanController extends Controller
                         'data'            => json_encode([
                             'judul' => 'Undangan Penugasan Kegiatan: ' . ($request->text ?? $request->agenda),
                             'pesan' => 'Anda ditugaskan oleh ' . $pjNama . ' (Ketua Tim / PJ) untuk kegiatan: ' . ($request->text ?? $request->agenda),
-                            'url'   => '/daftar_kegiatan',
+                            'url'   => ($request->jenis === 'Rapat' || !empty($request->start_jam)) ? ('/rapat/tiket-qr/' . $request->tes) : ('/detail_kegiatan/' . $request->tes),
                         ]),
                         'read_at'         => null,
                         'created_at'      => now(),
@@ -417,7 +417,7 @@ class KegiatanController extends Controller
                         'data'            => json_encode([
                             'judul' => 'Penugasan ' . $role['role'],
                             'pesan' => $role['msg'] . ' Topik: ' . ($request->text ?? $request->agenda),
-                            'url'   => '/daftar_kegiatan',
+                            'url'   => ($request->jenis === 'Rapat' || !empty($request->start_jam)) ? ('/rapat/tiket-qr/' . $request->tes) : ('/detail_kegiatan/' . $request->tes),
                         ]),
                         'read_at'         => null,
                         'created_at'      => now(),
@@ -1113,5 +1113,128 @@ class KegiatanController extends Controller
         return response()->download($filePath, $fileName, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         ])->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Halaman Tiket QR Presensi Rapat Khusus Peserta
+     * Dipicu langsung saat peserta menekan notifikasi undangan rapat
+     */
+    public function tiketQr($id)
+    {
+        $task = is_numeric($id) ? Task::find($id) : Task::where('id', $id)->orWhere('text', $id)->first();
+        if (!$task) {
+            $task = kegiatan::find($id);
+        }
+        if (!$task) {
+            abort(404, 'Kegiatan / Rapat tidak ditemukan.');
+        }
+
+        $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        // Cari record penugasan peserta untuk rapat ini
+        $penugasan = penugasan::where('id_kegiatan', $task->id)
+            ->where(function ($q) use ($user) {
+                if (!empty($user->niplama) && $user->niplama !== '-') {
+                    $q->where('niplama', $user->niplama);
+                }
+                if (!empty($user->nipbaru) && $user->nipbaru !== '-') {
+                    $q->orWhere('niplama', $user->nipbaru);
+                }
+                if (!empty($user->nama_lengkap)) {
+                    $q->orWhere('peserta', $user->nama_lengkap);
+                }
+            })
+            ->first();
+
+        $statusKehadiran = $penugasan ? ($penugasan->status_kehadiran ?: 'Belum Hadir') : 'Belum Hadir';
+        $waktuHadir = $penugasan ? ($penugasan->waktu_kehadiran ?: $penugasan->updated_at) : null;
+
+        // Generate URL Verifikasi yang di-encode ke dalam QR
+        $identifier = $user->niplama ?: ($user->nipbaru ?: $user->id);
+        $verifyToken = md5($user->id . '_' . $task->id . '_sikeren_salt');
+        $verifyUrl = self::getQrUrl('rapat/verifikasi-kehadiran/' . $task->id . '?nip=' . urlencode($identifier) . '&token=' . $verifyToken);
+
+        // QR SVG
+        $qrSvg = QrCode::size(260)->generate($verifyUrl);
+        $urlPresensiRuangan = self::getQrUrl('daftarhadir/' . $task->id);
+
+        return view('rapat.tiket_qr', compact(
+            'task',
+            'user',
+            'penugasan',
+            'statusKehadiran',
+            'waktuHadir',
+            'qrSvg',
+            'verifyUrl',
+            'urlPresensiRuangan'
+        ));
+    }
+
+    /**
+     * Endpoint Verifikasi Kehadiran oleh PJ / Admin via Scan QR Peserta
+     */
+    public function verifikasiKehadiran(Request $request, $id)
+    {
+        $task = is_numeric($id) ? Task::find($id) : Task::where('id', $id)->first();
+        if (!$task) {
+            $task = kegiatan::find($id);
+        }
+        if (!$task) {
+            abort(404, 'Rapat tidak ditemukan.');
+        }
+
+        $nip = $request->query('nip');
+        $token = $request->query('token');
+
+        $targetUser = null;
+        if (!empty($nip)) {
+            $targetUser = User::where('niplama', $nip)
+                ->orWhere('nipbaru', $nip)
+                ->orWhere('id', $nip)
+                ->first();
+        }
+
+        if (!$targetUser) {
+            return view('rapat.verifikasi_hasil', [
+                'success' => false,
+                'message' => 'Peserta tidak ditemukan di database.',
+                'task'    => $task,
+                'peserta' => null
+            ]);
+        }
+
+        // Catat kehadiran di tabel penugasan
+        $penugasan = penugasan::where('id_kegiatan', $task->id)
+            ->where(function ($q) use ($targetUser) {
+                if ($targetUser->niplama) $q->where('niplama', $targetUser->niplama);
+                if ($targetUser->nipbaru) $q->orWhere('niplama', $targetUser->nipbaru);
+                if ($targetUser->nama_lengkap) $q->orWhere('peserta', $targetUser->nama_lengkap);
+            })
+            ->first();
+
+        if ($penugasan) {
+            $penugasan->status_kehadiran = 'Hadir';
+            $penugasan->waktu_kehadiran  = now();
+            $penugasan->save();
+        } else {
+            $penugasan = penugasan::create([
+                'id_kegiatan'      => $task->id,
+                'niplama'          => $targetUser->niplama ?: '-',
+                'peserta'          => $targetUser->nama_lengkap,
+                'status_kehadiran' => 'Hadir',
+                'waktu_kehadiran'  => now(),
+            ]);
+        }
+
+        return view('rapat.verifikasi_hasil', [
+            'success'   => true,
+            'message'   => 'Kehadiran berhasil diverifikasi!',
+            'task'      => $task,
+            'peserta'   => $targetUser,
+            'penugasan' => $penugasan
+        ]);
     }
 }

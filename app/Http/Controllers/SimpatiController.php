@@ -87,6 +87,9 @@ class SimpatiController extends Controller
             ];
         })->values()->toArray();
 
+        // Database Kegiatan & Projek untuk monitoring penugasan 1 PJ per kegiatan
+        $kegiatanList = \App\Task::orderBy('created_at', 'desc')->take(100)->get();
+
         return view('admin.simpati.index', compact(
             'baseUrl',
             'apiKey',
@@ -95,6 +98,7 @@ class SimpatiController extends Controller
             'syncedPegawai',
             'syncedTims',
             'pegawaiList',
+            'kegiatanList',
             'totalPegawai',
             'totalPindah',
             'totalMultiTim',
@@ -371,6 +375,101 @@ class SimpatiController extends Controller
         }
 
         return (bool) file_put_contents($envPath, $content);
+    }
+
+    /**
+     * Update data pegawai SIMPATI oleh Admin
+     */
+    public function updatePegawai(Request $request, $id)
+    {
+        $this->authorizeAccess();
+
+        $user = User::findOrFail($id);
+        
+        $request->validate([
+            'nama_lengkap' => 'required|string|max:255',
+            'email'        => 'nullable|email|max:255',
+            'nm_jabatan'   => 'nullable|string|max:255',
+            'id_satker'    => 'nullable|string|max:20',
+        ]);
+
+        $user->nama_lengkap = $request->input('nama_lengkap');
+        if ($request->filled('email')) {
+            $user->email = $request->input('email');
+        }
+        $user->save();
+
+        // Update jabatan & satker
+        $latestJabatan = DB::table('users_jabatan')
+            ->where('id_users', $user->id)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($latestJabatan) {
+            DB::table('users_jabatan')
+                ->where('id', $latestJabatan->id)
+                ->update([
+                    'nm_jabatan' => $request->input('nm_jabatan', $latestJabatan->nm_jabatan),
+                    'id_satker'  => $request->input('id_satker', $latestJabatan->id_satker),
+                    'updated_at' => now(),
+                ]);
+        } else {
+            DB::table('users_jabatan')->insert([
+                'id_users'   => $user->id,
+                'nm_jabatan' => $request->input('nm_jabatan', 'Pegawai BPS'),
+                'id_satker'  => $request->input('id_satker', '7400'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // Update tim kerja jika dipilih
+        if ($request->filled('tim_utama')) {
+            $timBaru = trim($request->input('tim_utama'));
+            if (!empty($timBaru)) {
+                DB::table('groups')->where('niplama', $user->niplama)->delete();
+                DB::table('groups')->insert([
+                    'niplama'    => $user->niplama,
+                    'grup'       => $timBaru,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Data pegawai ' . $user->nama_lengkap . ' berhasil diperbarui.',
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Data pegawai ' . $user->nama_lengkap . ' berhasil diperbarui.');
+    }
+
+    /**
+     * Hapus data pegawai dari sistem SIKEREN oleh Admin
+     */
+    public function destroyPegawai(Request $request, $id)
+    {
+        $this->authorizeAccess();
+
+        $user = User::findOrFail($id);
+        $nama = $user->nama_lengkap;
+
+        // Hapus relasi
+        DB::table('users_jabatan')->where('id_users', $user->id)->delete();
+        DB::table('groups')->where('niplama', $user->niplama)->delete();
+        $user->delete();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pegawai ' . $nama . ' berhasil dihapus dari SIKEREN.',
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Pegawai ' . $nama . ' berhasil dihapus.');
     }
 
     /**

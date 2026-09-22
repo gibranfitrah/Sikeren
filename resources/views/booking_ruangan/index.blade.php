@@ -24,10 +24,15 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
          taskId: '{{ $selectedRapat->id ?? '' }}',
          keterangan: '',
          
-         // Sarpras & Layout State (Hybrid: statis + dinamis backend)
-         layoutMeja: 'Classroom',
-         sofaDepan: 'tanpa', // 'tanpa' | 'dengan' (UI statis / SVG)
-         sofaConfig: 'tanpa_sofa', // 'tanpa_sofa' | 'dengan_sofa' (backend, sinkron dengan sofaDepan)
+          // Sarpras & Layout State (Hybrid: statis + dinamis backend)
+          venueDefaults: {
+              1: 'Classroom',
+              2: 'U-Shape',
+              3: 'Theatre'
+          },
+          layoutMeja: '{{ ($selectedRapat && $selectedRapat->venue_id == 2) ? "U-Shape" : (($selectedRapat && $selectedRapat->venue_id == 3) ? "Theatre" : "Classroom") }}',
+          sofaDepan: 'tanpa', // 'tanpa' | 'dengan' (UI statis / SVG)
+          sofaConfig: 'tanpa_sofa', // 'tanpa_sofa' | 'dengan_sofa' (backend, sinkron dengan sofaDepan)
          capacityInfo: null,
          capacityLoading: false,
          tipePodium: 'Podium Standar',
@@ -129,20 +134,35 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
              this.fetchCapacity();
          },
 
-         openBookingModal(venueId = null, zoomAcc = null, time = null) {
-             if (venueId) {
-                 this.selectedVenueId = venueId;
-                 this.tipePertemuan = 'offline';
-             }
-             if (zoomAcc) {
-                 this.zoomAccount = zoomAcc;
-                 this.tipePertemuan = 'online';
-             }
-             if (time) {
-                 this.startTime = time;
-                 let h = parseInt(time.split(':')[0]) + 2;
-                 this.endTime = (h < 10 ? '0' : '') + h + ':00';
-             }
+          onVenueChange(venueId = null) {
+              if (venueId) {
+                  this.selectedVenueId = venueId;
+              }
+              let defaultLayout = this.venueDefaults[this.selectedVenueId] || 'Classroom';
+              this.layoutMeja = defaultLayout;
+              this.sofaDepan = 'tanpa';
+              this.sofaConfig = 'tanpa_sofa';
+              this.fetchCapacity();
+          },
+
+          openBookingModal(venueId = null, zoomAcc = null, time = null) {
+              if (venueId) {
+                  this.selectedVenueId = venueId;
+                  this.tipePertemuan = 'offline';
+                  let defaultLayout = this.venueDefaults[venueId] || 'Classroom';
+                  this.layoutMeja = defaultLayout;
+                  this.sofaDepan = 'tanpa';
+                  this.sofaConfig = 'tanpa_sofa';
+              }
+              if (zoomAcc) {
+                  this.zoomAccount = zoomAcc;
+                  this.tipePertemuan = 'online';
+              }
+              if (time) {
+                  this.startTime = time;
+                  let h = parseInt(time.split(':')[0]) + 2;
+                  this.endTime = (h < 10 ? '0' : '') + h + ':00';
+              }
               this.modalOpen = true;
               this.fetchCapacity();
           },
@@ -1028,10 +1048,21 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                         <label class="p-3 rounded-xl border cursor-pointer text-xs transition"
                             :class="selectedVenueId == {{ $v->id }} ? 'bg-blue-50 border-blue-500 text-blue-900 shadow-2xs ring-1 ring-blue-500/50' : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-slate-100/70'">
                             <div class="flex items-center justify-between gap-1 mb-1">
-                                <div class="flex items-center gap-2">
-                                    <input type="radio" name="venue_id" value="{{ $v->id }}" x-model="selectedVenueId" @change="fetchCapacity()"
-                                        class="text-blue-600">
-                                    <span class="font-bold text-xs">{{ $v->name }}</span>
+                                <div class="flex items-start gap-2">
+                                    <input type="radio" name="venue_id" value="{{ $v->id }}" x-model="selectedVenueId" @change="onVenueChange({{ $v->id }})"
+                                        class="text-blue-600 mt-0.5">
+                                    <div>
+                                        <span class="font-bold text-xs block leading-tight">{{ $v->name }}</span>
+                                        <span class="text-[9.5px] text-blue-600 font-medium block mt-0.5">
+                                            @if($v->id == 2)
+                                                Default: U-Shape
+                                            @elseif($v->id == 3)
+                                                Default: Theatre
+                                            @else
+                                                Default: Classroom
+                                            @endif
+                                        </span>
+                                    </div>
                                 </div>
                                 <span class="text-[9.5px] font-extrabold text-blue-700 bg-blue-100/80 px-1.5 py-0.5 rounded">
                                     Maks {{ $v->capacity }} Org
