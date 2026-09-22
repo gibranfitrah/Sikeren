@@ -80,15 +80,15 @@
 
     .stat-cards-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 24px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 20px;
     }
 
     .stat-card-box {
         background-color: #ffffff;
         border-radius: 20px;
         border: 1px solid #e2e8f0;
-        padding: 24px 28px;
+        padding: 20px 22px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
         display: flex;
         align-items: center;
@@ -125,7 +125,14 @@
         flex-direction: column;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 1200px) {
+        .stat-cards-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+    }
+
+    @media (max-width: 640px) {
         .stat-cards-grid {
             grid-template-columns: 1fr;
             gap: 16px;
@@ -441,143 +448,7 @@
         </div>
     </div>
 
-    {{-- 2.5 STATUS KETERSEDIAAN RUANGAN & ZOOM HARI INI --}}
-    <div class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-7 shadow-xs space-y-5">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
-            <div class="flex items-center gap-3.5">
-                <div class="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
-                </div>
-                <div>
-                    <h3 class="text-base sm:text-lg font-bold text-gray-900">Ketersediaan Ruangan & Zoom Hari Ini</h3>
-                    <p class="text-xs text-gray-400">Pantau ruangan rapat yang kosong/belum dibooking serta status akun Zoom secara real-time.</p>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-3">
-                <a href="{{ route('booking-ruangan.index') }}" 
-                   class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                    Lihat Time Schedule & Booking Ruangan &rarr;
-                </a>
-            </div>
-        </div>
-
-        {{-- Grid 3 Ruangan Fisik & 2 Akun Zoom --}}
-        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
-            {{-- 3 Ruangan Fisik --}}
-            @foreach($dashboardVenuesStatus as $vId => $vStat)
-                @php
-                    $ven = $vStat['venue'];
-                    $isUse = $vStat['is_in_use'];
-                    $activeNow = $vStat['active_now'];
-                    $nextBook = $vStat['next_booking'];
-                    $tot = $vStat['total_today'];
-                @endphp
-                <div class="p-4 rounded-xl border flex flex-col justify-between transition {{ $isUse ? 'bg-rose-50/40 border-rose-200' : ($tot > 0 ? 'bg-amber-50/30 border-amber-200' : 'bg-gray-50/50 hover:bg-white border-gray-200') }}">
-                    <div>
-                        <div class="flex items-start justify-between gap-1 mb-2">
-                            <h4 class="text-xs font-bold text-gray-900 truncate">{{ $ven->name }}</h4>
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold shrink-0 {{ $isUse ? 'bg-rose-100 text-rose-700' : ($tot > 0 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700') }}">
-                                {{ $isUse ? 'Terpakai' : ($tot > 0 ? 'Ada Jadwal' : 'Kosong') }}
-                            </span>
-                        </div>
-                        <p class="text-[10px] text-gray-400 mb-2">Kapasitas: {{ $ven->capacity }} Orang</p>
-
-                        @if($isUse && $activeNow)
-                            <div class="p-2 bg-white rounded-lg border border-rose-200 text-[10px] space-y-0.5">
-                                <p class="font-bold text-rose-900 truncate">{{ $activeNow->nama_acara }}</p>
-                                <p class="text-rose-700">{{ substr($activeNow->start_time, 0, 5) }} - {{ substr($activeNow->end_time, 0, 5) }}</p>
-                            </div>
-                        @elseif($nextBook)
-                            <div class="text-[10px] text-amber-800 font-medium">
-                                Jadwal berikutnya: {{ substr($nextBook->start_time, 0, 5) }}
-                            </div>
-                        @else
-                            <p class="text-[11px] text-emerald-600 font-semibold">Tersedia sepanjang hari</p>
-                        @endif
-                    </div>
-
-                    <div class="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between">
-                        <span class="text-[10px] text-gray-400">{{ $tot }} Acara</span>
-                        <a href="{{ route('booking-ruangan.index', ['date' => $today]) }}" class="text-[10px] font-bold text-blue-600 hover:underline">
-                            + Booking
-                        </a>
-                    </div>
-                </div>
-            @endforeach
-
-            {{-- 2 Akun Zoom --}}
-            @foreach($dashboardZoomStatus as $zKey => $zStat)
-                @php
-                    $zInfo = $zStat['info'];
-                    $isUse = $zStat['is_in_use'];
-                    $activeNow = $zStat['active_now'];
-                @endphp
-                <div class="p-4 rounded-xl border flex flex-col justify-between transition {{ $isUse ? 'bg-rose-50/40 border-rose-200' : 'bg-indigo-50/20 hover:bg-white border-indigo-100' }}">
-                    <div>
-                        <div class="flex items-start justify-between gap-1 mb-2">
-                            <h4 class="text-xs font-bold text-indigo-900 truncate">{{ $zInfo['name'] }}</h4>
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold shrink-0 {{ $isUse ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700' }}">
-                                {{ $isUse ? 'Digunakan' : 'Tersedia' }}
-                            </span>
-                        </div>
-                        <p class="text-[10px] text-gray-400 mb-1">ID: {{ $zInfo['meeting_id'] }}</p>
-
-                        @if($isUse && $activeNow)
-                            <div class="p-2 bg-white rounded-lg border border-rose-200 text-[10px]">
-                                <p class="font-bold text-rose-900 truncate">{{ $activeNow->nama_acara }}</p>
-                                <p class="text-rose-700">{{ substr($activeNow->start_time, 0, 5) }} - {{ substr($activeNow->end_time, 0, 5) }}</p>
-                            </div>
-                        @else
-                            <p class="text-[11px] text-indigo-700 font-semibold">Siap digunakan rapat online</p>
-                        @endif
-                    </div>
-
-                    <div class="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between">
-                        <span class="text-[10px] text-gray-400">Zoom Daring</span>
-                        <a href="{{ route('booking-ruangan.index', ['date' => $today]) }}" class="text-[10px] font-bold text-indigo-600 hover:underline">
-                            + Pakai Zoom
-                        </a>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-    </div>
-
-    {{-- 3. KALENDER DASHBOARD (BERSPASI KE BAWAH SENDIRI) --}}
-    <div class="calendar-section-card">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-gray-100">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="text-base sm:text-lg font-bold text-gray-900">Kalender Agenda & Kegiatan BPS</h3>
-                    <p class="text-xs text-gray-400">Klik pada agenda untuk membuka detail atau approval persetujuan rapat.</p>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-4 text-xs font-semibold">
-                <div class="flex items-center gap-2">
-                    <span class="w-3 h-3 rounded-md bg-indigo-600 inline-block"></span>
-                    <span class="text-gray-700">Rapat</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="w-3 h-3 rounded-md bg-sky-500 inline-block"></span>
-                    <span class="text-gray-700">Kegiatan</span>
-                </div>
-            </div>
-        </div>
-
-        <div id="dashboardCalendar" class="min-h-[520px]"></div>
-    </div>
-
-    {{-- 4. TUGAS SAYA & SUB KEGIATAN & DEADLINE (2 KOTAK TERPISAH BERSPASI) --}}
+    {{-- 2. TUGAS SAYA & SUB KEGIATAN & DEADLINE (BERADA TEPAT DI BAWAH 4 STAT CARD) --}}
     <div class="tables-two-cols">
         
         <!-- Kotak 1: Tugas Saya -->
@@ -696,6 +567,248 @@
 
     </div>
 
+    {{-- 3. STATUS KETERSEDIAAN RUANGAN & ZOOM HARI INI (FLEX KIRI & KANAN) --}}
+    <div class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-7 shadow-xs space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+            <div class="flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
+                </div>
+                <div>
+                    <h3 class="text-base sm:text-lg font-bold text-gray-900">Ketersediaan Ruangan & Zoom Hari Ini</h3>
+                    <p class="text-xs text-gray-400">Pantau ketersediaan ruangan fisik di kantor BPS dan akun Zoom daring secara real-time.</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <a href="{{ route('booking-ruangan.index') }}" 
+                   class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    Lihat Jadwal & Booking Ruangan &rarr;
+                </a>
+            </div>
+        </div>
+
+        {{-- Flex Grid Kiri (3 Ruangan Fisik) & Kanan (2 Akun Zoom) --}}
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+            
+            {{-- KIRI: RUANGAN RAPAT FISIK (7 Cols) --}}
+            <div class="xl:col-span-7 flex flex-col justify-between space-y-3">
+                <div class="flex items-center justify-between pb-2 border-b border-gray-100">
+                    <span class="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                        Ruangan Rapat Fisik (3 Ruangan)
+                    </span>
+                    <span class="text-[11px] font-medium text-gray-400">Offline</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    @foreach($dashboardVenuesStatus as $vId => $vStat)
+                        @php
+                            $ven = $vStat['venue'];
+                            $isUse = $vStat['is_in_use'];
+                            $activeNow = $vStat['active_now'];
+                            $nextBook = $vStat['next_booking'];
+                            $tot = $vStat['total_today'];
+                        @endphp
+                        <div class="p-3.5 rounded-xl border flex flex-col justify-between transition {{ $isUse ? 'bg-rose-50/40 border-rose-200' : ($tot > 0 ? 'bg-amber-50/30 border-amber-200' : 'bg-gray-50/50 hover:bg-white border-gray-200') }}">
+                            <div>
+                                <div class="flex items-start justify-between gap-1 mb-1.5">
+                                    <h4 class="text-xs font-bold text-gray-900 truncate" title="{{ $ven->name }}">{{ $ven->name }}</h4>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold shrink-0 {{ $isUse ? 'bg-rose-100 text-rose-700' : ($tot > 0 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700') }}">
+                                        {{ $isUse ? 'Terpakai' : ($tot > 0 ? 'Ada Jadwal' : 'Kosong') }}
+                                    </span>
+                                </div>
+                                <p class="text-[10px] text-gray-400 mb-2">Kapasitas: {{ $ven->capacity }} Orang</p>
+
+                                @if($isUse && $activeNow)
+                                    <div class="p-2 bg-white rounded-lg border border-rose-200 text-[10px] space-y-0.5">
+                                        <p class="font-bold text-rose-900 truncate">{{ $activeNow->nama_acara }}</p>
+                                        <p class="text-rose-700">{{ substr($activeNow->start_time, 0, 5) }} - {{ substr($activeNow->end_time, 0, 5) }}</p>
+                                    </div>
+                                @elseif($nextBook)
+                                    <div class="text-[10px] text-amber-800 font-medium">
+                                        Berikutnya: {{ substr($nextBook->start_time, 0, 5) }}
+                                    </div>
+                                @else
+                                    <p class="text-[10px] text-emerald-600 font-semibold">Tersedia hari ini</p>
+                                @endif
+                            </div>
+
+                            <div class="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
+                                <span class="text-[10px] text-gray-400">{{ $tot }} Acara</span>
+                                <a href="{{ route('booking-ruangan.index', ['date' => $today]) }}" class="text-[10px] font-bold text-blue-600 hover:underline">
+                                    + Booking
+                                </a>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            {{-- KANAN: ZOOM MEETING DARING (5 Cols) --}}
+            <div class="xl:col-span-5 flex flex-col justify-between space-y-3">
+                <div class="flex items-center justify-between pb-2 border-b border-gray-100">
+                    <span class="text-xs font-bold text-indigo-700 uppercase tracking-wider flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                        Akun Zoom Meeting Daring (2 Akun)
+                    </span>
+                    <span class="text-[11px] font-medium text-indigo-400">Online</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    @foreach($dashboardZoomStatus as $zKey => $zStat)
+                        @php
+                            $zInfo = $zStat['info'];
+                            $isUse = $zStat['is_in_use'];
+                            $activeNow = $zStat['active_now'];
+                        @endphp
+                        <div class="p-3.5 rounded-xl border flex flex-col justify-between transition {{ $isUse ? 'bg-rose-50/40 border-rose-200' : 'bg-indigo-50/20 hover:bg-white border-indigo-100' }}">
+                            <div>
+                                <div class="flex items-start justify-between gap-1 mb-1.5">
+                                    <h4 class="text-xs font-bold text-indigo-900 truncate" title="{{ $zInfo['name'] }}">{{ $zInfo['name'] }}</h4>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold shrink-0 {{ $isUse ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700' }}">
+                                        {{ $isUse ? 'Digunakan' : 'Tersedia' }}
+                                    </span>
+                                </div>
+                                <p class="text-[10px] text-gray-400 mb-2 truncate">ID: {{ $zInfo['meeting_id'] }}</p>
+
+                                @if($isUse && $activeNow)
+                                    <div class="p-2 bg-white rounded-lg border border-rose-200 text-[10px]">
+                                        <p class="font-bold text-rose-900 truncate">{{ $activeNow->nama_acara }}</p>
+                                        <p class="text-rose-700">{{ substr($activeNow->start_time, 0, 5) }} - {{ substr($activeNow->end_time, 0, 5) }}</p>
+                                    </div>
+                                @else
+                                    <p class="text-[10px] text-indigo-700 font-semibold">Siap rapat online</p>
+                                @endif
+                            </div>
+
+                            <div class="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
+                                <span class="text-[10px] text-gray-400">Zoom Daring</span>
+                                <a href="{{ route('booking-ruangan.index', ['date' => $today]) }}" class="text-[10px] font-bold text-indigo-600 hover:underline">
+                                    + Pakai Zoom
+                                </a>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    {{-- 4. KALENDER DASHBOARD --}}
+    <div class="calendar-section-card">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-base sm:text-lg font-bold text-gray-900">Kalender Agenda & Kegiatan BPS</h3>
+                    <p class="text-xs text-gray-400">Klik pada agenda di kalender untuk menampilkan pop-up ringkasan dan detail kegiatan.</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 text-xs font-semibold">
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-md bg-indigo-600 inline-block"></span>
+                    <span class="text-gray-700">Rapat</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-md bg-sky-500 inline-block"></span>
+                    <span class="text-gray-700">Kegiatan</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="dashboardCalendar" class="min-h-[520px]"></div>
+    </div>
+
+</div>
+
+{{-- POP-UP MODAL DETAIL EVENT KALENDER --}}
+<div id="calendarEventModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <!-- Backdrop Blur -->
+    <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-xs transition-opacity" onclick="closeCalendarModal()"></div>
+
+    <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+        <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-gray-100">
+            <!-- Header Modal -->
+            <div id="modalHeaderBg" class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between text-white">
+                <div class="flex items-center gap-2.5">
+                    <div id="modalEventIcon" class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </div>
+                    <div>
+                        <span id="modalEventBadge" class="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-white/20 text-white">Kegiatan</span>
+                        <h3 class="text-sm font-bold leading-6 text-white truncate max-w-[280px] sm:max-w-[340px]" id="modalEventTitle">Detail Agenda</h3>
+                    </div>
+                </div>
+                <button type="button" onclick="closeCalendarModal()" class="text-white/80 hover:text-white rounded-lg p-1 transition focus:outline-none">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Body Modal -->
+            <div class="p-6 space-y-4 text-xs">
+                <!-- Agenda / Nama Acara Lengkap -->
+                <div class="bg-gray-50 rounded-xl p-3.5 border border-gray-100">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Nama Agenda / Acara</p>
+                    <p class="text-sm font-bold text-gray-900 leading-snug" id="modalEventAgenda">-</p>
+                </div>
+
+                <!-- Info Grid: Waktu, Lokasi, PJ, Tim, Status -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="bg-gray-50/70 p-3 rounded-xl border border-gray-100">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Tanggal & Jadwal</p>
+                        <p class="font-bold text-gray-800" id="modalEventDate">-</p>
+                        <p class="text-gray-500 font-medium mt-0.5" id="modalEventTime">-</p>
+                    </div>
+
+                    <div class="bg-gray-50/70 p-3 rounded-xl border border-gray-100">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Tempat / Ruangan</p>
+                        <p class="font-bold text-gray-800 truncate" id="modalEventPlace">-</p>
+                    </div>
+
+                    <div class="bg-gray-50/70 p-3 rounded-xl border border-gray-100">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Penanggung Jawab (PJ)</p>
+                        <p class="font-bold text-gray-800 truncate" id="modalEventPj">-</p>
+                    </div>
+
+                    <div class="bg-gray-50/70 p-3 rounded-xl border border-gray-100">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Tim / Fungsi</p>
+                        <p class="font-bold text-gray-800 truncate" id="modalEventTim">-</p>
+                    </div>
+                </div>
+
+                <!-- Status Pelaksanaan -->
+                <div class="flex items-center justify-between px-3.5 py-2.5 bg-blue-50/60 rounded-xl border border-blue-100">
+                    <span class="font-medium text-blue-900">Status Pelaksanaan</span>
+                    <span id="modalEventStatus" class="font-bold text-blue-700 bg-white px-2.5 py-0.5 rounded-lg border border-blue-200 shadow-2xs">-</span>
+                </div>
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="bg-gray-50 px-6 py-3.5 flex items-center justify-end gap-2.5 border-t border-gray-100">
+                <button type="button" onclick="closeCalendarModal()" class="px-4 py-2 bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 text-xs font-semibold rounded-xl transition">
+                    Tutup
+                </button>
+                <a id="modalEventLink" href="#" class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
+                    <span>Buka Detail Kegiatan</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
 
@@ -704,6 +817,54 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/id.js"></script>
 <script>
+function openCalendarModal(event) {
+    var props = event.extendedProps || {};
+    var isRapat = props.jenis === 'Rapat';
+
+    // Header styling based on jenis
+    var headerBg = document.getElementById('modalHeaderBg');
+    if (isRapat) {
+        headerBg.className = 'bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 flex items-center justify-between text-white';
+    } else {
+        headerBg.className = 'bg-gradient-to-r from-blue-600 to-sky-600 px-6 py-4 flex items-center justify-between text-white';
+    }
+
+    document.getElementById('modalEventBadge').textContent = props.jenis || (isRapat ? 'Rapat' : 'Kegiatan');
+    document.getElementById('modalEventTitle').textContent = props.raw_title || event.title;
+    document.getElementById('modalEventAgenda').textContent = props.agenda || props.raw_title || event.title;
+    
+    var dateStr = props.start_formatted || '-';
+    if (props.end_formatted && props.end_formatted !== props.start_formatted && props.end_formatted !== '-') {
+        dateStr += ' s.d. ' + props.end_formatted;
+    }
+    document.getElementById('modalEventDate').textContent = dateStr;
+    document.getElementById('modalEventTime').textContent = props.jam || '-';
+    document.getElementById('modalEventPlace').textContent = props.tempat || '-';
+    document.getElementById('modalEventPj').textContent = props.pj || '-';
+    document.getElementById('modalEventTim').textContent = props.tim || '-';
+    document.getElementById('modalEventStatus').textContent = props.status || 'Terjadwal';
+    
+    var linkBtn = document.getElementById('modalEventLink');
+    if (event.url) {
+        linkBtn.href = event.url;
+        linkBtn.style.display = 'inline-flex';
+    } else {
+        linkBtn.style.display = 'none';
+    }
+
+    var modal = document.getElementById('calendarEventModal');
+    modal.classList.remove('hidden');
+}
+
+function closeCalendarModal() {
+    var modal = document.getElementById('calendarEventModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeCalendarModal();
+});
+
 document.addEventListener("DOMContentLoaded", function() {
     var calendarEl = document.getElementById('dashboardCalendar');
     if (!calendarEl) return;
@@ -724,10 +885,8 @@ document.addEventListener("DOMContentLoaded", function() {
         },
         events: {!! json_encode($calendarEvents) !!},
         eventClick: function(info) {
-            if (info.event.url) {
-                info.jsEvent.preventDefault();
-                window.location.href = info.event.url;
-            }
+            info.jsEvent.preventDefault();
+            openCalendarModal(info.event);
         },
         eventMouseEnter: function(info) {
             var props = info.event.extendedProps;

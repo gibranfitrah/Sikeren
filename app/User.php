@@ -253,7 +253,11 @@ class User extends Authenticatable
 
     public function canAccessDetailKegiatan($task = null)
     {
-        // 1. Super Admin has full access
+        // 1. Super Admin or Ketua Tim / PJ has full management access
+        if ($this->isAdmin() || $this->isKetuaTimOrPj()) {
+            return true;
+        }
+
         $username = strtolower(trim($this->username ?? ''));
         $email = strtolower(trim($this->email ?? ''));
         if (

@@ -61,13 +61,6 @@
         :backUrl="url('/daftar_kegiatan')">
         
         <x-slot name="action">
-            <x-button 
-                variant="secondary" 
-                size="sm"
-                href="{{ url('/daftar_kegiatan') }}"
-                icon='<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>'>
-                Daftar Kegiatan
-            </x-button>
 
             @if(!empty($task->id))
                 <div class="relative" x-data="{ unduhOpen: false }">

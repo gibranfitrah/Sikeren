@@ -138,10 +138,16 @@ class DashboardController extends Controller
                 'borderColor'     => $isRapat ? '#4f46e5' : '#0284c7',
                 'textColor'       => '#ffffff',
                 'extendedProps'   => [
-                    'tim'    => $task->tim ?? '-',
-                    'pj'     => $task->penanggung_jawab ?? $task->pemimpin ?? '-',
-                    'tempat' => $task->tempat ?? '-',
-                    'status' => $task->status ?? 'Terjadwal'
+                    'raw_title'       => $task->text,
+                    'jenis'           => $isRapat ? 'Rapat' : 'Kegiatan',
+                    'agenda'          => $task->agenda ?? $task->perihal ?? $task->text,
+                    'start_formatted' => $task->start_date ? Carbon::parse($task->start_date)->translatedFormat('d M Y') : '-',
+                    'end_formatted'   => $task->date_akhir ? Carbon::parse($task->date_akhir)->translatedFormat('d M Y') : '-',
+                    'jam'             => ($task->start_jam ? substr($task->start_jam, 0, 5) : '08:00') . ' - ' . ($task->end_jam ? substr($task->end_jam, 0, 5) : 'Selesai'),
+                    'tim'             => $task->tim ?? '-',
+                    'pj'              => $task->penanggung_jawab ?? $task->pemimpin ?? '-',
+                    'tempat'          => $task->tempat ?? '-',
+                    'status'          => $task->status ?? 'Terjadwal'
                 ]
             ];
         }

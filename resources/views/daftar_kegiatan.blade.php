@@ -34,7 +34,7 @@
     }
 
     $currentUser = Auth::user();
-    $isPjUser = $currentUser && $currentUser->isKetuaTimOrPj();
+    $isPjUser = $currentUser && ($currentUser->isKetuaTimOrPj() || $currentUser->isAdmin());
 @endphp
 
 <style>
@@ -70,11 +70,7 @@
             </div>
             <h2 class="text-xl font-bold text-gray-900 mt-1">Kelola Kegiatan & Sub Kegiatan</h2>
             <p class="text-xs text-gray-500 mt-0.5">
-                @if($isPjUser)
-                    Kelola seluruh kegiatan, pantau sub-kegiatan terintegrasi melalui menu dropdown, dan delegasikan penugasan tim.
-                @else
-                    Daftar pemantauan seluruh kegiatan dan agenda rapat BPS (Mode Lihat).
-                @endif
+                Kelola seluruh kegiatan, pantau sub-kegiatan terintegrasi melalui menu dropdown, dan delegasikan penugasan tim.
             </p>
         </div>
         <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
@@ -104,14 +100,6 @@
                     </svg>
                     Sub Kegiatan
                 </a>
-            @else
-                <span class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold shadow-2xs">
-                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                    </svg>
-                    <span>Mode Pantau (Hanya Lihat Agenda)</span>
-                </span>
             @endif
         </div>
     </div>
