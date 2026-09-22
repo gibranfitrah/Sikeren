@@ -665,7 +665,6 @@ class KegiatanController extends Controller
             if ($pjName) {
                 $pjUser = User::where('nama_lengkap', 'LIKE', '%' . $pjName . '%')->first();
                 if ($pjUser) {
-                    $statusIcon = ($statusKehadiran === 'Hadir') ? '✅' : (($statusKehadiran === 'Sedang Ada Kegiatan Lain') ? '💼' : 'ℹ️');
                     $ketMsg = $keterangan ? " (Ket: {$keterangan})" : "";
                     
                     DB::table('notifications')->insert([
@@ -675,7 +674,7 @@ class KegiatanController extends Controller
                         'notifiable_id'   => $pjUser->id,
                         'data'            => json_encode([
                             'judul'            => "Presensi {$nama}: {$statusKehadiran}",
-                            'pesan'            => "{$statusIcon} Peserta {$nama} mencatat status '{$statusKehadiran}' pada kegiatan '{$task->text}'{$ketMsg}.",
+                            'pesan'            => "Peserta {$nama} mencatat status '{$statusKehadiran}' pada kegiatan '{$task->text}'{$ketMsg}.",
                             'url'              => url('/detail_kegiatan/' . $task->id),
                             'id_kegiatan'      => $task->id,
                             'status_kehadiran' => $statusKehadiran,

@@ -10,7 +10,7 @@
     <div class="bg-white p-6 rounded-2xl border border-gray-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
             <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
-                ✓ Akun Siap Digunakan
+                Akun Siap Digunakan
             </span>
             <h2 class="text-xl font-bold text-gray-900 mt-2">Daftar Akun Ketua Tim / Pemimpin Rapat</h2>
             <p class="text-xs text-gray-500 mt-0.5">Akun di bawah ini telah disinkronkan dan dapat langsung digunakan untuk login dan menyetujui rapat.</p>

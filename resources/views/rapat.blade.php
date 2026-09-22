@@ -280,14 +280,14 @@
                         <select id="penanggung_jawab" name="penanggung_jawab" class="w-full text-xs border-gray-300 rounded-lg p-2.5 bg-gray-50 focus:bg-white text-gray-800 shadow-xs focus:ring-emerald-500 focus:border-emerald-500 border">
                             <option value="">-- Pilih Penanggung Jawab (PJ) --</option>
                             @if(isset($eligiblePJs) && $eligiblePJs->count() > 0)
-                                <optgroup label="⭐ Pejabat, Ketua Tim, & Ahli Madya (Eligible PJ)">
+                                <optgroup label="Pejabat, Ketua Tim, & Ahli Madya (Eligible PJ)">
                                     @foreach ($eligiblePJs as $u)
                                         <option value="{{ $u->nama_lengkap }}" {{ $defaultPj == $u->nama_lengkap ? 'selected' : '' }}>
                                             {{ $u->select_option_label }}
                                         </option>
                                     @endforeach
                                 </optgroup>
-                                <optgroup label="📋 Pegawai BPS">
+                                <optgroup label="Pegawai BPS">
                                     @foreach ($allUsers->diff($eligiblePJs) as $u)
                                         <option value="{{ $u->nama_lengkap }}" {{ $defaultPj == $u->nama_lengkap ? 'selected' : '' }}>
                                             {{ $u->select_option_label }}
@@ -326,14 +326,14 @@
                         <select id="pemimpin" name="pemimpin" required class="w-full text-xs border-gray-300 rounded-lg p-2.5 bg-gray-50 focus:bg-white text-gray-800 shadow-xs focus:ring-blue-500 focus:border-blue-500 border">
                             <option value="">-- Pilih Pemimpin Rapat --</option>
                             @if(isset($eligiblePJs) && $eligiblePJs->count() > 0)
-                                <optgroup label="⭐ Pejabat, Ketua Tim, & Ahli Madya (Eligible PJ)">
+                                <optgroup label="Pejabat, Ketua Tim, & Ahli Madya (Eligible PJ)">
                                     @foreach ($eligiblePJs as $u)
                                         <option value="{{ $u->nama_lengkap }}" {{ $defaultPemimpin == $u->nama_lengkap ? 'selected' : '' }}>
                                             {{ $u->select_option_label }}
                                         </option>
                                     @endforeach
                                 </optgroup>
-                                <optgroup label="📋 Pegawai BPS">
+                                <optgroup label="Pegawai BPS">
                                     @foreach ($allUsers->diff($eligiblePJs) as $u)
                                         <option value="{{ $u->nama_lengkap }}" {{ $defaultPemimpin == $u->nama_lengkap ? 'selected' : '' }}>
                                             {{ $u->select_option_label }}

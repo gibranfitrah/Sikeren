@@ -23,16 +23,50 @@ class SimpatiApiService
 
     public function __construct()
     {
-        $this->baseUrl = rtrim(config('services.simpati.base_url', 'http://localhost:3000'), '/');
+        $this->baseUrl = self::normalizeBaseUrl(config('services.simpati.base_url', 'http://127.0.0.1:3000'));
         $this->apiKey  = config('services.simpati.api_key', 'si-ke-ren74_K9xM2pL8vR5wQ1zY4tN7bC0jF3hG6dS8aE1uW4iO9qX2zV5mP0');
         $this->timeout = (int) config('services.simpati.timeout', 15);
     }
 
+    /**
+     * Normalisasi Base URL agar tidak gagal hanya karena trailing slash,
+     * spasi, atau perbedaan localhost vs 127.0.0.1.
+     * "localhost" dinormalkan ke "127.0.0.1" agar stabil di Windows
+     * (menghindari masalah resolusi IPv6 ::1 vs IPv4).
+     */
+    public static function normalizeBaseUrl(?string $baseUrl): string
+    {
+        $baseUrl = trim((string) $baseUrl);
+        if ($baseUrl === '') {
+            return 'http://127.0.0.1:3000';
+        }
+        $baseUrl = rtrim($baseUrl, '/');
+        // Normalkan host localhost -> 127.0.0.1 (port & path dipertahankan)
+        $parts = parse_url($baseUrl);
+        if (!empty($parts['host']) && strtolower($parts['host']) === 'localhost') {
+            $parts['host'] = '127.0.0.1';
+            $scheme = ($parts['scheme'] ?? 'http') . '://';
+            $auth = '';
+            if (!empty($parts['user'])) {
+                $auth = $parts['user'];
+                if (!empty($parts['pass'])) {
+                    $auth .= ':' . $parts['pass'];
+                }
+                $auth .= '@';
+            }
+            $port = isset($parts['port']) ? ':' . $parts['port'] : '';
+            $path = $parts['path'] ?? '';
+            $query = isset($parts['query']) ? '?' . $parts['query'] : '';
+            $baseUrl = $scheme . $auth . $parts['host'] . $port . $path . $query;
+        }
+        return $baseUrl;
+    }
+
     public function setConfig(string $baseUrl, string $apiKey, int $timeout = 15): self
     {
-        $this->baseUrl = rtrim($baseUrl, '/');
+        $this->baseUrl = self::normalizeBaseUrl($baseUrl);
         $this->apiKey  = trim($apiKey);
-        $this->timeout = $timeout;
+        $this->timeout = $timeout > 0 ? $timeout : 15;
         return $this;
     }
 
@@ -54,7 +88,7 @@ class SimpatiApiService
         return Http::withHeaders([
             'x-api-key' => $this->apiKey,
             'Accept'    => 'application/json',
-        ])->timeout($this->timeout);
+        ])->connectTimeout(5)->timeout($this->timeout)->retry(1, 300);
     }
 
     /**
@@ -63,11 +97,11 @@ class SimpatiApiService
     protected function formatErrorMessage(Exception $e, string $endpoint): string
     {
         $msg = $e->getMessage();
-        if (str_contains($msg, 'Failed to connect') || str_contains($msg, 'cURL error 7') || str_contains($msg, 'Connection refused')) {
-            return "Tidak dapat terhubung ke server SIMPATI di ({$this->baseUrl}). Pastikan aplikasi SIMPATI sudah dijalankan di port tersebut atau periksa Base URL.";
+        if (str_contains($msg, 'Failed to connect') || str_contains($msg, 'cURL error 7') || str_contains($msg, 'Connection refused') || str_contains($msg, 'Couldn\'t connect to server')) {
+            return "Tidak dapat menjangkau server SIMPATI di ({$this->baseUrl}). Jalankan dulu mock server dengan 'npm run simpati' (atau 'node simpati-server.js') di terminal terpisah, lalu pastikan SIMPATI_API_BASE_URL di .env sudah benar.";
         }
         if (str_contains($msg, 'timed out') || str_contains($msg, 'cURL error 28')) {
-            return "Koneksi ke SIMPATI timeout setelah {$this->timeout} detik. Pastikan server SIMPATI tidak sedang mengalami kendala.";
+            return "Koneksi ke SIMPATI timeout setelah {$this->timeout} detik di {$this->baseUrl}{$endpoint}. Pastikan server SIMPATI tidak sedang mengalami kendala / port tidak diblokir firewall.";
         }
         if (str_contains($msg, '401') || str_contains($msg, 'Unauthorized')) {
             return "Akses ditolak (401 Unauthorized). Pastikan API Key valid dan memiliki hak akses 'read:pegawai'.";
@@ -84,6 +118,25 @@ class SimpatiApiService
     public function testConnection(): array
     {
         try {
+            // 0) Probe cepat tanpa auth: pastikan host/port bisa dijangkau.
+            // Membedakan "server mati" vs "API key salah".
+            try {
+                $health = Http::acceptJson()->connectTimeout(3)->timeout(5)->get("{$this->baseUrl}/health");
+                // Jika health 200 tapi endpoint auth gagal nanti, berarti server hidup.
+                // Jika health gagal koneksi, langsung kembalikan pesan jelas tanpa retry lama.
+            } catch (Exception $healthEx) {
+                $hmsg = $healthEx->getMessage();
+                if (str_contains($hmsg, 'Failed to connect') || str_contains($hmsg, 'cURL error 7') || str_contains($hmsg, 'Connection refused') || str_contains($hmsg, 'Couldn\'t connect')) {
+                    return [
+                        'success' => false,
+                        'status'  => 503,
+                        'message' => "Tidak dapat menjangkau server SIMPATI di ({$this->baseUrl}). Jalankan dulu 'npm run simpati' di terminal terpisah, lalu uji lagi. Detail: server tidak merespon /health.",
+                        'raw'     => null,
+                    ];
+                }
+                // Selain connection-refused, lanjut ke tes auth resmi.
+            }
+
             $url = "{$this->baseUrl}/api/public/pegawai";
             $response = $this->client()->get($url);
 
@@ -345,7 +398,7 @@ class SimpatiApiService
                                 'notifiable_type' => 'App\User',
                                 'notifiable_id'   => $admin->id,
                                 'data'            => json_encode([
-                                    'judul'       => '⚠️ Peringatan: Status Pegawai Pindah SATKER',
+                                    'judul'       => 'Peringatan: Status Pegawai Pindah SATKER',
                                     'pesan'       => "Pegawai {$nama} (NIP: {$niplama}) terdeteksi Pindah SATKER (dari " . ($oldSatker ?: 'Satker Lama') . " ke " . ($idSatker ?: 'Satker Baru') . "). Status kepegawaian memerlukan verifikasi.",
                                     'url'         => '/admin/simpati',
                                     'id_satker'   => $idSatker,

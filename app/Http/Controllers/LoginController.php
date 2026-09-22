@@ -28,11 +28,38 @@ class LoginController extends Controller
 {
     public function login(Request $request)
     {
-        if (Auth::check()) {
-            return redirect('/dashboard');
-        } else {
+        try {
+            if (Auth::check()) {
+                return redirect('/dashboard');
+            }
+        } catch (\Illuminate\Database\QueryException $e) {
+            // DB down / kredensial salah: jangan tampilkan 500 Ignition,
+            // tampilkan halaman login dengan pesan yang jelas + bersihkan cookie remember.
+            \Illuminate\Support\Facades\Log::error('DB connection failed on login page: ' . $e->getMessage());
+            try {
+                Auth::logout();
+            } catch (\Exception $ignored) {
+            }
+            try {
+                $request->session()->invalidate();
+            } catch (\Exception $ignored) {
+            }
+            try {
+                $recallerName = Auth::guard()->getRecallerName();
+            } catch (\Exception $ignored) {
+                $recallerName = 'remember_web_sha1';
+            }
+            $cookie = \Illuminate\Support\Facades\Cookie::forget($recallerName);
+            $prevMessage = $e->getPrevious() ? $e->getPrevious()->getMessage() : $e->getMessage();
+            return response()
+                ->view('login', ['db_error' => 'Koneksi database gagal: ' . $prevMessage])
+                ->withCookie($cookie);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Login page error: ' . $e->getMessage());
             return view('login');
         }
+
+        return view('login');
     }
 
     public function actionlogin(Request $request)

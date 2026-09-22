@@ -199,7 +199,7 @@
                             Penanggung Jawab (PJ) Kegiatan <span class="text-rose-500">*</span>
                         </label>
                         <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                            ⭐ Prioritas: Minimal Ketua Tim / Ahli Madya
+                            Prioritas: Minimal Ketua Tim / Ahli Madya
                         </span>
                     </div>
                     @php
@@ -212,14 +212,14 @@
                                 class="w-full px-4 py-2.5 bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition">
                             <option value="">-- Pilih Penanggung Jawab (PJ) --</option>
                             @if(isset($eligiblePJs) && $eligiblePJs->count() > 0)
-                                <optgroup label="⭐ Pejabat, Ketua Tim, & Ahli Madya (Eligible PJ)">
+                                <optgroup label="Pejabat, Ketua Tim, & Ahli Madya (Eligible PJ)">
                                     @foreach($eligiblePJs as $u)
                                         <option value="{{ $u->nama_lengkap }}" {{ $defaultPj == $u->nama_lengkap ? 'selected' : '' }}>
                                             {{ $u->select_option_label }}
                                         </option>
                                     @endforeach
                                 </optgroup>
-                                <optgroup label="📋 Pegawai BPS">
+                                <optgroup label="Pegawai BPS">
                                     @foreach($allUsers->diff($eligiblePJs) as $u)
                                         <option value="{{ $u->nama_lengkap }}" {{ $defaultPj == $u->nama_lengkap ? 'selected' : '' }}>
                                             {{ $u->select_option_label }}

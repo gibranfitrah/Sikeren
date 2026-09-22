@@ -33,7 +33,7 @@ class SimpatiSyncCommand extends Command
         $this->info('   INTEGRASI SIMPATI API -> SIKEREN (BPS SULTRA)   ');
         $this->info('====================================================');
 
-        $baseUrl = config('services.simpati.base_url', 'http://localhost:3000');
+        $baseUrl = config('services.simpati.base_url', 'http://127.0.0.1:3000');
         $apiKey  = config('services.simpati.api_key', '');
         $maskedKey = substr($apiKey, 0, 10) . '...' . substr($apiKey, -6);
 
@@ -46,11 +46,11 @@ class SimpatiSyncCommand extends Command
             $this->info('Menguji koneksi ke SIMPATI API...');
             $result = $simpatiService->testConnection();
             if ($result['success']) {
-                $this->info("✓ Sukses! {$result['message']}");
+                $this->info("Sukses! {$result['message']}");
                 $this->line("  Ditemukan {$result['data_count']} data pegawai aktif.");
                 return 0;
             } else {
-                $this->error("✗ Gagal: {$result['message']}");
+                $this->error("Gagal: {$result['message']}");
                 return 1;
             }
         }
@@ -100,7 +100,7 @@ class SimpatiSyncCommand extends Command
         $this->newLine();
 
         if ($result['success']) {
-            $this->info('✓ SINKRONISASI BERHASIL!');
+            $this->info('SINKRONISASI BERHASIL!');
             $this->table(
                 ['Kategori Data', 'Jumlah'],
                 [
@@ -122,7 +122,7 @@ class SimpatiSyncCommand extends Command
 
             return 0;
         } else {
-            $this->error('✗ SINKRONISASI GAGAL!');
+            $this->error('SINKRONISASI GAGAL!');
             foreach ($result['errors'] as $err) {
                 $this->error(" - {$err}");
             }

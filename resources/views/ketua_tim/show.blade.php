@@ -18,7 +18,7 @@
                 <div class="flex items-center gap-2">
                     <span class="text-xs font-bold px-3 py-1 rounded-full 
                         {{ $agenda->status === 'selesai' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600' }}">
-                        ● {{ ucfirst($agenda->status) }}
+                        {{ ucfirst($agenda->status) }}
                     </span>
                     <span class="text-xs text-gray-400">ID: #{{ $agenda->id }}</span>
                 </div>

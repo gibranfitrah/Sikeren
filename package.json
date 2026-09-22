@@ -4,7 +4,9 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "simpati": "node simpati-server.js"
+        "simpati": "node simpati-server.js",
+        "simpati:host": "node simpati-server.js",
+        "simpati:test": "node -e \"fetch('http://127.0.0.1:3000/health').then(r=>r.json().then(j=>console.log('OK:',JSON.stringify(j)))).catch(e=>{console.error('GAGAL: server SIMPATI tidak jalan. Jalankan npm run simpati dulu. Detail:',e.message);process.exit(1)})\""
     },
     "devDependencies": {
         "axios": "^1.6.4",
