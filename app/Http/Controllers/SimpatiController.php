@@ -38,7 +38,7 @@ class SimpatiController extends Controller
     {
         $this->authorizeAccess();
 
-        $baseUrl = config('services.simpati.base_url', 'http://localhost:3000');
+        $baseUrl = config('services.simpati.base_url', 'http://127.0.0.1:3000');
         $apiKey  = config('services.simpati.api_key', 'si-ke-ren74_K9xM2pL8vR5wQ1zY4tN7bC0jF3hG6dS8aE1uW4iO9qX2zV5mP0');
 
         // Daftar Satker Resmi BPS se-Sulawesi Tenggara

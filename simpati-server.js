@@ -13,8 +13,13 @@
 import http from 'http';
 import url from 'url';
 
-const PORT = 3000;
-const VALID_API_KEY = 'si-ke-ren74_K9xM2pL8vR5wQ1zY4tN7bC0jF3hG6dS8aE1uW4iO9qX2zV5mP0';
+// PORT & HOST bisa dioverride via env agar fleksibel di Windows/server.
+// Contoh: PORT=3000 HOST=0.0.0.0 node simpati-server.js
+// Bind default ke 0.0.0.0 agar bisa dijangkau via localhost MAUPUN 127.0.0.1
+// (sebelumnya hanya listen() default sehingga rawan masalah resolusi IPv6 ::1 vs IPv4).
+const PORT = parseInt(process.env.PORT || process.env.SIMPATI_PORT || '3000', 10);
+const HOST = process.env.HOST || process.env.SIMPATI_HOST || '0.0.0.0';
+const VALID_API_KEY = process.env.SIMPATI_API_KEY || 'si-ke-ren74_K9xM2pL8vR5wQ1zY4tN7bC0jF3hG6dS8aE1uW4iO9qX2zV5mP0';
 
 // Master Data Pegawai BPS Sultra
 const PEGAWAI_DATA = [
@@ -168,6 +173,22 @@ const server = http.createServer((req, res) => {
 
     console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${pathname}`);
 
+    // Health check tanpa API key agar Laravel / browser bisa cek "dijangkau atau tidak"
+    // GET / , GET /health , GET /api/public/health
+    if (req.method === 'GET' && (pathname === '/' || pathname === '/health' || pathname === '/api/public/health')) {
+        return sendJSON(res, 200, {
+            status: 'ok',
+            service: 'SIMPATI Public API (Mock)',
+            port: PORT,
+            time: new Date().toISOString(),
+            endpoints: [
+                'GET /api/public/pegawai',
+                'GET /api/public/pegawai/{niplama}',
+                'GET /api/public/tim-kerja',
+            ],
+        });
+    }
+
     // Check API Key
     const apiKey = req.headers['x-api-key'];
     if (!apiKey || apiKey !== VALID_API_KEY) {
@@ -285,14 +306,30 @@ const server = http.createServer((req, res) => {
     });
 });
 
-server.listen(PORT, () => {
+server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error("==========================================================");
+        console.error(`✗ Port ${PORT} sudah dipakai aplikasi lain.`);
+        console.error(`  Solusi: hentikan proses lama atau jalankan dengan port lain, contoh:`);
+        console.error(`    PORT=3001 node simpati-server.js`);
+        console.error(`  Lalu sesuaikan SIMPATI_API_BASE_URL di .env SIKEREN.`);
+        console.error("==========================================================");
+        process.exit(1);
+    }
+    console.error('✗ Server error:', err);
+    process.exit(1);
+});
+
+server.listen(PORT, HOST, () => {
     console.log("==========================================================");
-    console.log(`✓ SIMPATI Public API Server BERHASIL AKTIF di http://localhost:${PORT}`);
+    console.log(`✓ SIMPATI Public API Server BERHASIL AKTIF di http://${HOST === '0.0.0.0' ? '127.0.0.1' : HOST}:${PORT}`);
+    console.log(`  (bind ${HOST}:${PORT} — bisa diakses via localhost & 127.0.0.1)`);
     console.log(`✓ API Key: ${VALID_API_KEY}`);
     console.log("==========================================================");
     console.log("Endpoint Siap Digunakan:");
-    console.log(` - GET http://localhost:${PORT}/api/public/pegawai`);
-    console.log(` - GET http://localhost:${PORT}/api/public/pegawai/{niplama}`);
-    console.log(` - GET http://localhost:${PORT}/api/public/tim-kerja`);
+    console.log(` - GET http://127.0.0.1:${PORT}/api/public/pegawai`);
+    console.log(` - GET http://127.0.0.1:${PORT}/api/public/pegawai/{niplama}`);
+    console.log(` - GET http://127.0.0.1:${PORT}/api/public/tim-kerja`);
+    console.log(` - GET http://127.0.0.1:${PORT}/health (tanpa API key)`);
     console.log("==========================================================");
 });

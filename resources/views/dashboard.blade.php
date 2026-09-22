@@ -148,16 +148,16 @@
         $hour = (int) \Carbon\Carbon::now()->format('H');
         if ($hour >= 4 && $hour < 11) {
             $timeGreeting = 'Selamat Pagi';
-            $timeEmoji = '🌅';
+            $timeIcon = 'sun';
         } elseif ($hour >= 11 && $hour < 15) {
             $timeGreeting = 'Selamat Siang';
-            $timeEmoji = '☀️';
+            $timeIcon = 'sun';
         } elseif ($hour >= 15 && $hour < 18) {
             $timeGreeting = 'Selamat Sore';
-            $timeEmoji = '🌇';
+            $timeIcon = 'sun';
         } else {
             $timeGreeting = 'Selamat Malam';
-            $timeEmoji = '🌙';
+            $timeIcon = 'moon';
         }
 
         $currentUser = Auth::user();
@@ -173,30 +173,38 @@
         <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
             {{-- Left: Avatar & Greeting Text --}}
             <div class="flex items-start sm:items-center gap-4">
-                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center text-3xl shadow-sm shrink-0">
-                    <span>👋</span>
+                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center shadow-sm shrink-0">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></svg>
                 </div>
                 <div class="space-y-1.5">
                     <div class="flex items-center gap-2 flex-wrap">
                         <span class="text-[11px] font-semibold px-3 py-1 rounded-full bg-white/20 text-white border border-white/30 flex items-center gap-1.5 shadow-xs">
-                            <span>{{ $timeEmoji }}</span>
+                            @if($timeIcon === 'moon')
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0012 21.75a9.753 9.753 0 009.752-6.748z"/></svg>
+                            @else
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
+                            @endif
                             <span>{{ $timeGreeting }}</span>
                         </span>
                         @if($userRole === 'Administrator')
-                            <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-rose-500/40 text-rose-100 border border-rose-300/50 shadow-xs">
-                                🛡️ Administrator Sistem
+                            <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-rose-500/40 text-rose-100 border border-rose-300/50 shadow-xs inline-flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+                                Administrator Sistem
                             </span>
                         @elseif(str_contains(strtolower($userRole), 'ketua tim') || str_contains(strtolower($userRole), 'pj'))
-                            <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-amber-400/35 text-amber-100 border border-amber-300/50 shadow-xs">
-                                ⭐ {{ $userRole }}
+                            <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-amber-400/35 text-amber-100 border border-amber-300/50 shadow-xs inline-flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>
+                                {{ $userRole }}
                             </span>
                         @elseif(str_contains(strtolower($userRole), 'anggota tim'))
-                            <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-sky-400/35 text-sky-100 border border-sky-300/50 shadow-xs">
-                                👥 {{ $userRole }}
+                            <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-sky-400/35 text-sky-100 border border-sky-300/50 shadow-xs inline-flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+                                {{ $userRole }}
                             </span>
                         @else
-                            <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-400/35 text-emerald-100 border border-emerald-300/50 shadow-xs">
-                                👔 {{ $userRole }}
+                            <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-400/35 text-emerald-100 border border-emerald-300/50 shadow-xs inline-flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.111 48.111 0 00-7.5 0"/></svg>
+                                {{ $userRole }}
                             </span>
                         @endif
                     </div>
@@ -214,7 +222,10 @@
             {{-- Right: Date & Quick Action Chips --}}
             <div class="flex sm:flex-row md:flex-col items-start md:items-end justify-between gap-3 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-white/20">
                 <div class="text-left md:text-right">
-                    <span class="text-[11px] font-semibold text-blue-200 block">📅 Hari Ini:</span>
+                    <span class="text-[11px] font-semibold text-blue-200 flex items-center gap-1 md:justify-end">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+                        Hari Ini:
+                    </span>
                     <span class="text-sm sm:text-base font-extrabold text-white tracking-wide block">
                         {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}
                     </span>
@@ -223,11 +234,13 @@
                 <div class="flex items-center gap-2 flex-wrap">
                     <a href="{{ url('/tugas-saya') }}" 
                        class="px-3.5 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition flex items-center gap-1.5 border border-white/40 shadow-sm">
-                        <span>📋 {{ $jumlah_kegiatan_saya }} Tugas Saya</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h3.75M9 15h3.75M9 18h3.75m3.75-13.5H18a2.25 2.25 0 012.25 2.25v13.5A2.25 2.25 0 0118 22.5H6A2.25 2.25 0 013.75 20.25V6.75A2.25 2.25 0 016 4.5h2.25m6 0h-6m6 0a2.25 2.25 0 012.25 2.25v.75m-4.5 0a2.25 2.25 0 01-2.25-2.25v-.75m4.5 0h.008v.008h-.008v-.008z"/></svg>
+                        <span>{{ $jumlah_kegiatan_saya }} Tugas Saya</span>
                     </a>
                     <a href="{{ route('time-schedule.index') }}" 
                        class="px-3.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm border border-sky-300/40">
-                        <span>⏰ Time Schedule</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Time Schedule</span>
                     </a>
                 </div>
             </div>
@@ -432,8 +445,8 @@
     <div class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-7 shadow-xs space-y-5">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
             <div class="flex items-center gap-3.5">
-                <div class="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center font-bold text-base shrink-0">
-                    🏛️
+                <div class="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
                 </div>
                 <div>
                     <h3 class="text-base sm:text-lg font-bold text-gray-900">Ketersediaan Ruangan & Zoom Hari Ini</h3>

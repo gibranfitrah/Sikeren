@@ -37,6 +37,14 @@
             </div>
             @endif
 
+            @if(isset($db_error))
+            <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-r" role="alert">
+                <p class="font-bold">Database tidak terhubung!</p>
+                <p>{{ $db_error }}</p>
+                <p class="mt-2 text-sm">Pastikan MariaDB di PhpWebStudy berjalan (port 3306) dan .env: DB_DATABASE=bps7400_sikeren, DB_USERNAME=root, DB_PASSWORD=root.</p>
+            </div>
+            @endif
+
             <form id="loginForm" action="{{ route('/actionlogin') }}" method="post" class="space-y-5">
                 @csrf
                 <div>

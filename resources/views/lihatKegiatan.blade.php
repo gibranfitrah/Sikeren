@@ -287,20 +287,20 @@
                 </div>
                 <div id="top-banner-status">
                     @if($rapatSetuju == 1 && (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1))
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                            ✓ Seluruh Tahap Tuntas (Selesai)
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            <svg class="w-3 h-3 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> Seluruh Tahap Tuntas (Selesai)
                         </span>
                     @elseif($rapatSetuju == 1)
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                            ● Rapat Disetujui (Sedang Berjalan)
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                            <span class="w-1.5 h-1.5 rounded-full bg-current inline-block"></span> Rapat Disetujui (Sedang Berjalan)
                         </span>
                     @elseif($rapatSetuju == 3)
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-300 border border-red-500/30">
-                            ✕ Rapat Ditolak
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-300 border border-red-500/30">
+                            <svg class="w-3 h-3 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg> Rapat Ditolak
                         </span>
                     @else
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
-                            ⏳ Menunggu Persetujuan Pemimpin
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
+                            <svg class="w-3.5 h-3.5 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Menunggu Persetujuan Pemimpin
                         </span>
                     @endif
                 </div>
@@ -313,7 +313,7 @@
                     <span class="w-8 h-8 rounded-lg bg-blue-600 text-white font-black text-xs flex items-center justify-center flex-shrink-0">1</span>
                     <div>
                         <div class="text-xs font-bold text-white">1. Buat Rapat</div>
-                        <div class="text-[10px] text-blue-400 font-medium">✓ Selesai Diterbitkan</div>
+                        <div class="text-[10px] text-blue-400 font-medium inline-flex items-center gap-1"><svg class="w-3 h-3 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> Selesai Diterbitkan</div>
                     </div>
                 </div>
 
@@ -323,7 +323,7 @@
                     <div>
                         <div class="text-xs font-bold text-white">2. Persetujuan</div>
                         <div id="step-2-status" class="text-[10px] {{ $rapatSetuju == 1 ? 'text-emerald-400' : ($rapatSetuju == 3 ? 'text-red-400' : 'text-amber-400 font-bold') }}">
-                            {{ $rapatSetuju == 1 ? '✓ Telah Disetujui' : ($rapatSetuju == 3 ? '✕ Ditolak' : '⏳ Menunggu Approval') }}
+                            {{ $rapatSetuju == 1 ? 'Telah Disetujui' : ($rapatSetuju == 3 ? 'Ditolak' : 'Menunggu Approval') }}
                         </div>
                     </div>
                 </div>
@@ -334,7 +334,7 @@
                     <div>
                         <div class="text-xs font-bold text-white">3. Presensi QR</div>
                         <div id="step-3-status" class="text-[10px] {{ $rapatSetuju == 1 ? 'text-blue-400' : 'text-slate-500' }}">
-                            {{ $rapatSetuju == 1 ? '● Siap / QR Aktif' : 'Terkunci' }}
+                            {{ $rapatSetuju == 1 ? 'Siap / QR Aktif' : 'Terkunci' }}
                         </div>
                     </div>
                 </div>
@@ -345,7 +345,7 @@
                     <div>
                         <div class="text-xs font-bold text-white">4. Notulen & Foto</div>
                         <div id="step-4-status" class="text-[10px] {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'text-emerald-400' : ($rapatSetuju == 1 ? 'text-amber-400' : 'text-slate-500') }}">
-                            {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? '✓ Notulen Selesai' : ($rapatSetuju == 1 ? 'Menunggu Unggah' : 'Terkunci') }}
+                            {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'Notulen Selesai' : ($rapatSetuju == 1 ? 'Menunggu Unggah' : 'Terkunci') }}
                         </div>
                     </div>
                 </div>
@@ -487,7 +487,7 @@
                                 </div>
                             </div>
                             <span id="badge-tahap4-status" class="text-[11px] font-bold {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-amber-700 bg-amber-50 border border-amber-200' }} px-3 py-1 rounded-full">
-                                {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? '✓ Selesai (100%)' : 'Menunggu Notulen' }}
+                                {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'Selesai (100%)' : 'Menunggu Notulen' }}
                             </span>
                         </div>
 
@@ -515,19 +515,19 @@
                                 {{-- ATTACHMENT CARDS & LINKS --}}
                                 <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2">
                                     <a id="materi-link-btn" target="_blank" href="{{ $rapatMateriLink ?: '#' }}" class="{{ $rapatMateriLink ? 'inline-flex' : 'hidden' }} items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-bold transition shadow-2xs">
-                                        <span>📁</span>
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
                                         <span>Buka Materi (Drive)</span>
                                         <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                                     </a>
 
                                     <a id="foto-link-btn" target="_blank" href="{{ $rapatFotoLink ?: '#' }}" class="{{ $rapatFotoLink ? 'inline-flex' : 'hidden' }} items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 text-xs font-bold transition shadow-2xs">
-                                        <span>📷</span>
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                         <span>Buka Foto Dokumentasi</span>
                                         <svg class="w-3 h-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                                     </a>
 
                                     <a target="_blank" href="{{ url('employee/pdf_kegiatan/' . $rapatId) }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 text-xs font-bold transition shadow-2xs">
-                                        <span>📄</span>
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
                                         <span>Unduh PDF Risalah</span>
                                     </a>
                                 </div>
@@ -541,7 +541,7 @@
                                             {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'Ubah Notulen & Dokumentasi Rapat' : 'Pengisian Notulen & Dokumentasi Rapat' }}
                                         </h5>
                                         <button type="button" id="btn-cancel-edit-notulen" onclick="toggleEditNotulen(false)" class="{{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? '' : 'hidden' }} text-xs font-bold text-gray-500 hover:text-gray-700 px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 transition">
-                                            ✕ Batal
+                                            Batal
                                         </button>
                                     </div>
 
@@ -738,7 +738,7 @@
                                     @if($st === 'Hadir')
                                         <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                            <span>✓ Hadir</span>
+                                            <svg class="w-3 h-3 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span>Hadir</span>
                                             @if(!empty($pesertaItem->waktu_kehadiran))
                                                 <span class="text-[9px] text-emerald-600 font-mono ml-0.5 font-normal">({{ \Carbon\Carbon::parse($pesertaItem->waktu_kehadiran)->format('H:i') }})</span>
                                             @endif
@@ -746,7 +746,7 @@
                                     @elseif($st === 'Sedang Ada Kegiatan Lain')
                                         <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
                                             <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                            <span>💼 Kegiatan Lain</span>
+                                            <svg class="w-3.5 h-3.5 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.111 48.111 0 00-7.5 0"/></svg><span>Kegiatan Lain</span>
                                             @if(!empty($pesertaItem->waktu_kehadiran))
                                                 <span class="text-[9px] text-amber-600 font-mono ml-0.5 font-normal">({{ \Carbon\Carbon::parse($pesertaItem->waktu_kehadiran)->format('H:i') }})</span>
                                             @endif
@@ -754,7 +754,7 @@
                                     @elseif($st === 'Tidak Hadir')
                                         <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
                                             <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                            <span>✕ Tidak Hadir</span>
+                                            <svg class="w-3 h-3 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg><span>Tidak Hadir</span>
                                             @if(!empty($pesertaItem->waktu_kehadiran))
                                                 <span class="text-[9px] text-rose-600 font-mono ml-0.5 font-normal">({{ \Carbon\Carbon::parse($pesertaItem->waktu_kehadiran)->format('H:i') }})</span>
                                             @endif
@@ -927,19 +927,19 @@ function refreshPresensi() {
                         if (p.status_kehadiran === 'Hadir') {
                             statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                <span>✓ Hadir</span>
+                                <svg class="w-3 h-3 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span>Hadir</span>
                                 ${p.waktu ? `<span class="text-[9px] text-emerald-600 font-mono ml-0.5 font-normal">(${p.waktu})</span>` : ''}
                             </span>`;
                         } else if (p.status_kehadiran === 'Sedang Ada Kegiatan Lain') {
                             statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
                                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                <span>💼 Kegiatan Lain</span>
+                                <svg class="w-3.5 h-3.5 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.111 48.111 0 00-7.5 0"/></svg><span>Kegiatan Lain</span>
                                 ${p.waktu ? `<span class="text-[9px] text-amber-600 font-mono ml-0.5 font-normal">(${p.waktu})</span>` : ''}
                             </span>`;
                         } else if (p.status_kehadiran === 'Tidak Hadir') {
                             statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
                                 <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                <span>✕ Tidak Hadir</span>
+                                <svg class="w-3 h-3 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg><span>Tidak Hadir</span>
                                 ${p.waktu ? `<span class="text-[9px] text-rose-600 font-mono ml-0.5 font-normal">(${p.waktu})</span>` : ''}
                             </span>`;
                         } else {
@@ -971,13 +971,13 @@ function refreshPresensi() {
                     const topBanner = document.getElementById('top-banner-status');
                     if (topBanner) {
                         if (r.setuju_rapat == 1 && hasNotulen) {
-                            topBanner.innerHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">✓ Seluruh Tahap Tuntas (Selesai)</span>`;
+                            topBanner.innerHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"><svg class="w-3 h-3 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> Seluruh Tahap Tuntas (Selesai)</span>`;
                         } else if (r.setuju_rapat == 1) {
-                            topBanner.innerHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">● Rapat Disetujui (Sedang Berjalan)</span>`;
+                            topBanner.innerHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30"><span class="w-1.5 h-1.5 rounded-full bg-current inline-block"></span> Rapat Disetujui (Sedang Berjalan)</span>`;
                         } else if (r.setuju_rapat == 3) {
-                            topBanner.innerHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-300 border border-red-500/30">✕ Rapat Ditolak</span>`;
+                            topBanner.innerHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-300 border border-red-500/30"><svg class="w-3 h-3 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg> Rapat Ditolak</span>`;
                         } else {
-                            topBanner.innerHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">⏳ Menunggu Persetujuan Pemimpin</span>`;
+                            topBanner.innerHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse"><svg class="w-3.5 h-3.5 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Menunggu Persetujuan Pemimpin</span>`;
                         }
                     }
 
@@ -990,7 +990,7 @@ function refreshPresensi() {
                             step4Box.className = "p-3 rounded-xl bg-slate-800/80 border-emerald-500/50 border flex items-center gap-3";
                             step4Badge.className = "w-8 h-8 rounded-lg bg-emerald-600 text-white font-black text-xs flex items-center justify-center flex-shrink-0";
                             step4Status.className = "text-[10px] text-emerald-400 font-medium";
-                            step4Status.innerText = "✓ Notulen Selesai";
+                            step4Status.innerText = "Notulen Selesai";
                         } else if (r.setuju_rapat == 1) {
                             step4Box.className = "p-3 rounded-xl bg-slate-800/80 border-amber-500/50 border flex items-center gap-3";
                             step4Badge.className = "w-8 h-8 rounded-lg bg-amber-500 text-white font-black text-xs flex items-center justify-center flex-shrink-0";
@@ -1004,7 +1004,7 @@ function refreshPresensi() {
                     if (badgeTahap4) {
                         if (hasNotulen) {
                             badgeTahap4.className = "text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full";
-                            badgeTahap4.innerText = "✓ Selesai (100%)";
+                            badgeTahap4.innerText = "Selesai (100%)";
                         } else {
                             badgeTahap4.className = "text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full";
                             badgeTahap4.innerText = "Menunggu Notulen";
