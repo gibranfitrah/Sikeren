@@ -60,7 +60,7 @@
         flex-direction: column;
         gap: 28px;
         padding-bottom: 48px;
-        max-width: 1280px;
+        max-width: 1440px;
         margin: 0 auto;
     }
 
@@ -567,46 +567,41 @@
 
     </div>
 
-    {{-- 3. STATUS KETERSEDIAAN RUANGAN & ZOOM HARI INI (FLEX KIRI & KANAN) --}}
-    <div class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-7 shadow-xs space-y-6">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
-            <div class="flex items-center gap-3.5">
-                <div class="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
+    {{-- 3. KETERSEDIAAN RUANGAN & ZOOM (KIRI) DAN KALENDER AGENDA (KANAN) --}}
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+        
+        {{-- SISI KIRI: STATUS KETERSEDIAAN RUANGAN & ZOOM HARI INI --}}
+        <div class="xl:col-span-5 bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-xs space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                        <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm sm:text-base font-bold text-gray-900 leading-tight">Ketersediaan Ruangan & Zoom</h3>
+                        <p class="text-[11px] text-gray-400">Status real-time ruangan & Zoom hari ini</p>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="text-base sm:text-lg font-bold text-gray-900">Ketersediaan Ruangan & Zoom Hari Ini</h3>
-                    <p class="text-xs text-gray-400">Pantau ketersediaan ruangan fisik di kantor BPS dan akun Zoom daring secara real-time.</p>
-                </div>
-            </div>
 
-            <div class="flex items-center gap-3">
                 <a href="{{ route('booking-ruangan.index') }}" 
-                   class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                    Lihat Jadwal & Booking Ruangan &rarr;
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold rounded-lg shadow-2xs transition shrink-0">
+                    <span>Jadwal Ruangan &rarr;</span>
                 </a>
             </div>
-        </div>
 
-        {{-- Flex Grid Kiri (3 Ruangan Fisik) & Kanan (2 Akun Zoom) --}}
-        <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
-            
-            {{-- KIRI: RUANGAN RAPAT FISIK (7 Cols) --}}
-            <div class="xl:col-span-7 flex flex-col justify-between space-y-3">
-                <div class="flex items-center justify-between pb-2 border-b border-gray-100">
+            {{-- 1. RUANGAN RAPAT FISIK (3 Ruangan) --}}
+            <div class="space-y-2.5">
+                <div class="flex items-center justify-between pb-1.5 border-b border-gray-100">
                     <span class="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
-                        <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                         </svg>
                         Ruangan Rapat Fisik (3 Ruangan)
                     </span>
-                    <span class="text-[11px] font-medium text-gray-400">Offline</span>
+                    <span class="text-[10px] font-bold text-gray-400">Offline</span>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="space-y-2.5">
                     @foreach($dashboardVenuesStatus as $vId => $vStat)
                         @php
                             $ven = $vStat['venue'];
@@ -615,33 +610,35 @@
                             $nextBook = $vStat['next_booking'];
                             $tot = $vStat['total_today'];
                         @endphp
-                        <div class="p-3.5 rounded-xl border flex flex-col justify-between transition {{ $isUse ? 'bg-rose-50/40 border-rose-200' : ($tot > 0 ? 'bg-amber-50/30 border-amber-200' : 'bg-gray-50/50 hover:bg-white border-gray-200') }}">
+                        <div class="p-3 rounded-xl border flex flex-col justify-between transition {{ $isUse ? 'bg-rose-50/40 border-rose-200' : ($tot > 0 ? 'bg-amber-50/30 border-amber-200' : 'bg-gray-50/50 hover:bg-white border-gray-200') }}">
                             <div>
-                                <div class="flex items-start justify-between gap-1 mb-1.5">
-                                    <h4 class="text-xs font-bold text-gray-900 truncate" title="{{ $ven->name }}">{{ $ven->name }}</h4>
+                                <div class="flex items-start justify-between gap-1 mb-1">
+                                    <div>
+                                        <h4 class="text-xs font-bold text-gray-900 truncate" title="{{ $ven->name }}">{{ $ven->name }}</h4>
+                                        <p class="text-[10px] text-gray-400">Kapasitas: {{ $ven->capacity }} Orang</p>
+                                    </div>
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold shrink-0 {{ $isUse ? 'bg-rose-100 text-rose-700' : ($tot > 0 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700') }}">
                                         {{ $isUse ? 'Terpakai' : ($tot > 0 ? 'Ada Jadwal' : 'Kosong') }}
                                     </span>
                                 </div>
-                                <p class="text-[10px] text-gray-400 mb-2">Kapasitas: {{ $ven->capacity }} Orang</p>
 
                                 @if($isUse && $activeNow)
-                                    <div class="p-2 bg-white rounded-lg border border-rose-200 text-[10px] space-y-0.5">
+                                    <div class="mt-1.5 p-1.5 bg-white rounded-lg border border-rose-200 text-[10px] space-y-0.5">
                                         <p class="font-bold text-rose-900 truncate">{{ $activeNow->nama_acara }}</p>
                                         <p class="text-rose-700">{{ substr($activeNow->start_time, 0, 5) }} - {{ substr($activeNow->end_time, 0, 5) }}</p>
                                     </div>
                                 @elseif($nextBook)
-                                    <div class="text-[10px] text-amber-800 font-medium">
-                                        Berikutnya: {{ substr($nextBook->start_time, 0, 5) }}
+                                    <div class="mt-1 text-[10px] text-amber-800 font-medium">
+                                        Jadwal berikutnya: {{ substr($nextBook->start_time, 0, 5) }}
                                     </div>
                                 @else
-                                    <p class="text-[10px] text-emerald-600 font-semibold">Tersedia hari ini</p>
+                                    <p class="mt-1 text-[10px] text-emerald-600 font-semibold">Tersedia hari ini</p>
                                 @endif
                             </div>
 
-                            <div class="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
-                                <span class="text-[10px] text-gray-400">{{ $tot }} Acara</span>
-                                <a href="{{ route('booking-ruangan.index', ['date' => $today]) }}" class="text-[10px] font-bold text-blue-600 hover:underline">
+                            <div class="mt-2 pt-1.5 border-t border-gray-100 flex items-center justify-between text-[10px]">
+                                <span class="text-gray-400">{{ $tot }} Acara</span>
+                                <a href="{{ route('booking-ruangan.index', ['date' => $today]) }}" class="font-bold text-blue-600 hover:underline">
                                     + Booking
                                 </a>
                             </div>
@@ -650,37 +647,37 @@
                 </div>
             </div>
 
-            {{-- KANAN: ZOOM MEETING DARING (5 Cols) --}}
-            <div class="xl:col-span-5 flex flex-col justify-between space-y-3">
-                <div class="flex items-center justify-between pb-2 border-b border-gray-100">
+            {{-- 2. AKUN ZOOM MEETING DARING (2 Akun) --}}
+            <div class="space-y-2.5 pt-1">
+                <div class="flex items-center justify-between pb-1.5 border-b border-gray-100">
                     <span class="text-xs font-bold text-indigo-700 uppercase tracking-wider flex items-center gap-1.5">
-                        <svg class="w-4 h-4 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-3.5 h-3.5 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                         </svg>
-                        Akun Zoom Meeting Daring (2 Akun)
+                        Zoom Meeting Daring (2 Akun)
                     </span>
-                    <span class="text-[11px] font-medium text-indigo-400">Online</span>
+                    <span class="text-[10px] font-bold text-indigo-400">Online</span>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     @foreach($dashboardZoomStatus as $zKey => $zStat)
                         @php
                             $zInfo = $zStat['info'];
                             $isUse = $zStat['is_in_use'];
                             $activeNow = $zStat['active_now'];
                         @endphp
-                        <div class="p-3.5 rounded-xl border flex flex-col justify-between transition {{ $isUse ? 'bg-rose-50/40 border-rose-200' : 'bg-indigo-50/20 hover:bg-white border-indigo-100' }}">
+                        <div class="p-3 rounded-xl border flex flex-col justify-between transition {{ $isUse ? 'bg-rose-50/40 border-rose-200' : 'bg-indigo-50/20 hover:bg-white border-indigo-100' }}">
                             <div>
-                                <div class="flex items-start justify-between gap-1 mb-1.5">
+                                <div class="flex items-start justify-between gap-1 mb-1">
                                     <h4 class="text-xs font-bold text-indigo-900 truncate" title="{{ $zInfo['name'] }}">{{ $zInfo['name'] }}</h4>
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold shrink-0 {{ $isUse ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700' }}">
+                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold shrink-0 {{ $isUse ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700' }}">
                                         {{ $isUse ? 'Digunakan' : 'Tersedia' }}
                                     </span>
                                 </div>
-                                <p class="text-[10px] text-gray-400 mb-2 truncate">ID: {{ $zInfo['meeting_id'] }}</p>
+                                <p class="text-[10px] text-gray-400 mb-1 truncate">ID: {{ $zInfo['meeting_id'] }}</p>
 
                                 @if($isUse && $activeNow)
-                                    <div class="p-2 bg-white rounded-lg border border-rose-200 text-[10px]">
+                                    <div class="p-1.5 bg-white rounded-lg border border-rose-200 text-[10px]">
                                         <p class="font-bold text-rose-900 truncate">{{ $activeNow->nama_acara }}</p>
                                         <p class="text-rose-700">{{ substr($activeNow->start_time, 0, 5) }} - {{ substr($activeNow->end_time, 0, 5) }}</p>
                                     </div>
@@ -689,9 +686,9 @@
                                 @endif
                             </div>
 
-                            <div class="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
-                                <span class="text-[10px] text-gray-400">Zoom Daring</span>
-                                <a href="{{ route('booking-ruangan.index', ['date' => $today]) }}" class="text-[10px] font-bold text-indigo-600 hover:underline">
+                            <div class="mt-2 pt-1.5 border-t border-gray-100 flex items-center justify-between text-[10px]">
+                                <span class="text-gray-400">Zoom Daring</span>
+                                <a href="{{ route('booking-ruangan.index', ['date' => $today]) }}" class="font-bold text-indigo-600 hover:underline">
                                     + Pakai Zoom
                                 </a>
                             </div>
@@ -701,36 +698,37 @@
             </div>
 
         </div>
-    </div>
 
-    {{-- 4. KALENDER DASHBOARD --}}
-    <div class="calendar-section-card">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-gray-100">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
+        {{-- SISI KANAN: KALENDER AGENDA & KEGIATAN BPS --}}
+        <div class="xl:col-span-7 calendar-section-card space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold">
+                        <svg class="w-4.5 h-4.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm sm:text-base font-bold text-gray-900 leading-tight">Kalender Agenda & Kegiatan BPS</h3>
+                        <p class="text-[11px] text-gray-400">Klik agenda untuk menampilkan pop-up detail</p>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="text-base sm:text-lg font-bold text-gray-900">Kalender Agenda & Kegiatan BPS</h3>
-                    <p class="text-xs text-gray-400">Klik pada agenda di kalender untuk menampilkan pop-up ringkasan dan detail kegiatan.</p>
+
+                <div class="flex items-center gap-3 text-xs font-semibold">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 inline-block"></span>
+                        <span class="text-gray-700 text-[11px]">Rapat</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span>
+                        <span class="text-gray-700 text-[11px]">Kegiatan</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="flex items-center gap-4 text-xs font-semibold">
-                <div class="flex items-center gap-2">
-                    <span class="w-3 h-3 rounded-md bg-indigo-600 inline-block"></span>
-                    <span class="text-gray-700">Rapat</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="w-3 h-3 rounded-md bg-sky-500 inline-block"></span>
-                    <span class="text-gray-700">Kegiatan</span>
-                </div>
-            </div>
+            <div id="dashboardCalendar" class="min-h-[540px]"></div>
         </div>
 
-        <div id="dashboardCalendar" class="min-h-[520px]"></div>
     </div>
 
 </div>
@@ -896,6 +894,13 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     calendar.render();
+    setTimeout(function() {
+        calendar.updateSize();
+    }, 150);
+
+    window.addEventListener('resize', function() {
+        calendar.updateSize();
+    });
 });
 </script>
 @endpush
