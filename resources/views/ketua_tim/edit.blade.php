@@ -199,7 +199,7 @@
                             required
                             class="w-full px-4 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:bg-white transition font-semibold">
                         <option value="terjadwal" {{ old('status', $agenda->status) == 'terjadwal' ? 'selected' : '' }}>⏳ Terjadwal</option>
-                        <option value="selesai" {{ old('status', $agenda->status) == 'selesai' ? 'selected' : '' }}>✅ Selesai</option>
+                        <option value="selesai" {{ old('status', $agenda->status) == 'selesai' ? 'selected' : '' }}>Selesai</option>
                     </select>
                 </div>
             </div>
