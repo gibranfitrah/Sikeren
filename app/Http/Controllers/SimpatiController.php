@@ -87,8 +87,38 @@ class SimpatiController extends Controller
             ];
         })->values()->toArray();
 
-        // Database Kegiatan & Projek untuk monitoring penugasan 1 PJ per kegiatan
+        // Database Kegiatan & Projek dari Excel & Sistem
         $kegiatanList = \App\Task::orderBy('created_at', 'desc')->take(100)->get();
+
+        // 80 Master Proyek BPS & 2.809 Penugasan Anggota dari Database
+        $proyeks = \App\Proyek::withCount('anggota')
+            ->orderBy('id_tim', 'asc')
+            ->orderBy('namaproyek', 'asc')
+            ->get();
+        $totalProyek = \App\Proyek::count();
+        $totalPenugasan = \App\AnggotaProyek::count();
+        $totalProyekAdaPj = \App\Proyek::whereNotNull('pj_nama')->where('pj_nama', '!=', '')->count();
+        $totalProyekBelumPj = max(0, $totalProyek - $totalProyekAdaPj);
+
+        $proyekTims = \App\Proyek::select('id_tim', 'nm_tim')
+            ->distinct()
+            ->whereNotNull('nm_tim')
+            ->orderBy('nm_tim', 'asc')
+            ->get();
+
+        $proyekListJson = $proyeks->map(function($p) {
+            return [
+                'id'            => $p->id,
+                'proyekid'      => $p->proyekid,
+                'namaproyek'    => $p->namaproyek,
+                'id_tim'        => $p->id_tim,
+                'nm_tim'        => $p->nm_tim,
+                'pj_nama'       => $p->pj_nama,
+                'pj_nip'        => $p->pj_nip,
+                'status'        => $p->status ?: 'Aktif',
+                'anggota_count' => (int)$p->anggota_count,
+            ];
+        })->toArray();
 
         return view('admin.simpati.index', compact(
             'baseUrl',
@@ -99,6 +129,13 @@ class SimpatiController extends Controller
             'syncedTims',
             'pegawaiList',
             'kegiatanList',
+            'proyeks',
+            'totalProyek',
+            'totalPenugasan',
+            'totalProyekAdaPj',
+            'totalProyekBelumPj',
+            'proyekTims',
+            'proyekListJson',
             'totalPegawai',
             'totalPindah',
             'totalMultiTim',
@@ -470,6 +507,92 @@ class SimpatiController extends Controller
         }
 
         return redirect()->back()->with('success', 'Pegawai ' . $nama . ' berhasil dihapus.');
+    }
+
+    /**
+     * Ambil daftar anggota suatu proyek berdasarkan proyekid
+     */
+    public function getProyekAnggota($proyekid)
+    {
+        $this->authorizeAccess();
+
+        $proyek = \App\Proyek::where('proyekid', $proyekid)->firstOrFail();
+        $anggota = \App\AnggotaProyek::where('proyekid', $proyekid)
+            ->orderBy('nama_lengkap', 'asc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'proyek'  => $proyek,
+            'anggota' => $anggota,
+        ]);
+    }
+
+    /**
+     * Perbarui / Tetapkan Penanggung Jawab (1 PJ Resmi) pada Proyek
+     */
+    public function updateProyekPj(Request $request, $id)
+    {
+        $this->authorizeAccess();
+
+        $proyek = \App\Proyek::findOrFail($id);
+
+        $request->validate([
+            'pj_nama' => 'required|string|max:255',
+            'pj_nip'  => 'nullable|string|max:50',
+        ]);
+
+        $proyek->update([
+            'pj_nama' => trim($request->pj_nama),
+            'pj_nip'  => trim($request->pj_nip ?? ''),
+        ]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Penanggung Jawab (PJ) untuk proyek ' . $proyek->namaproyek . ' berhasil disimpan.',
+                'pj_nama' => $proyek->pj_nama,
+                'pj_nip'  => $proyek->pj_nip,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'PJ berhasil diperbarui untuk proyek ' . $proyek->namaproyek);
+    }
+
+    /**
+     * Sinkronkan / Impor Ulang Database Proyek dari File Excel
+     */
+    public function importExcel(Request $request)
+    {
+        $this->authorizeAccess();
+
+        try {
+            $seeder = new \Database\Seeders\ProyekDatabaseSeeder();
+            $seeder->run();
+
+            $totalProyek = \App\Proyek::count();
+            $totalPenugasan = \App\AnggotaProyek::count();
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Berhasil menyinkronkan database proyek dari Excel! Terdaftar {$totalProyek} proyek dan {$totalPenugasan} penugasan anggota.",
+                    'totalProyek' => $totalProyek,
+                    'totalPenugasan' => $totalPenugasan,
+                ]);
+            }
+
+            return redirect()->back()->with('success', "Database Proyek berhasil disinkronkan dari Excel!");
+        } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal membaca file Excel: ' . $e->getMessage(),
+                ], 500);
+            }
+
+            return redirect()->back()->with('error', 'Gagal membaca file Excel: ' . $e->getMessage());
+        }
     }
 
     /**

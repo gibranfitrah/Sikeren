@@ -213,4 +213,8 @@ Route::post('/kegiatan/{id}/status', [\App\Http\Controllers\KegiatanController::
     Route::get('/api/simpati/pegawai', [\App\Http\Controllers\SimpatiController::class, 'getPegawai'])->name('simpati.pegawai');
     Route::get('/api/simpati/tim-kerja', [\App\Http\Controllers\SimpatiController::class, 'getTimKerja'])->name('simpati.tim_kerja');
 
+    // Database Kegiatan & Proyek SIMPATI (Excel Integration & 1 PJ Requirement)
+    Route::get('/admin/simpati/proyek/{proyekid}/anggota', [\App\Http\Controllers\SimpatiController::class, 'getProyekAnggota'])->name('simpati.proyek.anggota');
+    Route::post('/admin/simpati/proyek/{id}/pj', [\App\Http\Controllers\SimpatiController::class, 'updateProyekPj'])->name('simpati.proyek.pj');
+    Route::post('/admin/simpati/proyek/import-excel', [\App\Http\Controllers\SimpatiController::class, 'importExcel'])->name('simpati.proyek.import');
 });

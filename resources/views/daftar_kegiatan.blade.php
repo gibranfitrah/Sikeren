@@ -416,7 +416,7 @@
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                             </svg>
-                                            <span>+ Sub</span>
+                                            <span>Sub</span>
                                         </a>
 
                                         <a href="{{ url('daftarkegiatan/' . $item->id) }}" class="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl border border-blue-200 text-xs transition">
