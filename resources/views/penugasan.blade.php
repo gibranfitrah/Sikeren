@@ -39,6 +39,44 @@
                 
                 <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
                     
+                    {{-- Master Proyek SIMPATI Selector --}}
+                    <div class="sm:col-span-2 p-4 bg-gradient-to-r from-blue-50/90 to-indigo-50/90 rounded-2xl border border-blue-200 shadow-2xs space-y-2">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                                <span>Pilih dari Master Proyek SIMPATI (Otomatisasi)</span>
+                            </label>
+                            <span class="text-[10px] font-bold text-blue-700 bg-white/90 px-2.5 py-0.5 rounded-full border border-blue-200">
+                                Auto-fill Topik, PJ & Anggota
+                            </span>
+                        </div>
+                        <select id="selectMasterProyekPenugasan"
+                                onchange="handleSelectMasterProyekPenugasan(this)"
+                                class="w-full px-3 py-2.5 bg-white border border-blue-300 rounded-xl text-xs text-gray-800 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition shadow-2xs">
+                            <option value="">-- Pilih dari Master Kegiatan / Proyek SIMPATI (80 Proyek) --</option>
+                            @foreach($masterProyeksByTim ?? [] as $timName => $proyeks)
+                                <optgroup label="Tim: {{ $timName }}">
+                                    @foreach($proyeks as $prj)
+                                        <option value="{{ $prj->proyekid }}"
+                                                data-nama="{{ $prj->namaproyek }}"
+                                                data-tim="{{ $prj->nm_tim }}"
+                                                data-pj-nama="{{ $prj->pj_nama ?? '' }}"
+                                                data-pj-nip="{{ $prj->pj_nip ?? '' }}"
+                                                data-anggota='@json($prj->anggota->map(fn($a) => ["nama" => $a->nama_lengkap, "nip" => $a->niplama]))'>
+                                            {{ $prj->namaproyek }} {{ $prj->pj_nama ? '(PJ: ' . $prj->pj_nama . ')' : '(Belum Ada PJ)' }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @endforeach
+                        </select>
+                        <div id="proyekFeedbackPenugasan" class="hidden p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-medium">
+                            <div class="flex items-start gap-2">
+                                <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span id="proyekFeedbackPenugasanText"></span>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Jenis Kegiatan -->
                     <div class="sm:col-span-2">
                         <label for="jenis_kegiatan" class="block text-sm font-semibold text-gray-700">Jenis Kegiatan</label>
@@ -307,6 +345,84 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     });
+
+    window.handleSelectMasterProyekPenugasan = function(selectElem) {
+        const selectedOpt = selectElem.options[selectElem.selectedIndex];
+        if (!selectedOpt || !selectedOpt.value) {
+            const fb = document.getElementById('proyekFeedbackPenugasan');
+            if (fb) fb.classList.add('hidden');
+            return;
+        }
+
+        const nama = selectedOpt.getAttribute('data-nama') || '';
+        const tim = selectedOpt.getAttribute('data-tim') || '';
+        const pjNama = selectedOpt.getAttribute('data-pj-nama') || '';
+        const pjNip = selectedOpt.getAttribute('data-pj-nip') || '';
+        let anggotaList = [];
+        try {
+            anggotaList = JSON.parse(selectedOpt.getAttribute('data-anggota') || '[]');
+        } catch (e) {
+            anggotaList = [];
+        }
+
+        const inputTopik = document.getElementById('text');
+        if (inputTopik) inputTopik.value = nama;
+
+        const inputAgenda = document.getElementById('agenda');
+        if (inputAgenda) inputAgenda.value = 'Pelaksanaan kegiatan ' + nama + ' (' + tim + ')';
+
+        if (pjNama) {
+            const pjSelect = document.getElementById('penanggung_jawab');
+            if (pjSelect) {
+                let matched = false;
+                const pjClean = pjNama.toLowerCase().trim();
+                for (let i = 0; i < pjSelect.options.length; i++) {
+                    const optVal = pjSelect.options[i].value.toLowerCase().trim();
+                    if (optVal === pjClean || optVal.includes(pjClean) || pjClean.includes(optVal)) {
+                        pjSelect.selectedIndex = i;
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched) {
+                    const newOpt = new Option(pjNama + (pjNip ? ' (' + pjNip + ')' : ''), pjNama, true, true);
+                    pjSelect.add(newOpt);
+                }
+            }
+        }
+
+        let checkedCount = 0;
+        if (anggotaList.length > 0) {
+            document.querySelectorAll('input[name="owners[]"]').forEach(cb => cb.checked = false);
+
+            anggotaList.forEach(m => {
+                const targetNama = (m.nama || '').toLowerCase().trim();
+                const targetNip = (m.nip || '').trim();
+
+                document.querySelectorAll('input[name="owners[]"]').forEach(cb => {
+                    const label = cb.closest('label');
+                    const labelText = label ? label.textContent.toLowerCase() : '';
+                    if (!cb.checked) {
+                        if ((targetNama && labelText.includes(targetNama)) || (targetNip && cb.value === targetNip)) {
+                            cb.checked = true;
+                            checkedCount++;
+                        }
+                    }
+                });
+            });
+        }
+
+        const fb = document.getElementById('proyekFeedbackPenugasan');
+        const fbText = document.getElementById('proyekFeedbackPenugasanText');
+        if (fb && fbText) {
+            let msg = `Proyek "${nama}" diterapkan: Tim [${tim}], PJ [${pjNama || 'Belum Ada PJ'}]`;
+            if (checkedCount > 0) {
+                msg += `, dan ${checkedCount} anggota proyek otomatis dicentang sebagai peserta!`;
+            }
+            fbText.textContent = msg;
+            fb.classList.remove('hidden');
+        }
+    };
 });
 </script>
 @endpush

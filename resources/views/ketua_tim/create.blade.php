@@ -60,6 +60,44 @@
                         </h3>
                     </div>
 
+                    {{-- PILIH DARI MASTER PROYEK SIMPATI --}}
+                    <div class="p-3.5 bg-gradient-to-r from-blue-50/90 to-indigo-50/90 rounded-2xl border border-blue-200 shadow-2xs space-y-2">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                                <span>Pilih dari Master Proyek SIMPATI</span>
+                            </label>
+                            <span class="text-[10px] font-bold text-blue-700 bg-white/90 px-2 py-0.5 rounded-full border border-blue-200">
+                                Auto-fill PJ & Tim
+                            </span>
+                        </div>
+                        <select id="selectMasterProyek"
+                                onchange="handleSelectMasterProyek(this)"
+                                class="w-full px-3 py-2 bg-white border border-blue-300 rounded-xl text-xs text-gray-800 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition shadow-2xs">
+                            <option value="">-- Pilih Master Kegiatan / Proyek SIMPATI (80 Proyek) --</option>
+                            @foreach($masterProyeksByTim ?? [] as $timName => $proyeks)
+                                <optgroup label="Tim: {{ $timName }}">
+                                    @foreach($proyeks as $prj)
+                                        <option value="{{ $prj->proyekid }}"
+                                                data-nama="{{ $prj->namaproyek }}"
+                                                data-tim="{{ $prj->nm_tim }}"
+                                                data-pj-nama="{{ $prj->pj_nama ?? '' }}"
+                                                data-pj-nip="{{ $prj->pj_nip ?? '' }}"
+                                                data-anggota='@json($prj->anggota->map(fn($a) => ["nama" => $a->nama_lengkap, "nip" => $a->niplama]))'>
+                                            {{ $prj->namaproyek }} {{ $prj->pj_nama ? '(PJ: ' . $prj->pj_nama . ')' : '(Belum Ada PJ)' }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @endforeach
+                        </select>
+                        <div id="proyekFeedback" class="hidden p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 font-medium">
+                            <div class="flex items-start gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span id="proyekFeedbackText"></span>
+                            </div>
+                        </div>
+                    </div>
+
                     {{-- PILIH TIM / FUNGSI --}}
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
@@ -369,6 +407,127 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+function handleSelectMasterProyek(selectEl) {
+    const selectedOpt = selectEl.options[selectEl.selectedIndex];
+    if (!selectedOpt || !selectedOpt.value) {
+        const fb = document.getElementById('proyekFeedback');
+        if (fb) fb.classList.add('hidden');
+        return;
+    }
+
+    const nama = selectedOpt.getAttribute('data-nama') || '';
+    const tim = selectedOpt.getAttribute('data-tim') || '';
+    const pjNama = selectedOpt.getAttribute('data-pj-nama') || '';
+    const pjNip = selectedOpt.getAttribute('data-pj-nip') || '';
+    let anggotaList = [];
+    try {
+        anggotaList = JSON.parse(selectedOpt.getAttribute('data-anggota') || '[]');
+    } catch (e) {
+        anggotaList = [];
+    }
+
+    // 1. Set Nama / Agenda Kegiatan
+    const inputAgenda = document.querySelector('input[name="agenda"]');
+    if (inputAgenda && nama) {
+        inputAgenda.value = nama;
+    }
+
+    // 2. Set Tim / Fungsi Pengampu
+    const selectTim = document.getElementById('selectTim');
+    if (selectTim && tim) {
+        let matchedTim = false;
+        const targetTim = tim.toLowerCase().trim();
+        for (let i = 0; i < selectTim.options.length; i++) {
+            const optVal = selectTim.options[i].value.toLowerCase().trim();
+            const optText = selectTim.options[i].text.toLowerCase().trim();
+            if (optVal === targetTim || optText.includes(targetTim) || targetTim.includes(optVal)) {
+                selectTim.selectedIndex = i;
+                matchedTim = true;
+                break;
+            }
+        }
+        if (!matchedTim) {
+            const newOpt = new Option(tim, tim, true, true);
+            selectTim.add(newOpt);
+        }
+        const filterTim = document.getElementById('filterTimPegawai');
+        if (filterTim) {
+            filterTim.value = selectTim.value;
+            filterPegawaiList();
+        }
+    }
+
+    // 3. Set Penanggung Jawab (PJ)
+    const selectPJ = document.getElementById('selectPJ');
+    if (selectPJ && pjNama) {
+        let matchedPj = false;
+        const targetPj = pjNama.toLowerCase().trim();
+        for (let i = 0; i < selectPJ.options.length; i++) {
+            const optVal = selectPJ.options[i].value.toLowerCase().trim();
+            const optText = selectPJ.options[i].text.toLowerCase().trim();
+            if (optVal === targetPj || optText.includes(targetPj) || targetPj.includes(optVal)) {
+                selectPJ.selectedIndex = i;
+                matchedPj = true;
+                break;
+            }
+        }
+        if (!matchedPj) {
+            const label = pjNama + (pjNip ? ' (' + pjNip + ' - PJ SIMPATI)' : ' (PJ SIMPATI)');
+            const newPjOpt = new Option(label, pjNama, true, true);
+            selectPJ.add(newPjOpt);
+        }
+    }
+
+    // 4. Rekomendasikan & Centang Anggota Proyek
+    let checkedCount = 0;
+    if (anggotaList.length > 0) {
+        // Reset centang sebelumnya
+        document.querySelectorAll('.anggota-checkbox').forEach(cb => {
+            cb.checked = false;
+        });
+
+        // Tampilkan semua card untuk pencocokan
+        const filterTim = document.getElementById('filterTimPegawai');
+        if (filterTim) {
+            filterTim.value = 'all';
+            filterPegawaiList();
+        }
+
+        anggotaList.forEach(m => {
+            const targetNama = (m.nama || '').toLowerCase().trim();
+            const targetNip = (m.nip || '').trim();
+
+            document.querySelectorAll('.pegawai-card').forEach(card => {
+                const cardName = (card.getAttribute('data-name') || '').toLowerCase();
+                const cb = card.querySelector('.anggota-checkbox');
+                if (cb && !cb.checked) {
+                    if ((targetNama && cardName.includes(targetNama)) || (targetNip && cardName.includes(targetNip))) {
+                        cb.checked = true;
+                        card.style.display = 'flex';
+                        checkedCount++;
+                    }
+                }
+            });
+        });
+
+        updateAnggotaCounter();
+    }
+
+    // 5. Tampilkan Feedback Visual
+    const fb = document.getElementById('proyekFeedback');
+    const fbText = document.getElementById('proyekFeedbackText');
+    if (fb && fbText) {
+        let msg = `Proyek "${nama}" dipilih: Tim [${tim}], PJ [${pjNama || 'Belum Ada PJ'}]`;
+        if (checkedCount > 0) {
+            msg += `, dan ${checkedCount} anggota proyek otomatis dicentang.`;
+        } else if (anggotaList.length > 0) {
+            msg += `, serta ${anggotaList.length} anggota tim terdaftar.`;
+        }
+        fbText.textContent = msg;
+        fb.classList.remove('hidden');
+    }
+}
 </script>
 
 @endsection

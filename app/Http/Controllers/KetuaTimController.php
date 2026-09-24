@@ -64,11 +64,20 @@ class KetuaTimController extends Controller
         $notifications = Auth::user()->notifications()->latest()->take(5)->get();
         $jumlah_notif  = Auth::user()->unreadNotifications()->count();
 
+        // Master Proyek SIMPATI (80 Proyek & Penugasan SDM)
+        $masterProyeks = \App\Proyek::with(['anggota:proyekid,nama_lengkap,niplama'])
+            ->orderBy('nm_tim', 'asc')
+            ->orderBy('namaproyek', 'asc')
+            ->get();
+        $masterProyeksByTim = $masterProyeks->groupBy('nm_tim');
+
         return view('ketua_tim.create', compact(
             'masterGroups',
             'allUsers',
             'eligiblePJs',
             'usersByGroup',
+            'masterProyeks',
+            'masterProyeksByTim',
             'notifications',
             'jumlah_notif'
         ));

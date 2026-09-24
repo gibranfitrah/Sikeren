@@ -94,6 +94,44 @@
                     </div>
                 </div>
 
+                {{-- PILIH DARI MASTER PROYEK SIMPATI (OTOMATISASI RAPAT) --}}
+                <div class="p-4 bg-gradient-to-r from-blue-50/90 to-indigo-50/90 rounded-2xl border border-blue-200 shadow-2xs space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                            <span>Pilih dari Master Proyek SIMPATI (Otomatisasi)</span>
+                        </label>
+                        <span class="text-[10px] font-bold text-blue-700 bg-white/90 px-2.5 py-0.5 rounded-full border border-blue-200">
+                            Auto-fill Topik, PJ, Pemimpin & Rekomendasi Peserta
+                        </span>
+                    </div>
+                    <select id="selectMasterProyekRapat"
+                            onchange="handleSelectMasterProyekRapat(this)"
+                            class="w-full px-3 py-2.5 bg-white border border-blue-300 rounded-xl text-xs text-gray-800 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition shadow-2xs">
+                        <option value="">-- Pilih dari Master Kegiatan / Proyek SIMPATI (80 Proyek) --</option>
+                        @foreach($masterProyeksByTim ?? [] as $timName => $proyeks)
+                            <optgroup label="Tim: {{ $timName }}">
+                                @foreach($proyeks as $prj)
+                                    <option value="{{ $prj->proyekid }}"
+                                            data-nama="{{ $prj->namaproyek }}"
+                                            data-tim="{{ $prj->nm_tim }}"
+                                            data-pj-nama="{{ $prj->pj_nama ?? '' }}"
+                                            data-pj-nip="{{ $prj->pj_nip ?? '' }}"
+                                            data-anggota='@json($prj->anggota->map(fn($a) => ["nama" => $a->nama_lengkap, "nip" => $a->niplama]))'>
+                                        {{ $prj->namaproyek }} {{ $prj->pj_nama ? '(PJ: ' . $prj->pj_nama . ')' : '(Belum Ada PJ)' }}
+                                    </option>
+                                @endforeach
+                            </optgroup>
+                        @endforeach
+                    </select>
+                    <div id="proyekFeedbackRapat" class="hidden p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-medium">
+                        <div class="flex items-start gap-2">
+                            <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span id="proyekFeedbackRapatText"></span>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Kategori Rapat (Radio Selection) --}}
                 <div>
                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
@@ -583,6 +621,132 @@ document.addEventListener("DOMContentLoaded", function () {
                 infoText.textContent = 'Ketua Tim/PJ otomatis terpilih: ' + pj;
                 infoContainer.classList.remove('hidden');
             }
+        }
+    };
+
+    // Auto-fill saat memilih master proyek SIMPATI (Topik, PJ, Pemimpin, & Anggota Peserta)
+    window.handleSelectMasterProyekRapat = function(selectElem) {
+        const selectedOpt = selectElem.options[selectElem.selectedIndex];
+        if (!selectedOpt || !selectedOpt.value) {
+            const fb = document.getElementById('proyekFeedbackRapat');
+            if (fb) fb.classList.add('hidden');
+            return;
+        }
+
+        const nama = selectedOpt.getAttribute('data-nama') || '';
+        const tim = selectedOpt.getAttribute('data-tim') || '';
+        const pjNama = selectedOpt.getAttribute('data-pj-nama') || '';
+        const pjNip = selectedOpt.getAttribute('data-pj-nip') || '';
+        let anggotaList = [];
+        try {
+            anggotaList = JSON.parse(selectedOpt.getAttribute('data-anggota') || '[]');
+        } catch (e) {
+            anggotaList = [];
+        }
+
+        // 1. Set Topik / Nama Rapat
+        const inputTopik = document.getElementById('text');
+        if (inputTopik) {
+            inputTopik.value = 'Rapat Koordinasi: ' + nama;
+        }
+
+        // 2. Set Agenda Pembahasan
+        const inputAgenda = document.getElementById('agenda');
+        if (inputAgenda) {
+            inputAgenda.value = 'Pembahasan pelaksanaan dan monitoring kegiatan ' + nama + ' (' + tim + ')';
+        }
+
+        // 3. Set PJ Kegiatan & Pemimpin Rapat
+        if (pjNama) {
+            const pjClean = pjNama.toLowerCase().trim();
+            const pjSelect = document.getElementById('penanggung_jawab');
+            const pemimpinSelect = document.getElementById('pemimpin');
+
+            if (pjSelect) {
+                let matched = false;
+                for (let i = 0; i < pjSelect.options.length; i++) {
+                    const optVal = pjSelect.options[i].value.toLowerCase().trim();
+                    const optText = pjSelect.options[i].text.toLowerCase().trim();
+                    if (optVal === pjClean || optVal.includes(pjClean) || pjClean.includes(optVal)) {
+                        pjSelect.selectedIndex = i;
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched) {
+                    const newOpt = new Option(pjNama + (pjNip ? ' (' + pjNip + ' - PJ SIMPATI)' : ' (PJ SIMPATI)'), pjNama, true, true);
+                    pjSelect.add(newOpt);
+                }
+            }
+
+            if (pemimpinSelect) {
+                let matchedPemimpin = false;
+                for (let i = 0; i < pemimpinSelect.options.length; i++) {
+                    const optVal = pemimpinSelect.options[i].value.toLowerCase().trim();
+                    const optText = pemimpinSelect.options[i].text.toLowerCase().trim();
+                    if (optVal === pjClean || optVal.includes(pjClean) || pjClean.includes(optVal)) {
+                        pemimpinSelect.selectedIndex = i;
+                        matchedPemimpin = true;
+                        break;
+                    }
+                }
+                if (!matchedPemimpin) {
+                    const newOpt = new Option(pjNama + (pjNip ? ' (' + pjNip + ' - PJ SIMPATI)' : ' (PJ SIMPATI)'), pjNama, true, true);
+                    pemimpinSelect.add(newOpt);
+                }
+            }
+
+            const infoContainer = document.getElementById('pjInfoContainer');
+            const infoText = document.getElementById('pjInfoText');
+            if (infoContainer && infoText) {
+                infoText.textContent = 'PJ SIMPATI otomatis terpilih: ' + pjNama;
+                infoContainer.classList.remove('hidden');
+            }
+        }
+
+        // 4. Rekomendasikan & Centang Peserta Rapat dari Anggota Proyek
+        let checkedCount = 0;
+        if (anggotaList.length > 0) {
+            // Uncheck semua dulu
+            document.querySelectorAll('.cb-peserta').forEach(cb => {
+                cb.checked = false;
+            });
+
+            anggotaList.forEach(m => {
+                const targetNama = (m.nama || '').toLowerCase().trim();
+                const targetNip = (m.nip || '').trim();
+
+                document.querySelectorAll('.item-peserta').forEach(item => {
+                    const cb = item.querySelector('.cb-peserta');
+                    const label = item.querySelector('.nama-peserta-label');
+                    const labelText = label ? label.textContent.toLowerCase() : '';
+                    const cbVal = cb ? cb.value.trim() : '';
+
+                    if (cb && !cb.checked) {
+                        if ((targetNama && labelText.includes(targetNama)) || (targetNip && cbVal === targetNip)) {
+                            cb.checked = true;
+                            item.style.display = 'flex';
+                            checkedCount++;
+                        }
+                    }
+                });
+            });
+
+            updateTotalPeserta();
+        }
+
+        // 5. Tampilkan Feedback Visual
+        const fb = document.getElementById('proyekFeedbackRapat');
+        const fbText = document.getElementById('proyekFeedbackRapatText');
+        if (fb && fbText) {
+            let msg = `Proyek "${nama}" diterapkan: Tim [${tim}], PJ & Pemimpin [${pjNama || 'Belum Ada PJ'}]`;
+            if (checkedCount > 0) {
+                msg += `, dan ${checkedCount} anggota proyek otomatis dicentang sebagai peserta rapat!`;
+            } else if (anggotaList.length > 0) {
+                msg += `, serta ${anggotaList.length} anggota proyek terhubung.`;
+            }
+            fbText.textContent = msg;
+            fb.classList.remove('hidden');
         }
     };
 

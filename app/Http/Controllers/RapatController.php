@@ -66,6 +66,13 @@ class RapatController extends Controller
         $notifications = Auth::user()->notifications()->latest()->take(5)->get();
         $jumlah_notif  = Auth::user()->unreadNotifications()->count();
 
+        // 7. Master Proyek SIMPATI (80 Proyek & Penugasan SDM)
+        $masterProyeks = \App\Proyek::with(['anggota:proyekid,nama_lengkap,niplama'])
+            ->orderBy('nm_tim', 'asc')
+            ->orderBy('namaproyek', 'asc')
+            ->get();
+        $masterProyeksByTim = $masterProyeks->groupBy('nm_tim');
+
         return view('rapat', compact(
             'id',
             'peserta',
@@ -76,6 +83,8 @@ class RapatController extends Controller
             'venues',
             'groups',
             'master_groups',
+            'masterProyeks',
+            'masterProyeksByTim',
             'notifications',
             'jumlah_notif'
         ));

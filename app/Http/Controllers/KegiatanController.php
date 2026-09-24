@@ -81,6 +81,12 @@ class KegiatanController extends Controller
         $groups        = group::join('users', 'users.niplama', 'groups.niplama')->get();
         $master_groups = master_group::all();
 
+        $masterProyeks = \App\Proyek::with(['anggota:proyekid,nama_lengkap,niplama'])
+            ->orderBy('nm_tim', 'asc')
+            ->orderBy('namaproyek', 'asc')
+            ->get();
+        $masterProyeksByTim = $masterProyeks->groupBy('nm_tim');
+
         $notifications = Auth::user()->notifications()->latest()->take(5)->get();
         $jumlah_notif  = Auth::user()->unreadNotifications()->count();
 
@@ -93,6 +99,8 @@ class KegiatanController extends Controller
             'end',
             'groups',
             'master_groups',
+            'masterProyeks',
+            'masterProyeksByTim',
             'notifications',
             'jumlah_notif'
         ));
