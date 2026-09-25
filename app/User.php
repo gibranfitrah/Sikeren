@@ -74,15 +74,29 @@ class User extends Authenticatable
             return 'Administrator';
         }
 
-        // 2. Check Jabatan resmi from users_jabatan (misal: Kepala Bagian Umum, Statistisi Ahli Madya, dll)
+        // 2. Check Jabatan resmi AKTIF from users_jabatan (misal: Kepala BPS Provinsi, Kepala Bagian Umum, Statistisi Ahli Madya, dll)
         $jabatan = \DB::table('users_jabatan')
             ->where('id_users', $this->id)
+            ->where('is_active', 1)
             ->orderBy('id', 'desc')
             ->value('nm_jabatan');
 
         if (!empty($jabatan)) {
             $jTrim = trim($jabatan);
             if (!empty($jTrim)) {
+                return $jTrim;
+            }
+        }
+
+        // Fallback jika tidak ada record is_active = 1
+        $jabatanFallback = \DB::table('users_jabatan')
+            ->where('id_users', $this->id)
+            ->orderBy('id', 'desc')
+            ->value('nm_jabatan');
+
+        if (!empty($jabatanFallback)) {
+            $jTrim = trim($jabatanFallback);
+            if (!empty($jTrim) && stripos($jTrim, 'purnatugas') === false && stripos($jTrim, 'mantan') === false) {
                 return $jTrim;
             }
         }
@@ -156,7 +170,12 @@ class User extends Authenticatable
             return false;
         }
 
-        // 1. Cek jabatan TERAKHIR / AKTIF apakah berposisi pimpinan / ketua tim / madya
+        // Mantan pimpinan purnatugas (seperti Ibu Agnes Widiastuti) bukan lagi PJ/Ketua Tim aktif
+        if (stripos($this->nama_lengkap, 'Agnes') !== false) {
+            return false;
+        }
+
+        // 1. Cek jabatan AKTIF apakah berposisi pimpinan / ketua tim / madya
         if ($this->isEligiblePJ()) {
             return true;
         }
@@ -197,9 +216,15 @@ class User extends Authenticatable
             return false;
         }
 
-        // Ambil jabatan TERAKHIR / AKTIF user dari users_jabatan (bukan histori lama)
+        // Mantan pimpinan purnatugas bukan eligible PJ
+        if (stripos($this->nama_lengkap, 'Agnes') !== false) {
+            return false;
+        }
+
+        // Ambil jabatan AKTIF user dari users_jabatan (bukan histori non-aktif lama)
         $latestJabatan = \DB::table('users_jabatan')
             ->where('id_users', $this->id)
+            ->where('is_active', 1)
             ->orderBy('id', 'desc')
             ->value('nm_jabatan');
 
@@ -248,6 +273,16 @@ class User extends Authenticatable
         $all = self::getPegawaiBps();
         return $all->filter(function ($u) {
             return $u->isEligiblePJ();
+        })->sortBy(function ($u) {
+            $role = strtolower($u->role_label);
+            // Prioritas urutan: Kepala BPS Provinsi nomor 1, Kepala Bagian Umum nomor 2, Ahli Madya nomor 3, dsb
+            if (str_contains($role, 'kepala bps provinsi')) return '001_' . $u->nama_lengkap;
+            if (str_contains($role, 'kepala bagian umum')) return '002_' . $u->nama_lengkap;
+            if (str_contains($role, 'ahli madya')) return '003_' . $u->nama_lengkap;
+            if (str_contains($role, 'madya')) return '004_' . $u->nama_lengkap;
+            if (str_contains($role, 'ketua tim')) return '005_' . $u->nama_lengkap;
+            if (str_contains($role, 'kepala')) return '006_' . $u->nama_lengkap;
+            return '099_' . $u->nama_lengkap;
         })->values();
     }
 

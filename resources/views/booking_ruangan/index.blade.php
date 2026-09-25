@@ -1001,7 +1001,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                            name="penyelenggara"
                            x-model="penyelenggara"
                            required
-                           placeholder="Contoh: Agnes Widiastuti"
+                           placeholder="Contoh: Hadi Susanto, M.A."
                            class="w-full px-3.5 py-2 text-xs rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
                 </div>
 

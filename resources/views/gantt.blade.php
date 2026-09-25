@@ -114,7 +114,7 @@
 <select onchange=show_owners(this.value) class="chosen-select" >
 
 
-@if( (Auth::user()->nama_lengkap == 'Agnes Widiastuti') )
+@if( (stripos(Auth::user()->nama_lengkap, 'Hadi Susanto') !== false) || (stripos(Auth::user()->nama_lengkap, 'Agnes') !== false) || Auth::user()->isAdmin() )
 <option value="All">All</option>
     @foreach ($peserta as $pesertas)
     <option value="{{$pesertas->niplama}}">{{$pesertas->nama_lengkap}}</option>
@@ -483,7 +483,7 @@ gantt.templates.task_text=function(start,end,task){
 
 
 
-var admin = ['Agnes Widiastuti','Muhammad Rizal Karim'];
+var admin = ['Hadi Susanto', 'Hadi Susanto, M.A.', 'Andi Kurniawan', 'Muhammad Rizal Karim', 'Administrator'];
 var user = '{{ Auth::user()->nama_lengkap }}'
 if (admin.includes(user)){
    gantt.config.columns = [{
@@ -705,7 +705,7 @@ function myFunction() {
 
 gantt.attachEvent("onGanttReady", function(){
     
-var admin = ['Agnes Widiastuti','Muhammad Rizal Karim'];
+var admin = ['Hadi Susanto', 'Hadi Susanto, M.A.', 'Andi Kurniawan', 'Muhammad Rizal Karim', 'Administrator'];
 var user = '{{ Auth::user()->nama_lengkap }}'
 if (admin.includes(user)){
    gantt.config.buttons_left = ["gantt_save_btn","gantt_cancel_btn","complete_button","complete_button2"];   

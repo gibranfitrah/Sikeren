@@ -205,7 +205,7 @@
     {{-- TANDA TANGAN --}}
     <div class="signature-box">
         <table>
-            @if(stripos($pemimpin, 'Agnes') !== false || stripos($pemimpin, 'Kepala') !== false)
+            @if(stripos($pemimpin, 'Hadi') !== false || stripos($pemimpin, 'Agnes') !== false || stripos($pemimpin, 'Kepala') !== false)
                 <tr>
                     <td><strong>Kepala Badan Pusat Statistik<br>Provinsi Sulawesi Tenggara,</strong></td>
                 </tr>
