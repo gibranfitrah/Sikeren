@@ -166,30 +166,58 @@
                         </h3>
                     </div>
 
-                    {{-- RENTANG TANGGAL --}}
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-amber-50/40 p-3.5 rounded-xl border border-amber-100">
-                        <div>
-                            <label class="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
-                                Tanggal Mulai <span class="text-rose-500">*</span>
-                            </label>
-                            <input type="date"
-                                   name="start_date"
-                                   id="startDate"
-                                   value="{{ old('start_date', date('Y-m-d')) }}"
-                                   required
-                                   class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition">
+                    {{-- RENTANG TANGGAL & JAM PELAKSANAAN --}}
+                    <div class="space-y-3 bg-amber-50/40 p-3.5 rounded-xl border border-amber-100">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                                    Tanggal Mulai <span class="text-rose-500">*</span>
+                                </label>
+                                <input type="date"
+                                       name="start_date"
+                                       id="startDate"
+                                       value="{{ old('start_date', date('Y-m-d')) }}"
+                                       required
+                                       class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition">
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                                    Tanggal Selesai <span class="text-rose-500">*</span>
+                                </label>
+                                <input type="date"
+                                       name="date_akhir"
+                                       id="dateAkhir"
+                                       value="{{ old('date_akhir', date('Y-m-d')) }}"
+                                       required
+                                       class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition">
+                            </div>
                         </div>
 
-                        <div>
-                            <label class="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
-                                Tanggal Selesai <span class="text-rose-500">*</span>
-                            </label>
-                            <input type="date"
-                                   name="date_akhir"
-                                   id="dateAkhir"
-                                   value="{{ old('date_akhir', date('Y-m-d')) }}"
-                                   required
-                                   class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2.5 border-t border-amber-200/60">
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1 flex items-center justify-between">
+                                    <span>Jam Mulai</span>
+                                    <span class="text-[10px] text-amber-600 font-normal">WITA</span>
+                                </label>
+                                <input type="time"
+                                       name="start_jam"
+                                       id="startJam"
+                                       value="{{ old('start_jam', '08:00') }}"
+                                       class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition">
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1 flex items-center justify-between">
+                                    <span>Jam Selesai</span>
+                                    <span class="text-[10px] text-amber-600 font-normal">WITA</span>
+                                </label>
+                                <input type="time"
+                                       name="end_jam"
+                                       id="endJam"
+                                       value="{{ old('end_jam', '16:00') }}"
+                                       class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition">
+                            </div>
                         </div>
                     </div>
 

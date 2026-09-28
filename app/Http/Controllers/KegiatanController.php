@@ -597,6 +597,31 @@ class KegiatanController extends Controller
         $statusKehadiran = $request->input('status_kehadiran', 'Hadir');
         $keterangan      = trim($request->input('keterangan', ''));
 
+        // Cek apakah jadwal pelaksanaan rapat telah lewat batas waktu
+        $task = is_numeric($idKegiatan) ? Task::find($idKegiatan) : Task::where('id', $idKegiatan)->orWhere('text', $idKegiatan)->first();
+        if ($task) {
+            $isSelesai = (!empty($task->notulen) || $task->notulen_selesai == 1);
+            $rapatEnd = $task->date_akhir ?: ($task->start_date ?: date('Y-m-d'));
+            $jamAkhirClean = trim($task->end_jam ?: '23:59:59');
+            if (strlen($jamAkhirClean) === 5) {
+                $jamAkhirClean .= ':00';
+            }
+            $isLewatWaktu = false;
+            try {
+                $waktuAkhirRapat = \Carbon\Carbon::parse($rapatEnd . ' ' . $jamAkhirClean);
+                $isLewatWaktu = \Carbon\Carbon::now()->greaterThan($waktuAkhirRapat) && !$isSelesai;
+            } catch (\Exception $e) {
+                $isLewatWaktu = false;
+            }
+
+            if ($isLewatWaktu) {
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json(['success' => false, 'message' => 'Presensi ditutup karena jadwal pelaksanaan rapat telah berakhir.'], 422);
+                }
+                return redirect()->back()->with('error_presensi', 'Presensi ditutup karena jadwal pelaksanaan rapat telah berakhir.');
+            }
+        }
+
         if (empty($niplama) && empty($namaManual)) {
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'Silakan pilih nama Anda atau masukkan nama pada form.'], 422);
@@ -817,6 +842,20 @@ class KegiatanController extends Controller
             'belum_hadir'    => $list->where('status_kehadiran', 'Belum Hadir')->count(),
         ];
 
+        $isSelesai = $task ? (!empty($task->notulen) || ($task->notulen_selesai ?? 0) == 1) : false;
+        $rapatEnd = $task ? ($task->date_akhir ?: ($task->start_date ?: date('Y-m-d'))) : date('Y-m-d');
+        $jamAkhirClean = trim(($task ? $task->end_jam : '') ?: '23:59:59');
+        if (strlen($jamAkhirClean) === 5) {
+            $jamAkhirClean .= ':00';
+        }
+        $isLewatWaktu = false;
+        try {
+            $waktuAkhirRapat = \Carbon\Carbon::parse($rapatEnd . ' ' . $jamAkhirClean);
+            $isLewatWaktu = \Carbon\Carbon::now()->greaterThan($waktuAkhirRapat) && !$isSelesai;
+        } catch (\Exception $e) {
+            $isLewatWaktu = false;
+        }
+
         return response()->json([
             'success' => true,
             'summary' => $summary,
@@ -832,6 +871,7 @@ class KegiatanController extends Controller
                 'pemimpin'        => $task ? $task->pemimpin : '',
                 'notulis'         => $task ? $task->notulis : '',
                 'tim_dokumentasi' => $task ? $task->tim_dokumentasi : '',
+                'is_lewat_waktu'  => $isLewatWaktu,
             ]
         ]);
     }

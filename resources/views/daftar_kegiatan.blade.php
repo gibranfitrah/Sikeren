@@ -266,12 +266,25 @@
                                 (isset($currentUser->level) && strtolower($currentUser->level) === 'admin')
                             );
                             $st = strtolower(trim($item->status ?? ''));
-                            $isDone     = ($st === 'selesai');
+                            $isDone     = ($st === 'selesai' || (!empty($item->notulen) && ($item->notulen_selesai ?? 0) == 1));
                             $isDelayed  = ($st === 'tertunda');
                             $isInactive = ($st === 'tidak berjalan' || $st === 'dibatalkan');
                             $isApproved = ($item->setuju_rapat == 1 || $st === 'disetujui' || $st === 'sedang berjalan' || $isDone || $isDelayed || $isInactive);
                             $isRejected = ($item->setuju_rapat == 3 || $st === 'ditolak');
                             $isPending  = ($item->setuju_rapat == 0 && !$isApproved && !$isRejected && in_array($st, ['menunggu', 'menunggu persetujuan', 'belum', '']));
+
+                            $isRapat = ($item->jenis === 'Rapat');
+                            $itemEnd = $item->date_akhir ?: ($item->start_date ?: date('Y-m-d'));
+                            $itemJamClean = trim($item->end_jam ?: '23:59:59');
+                            if (strlen($itemJamClean) === 5) {
+                                $itemJamClean .= ':00';
+                            }
+                            $isExpiredRapat = false;
+                            if ($isRapat && !$isDone && $item->setuju_rapat != 3 && $st !== 'ditolak') {
+                                try {
+                                    $isExpiredRapat = \Carbon\Carbon::now()->greaterThan(\Carbon\Carbon::parse($itemEnd . ' ' . $itemJamClean));
+                                } catch (\Exception $e) {}
+                            }
                         @endphp
                         <tr class="hover:bg-slate-50/60 transition-colors kegiatan-row">
                             <td class="px-6 py-4">
@@ -345,6 +358,11 @@
                                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                                         <span>Selesai</span>
+                                    </span>
+                                @elseif($isExpiredRapat)
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                                        <span>Lewat Waktu / Batal</span>
                                     </span>
                                 @elseif($isDelayed)
                                     <div class="space-y-1">

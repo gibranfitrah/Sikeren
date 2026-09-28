@@ -60,7 +60,7 @@
         :subtag="$task->tim ?? 'BPS Provinsi Sulawesi Tenggara'"
         :backUrl="url('/daftar_kegiatan')">
         
-        <x-slot name="action">
+        <x-slot name="action"> 
 
             @if(!empty($task->id))
                 <div class="relative" x-data="{ unduhOpen: false }">
@@ -244,7 +244,7 @@
                         size="sm"
                         @click="modalTambahSub = true"
                         icon='<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>'>
-                        + Sub Baru
+                        Sub Baru
                     </x-button>
                 </x-slot>
 

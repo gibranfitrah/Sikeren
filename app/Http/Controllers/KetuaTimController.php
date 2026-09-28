@@ -92,6 +92,8 @@ class KetuaTimController extends Controller
             'agenda'       => 'required|string|max:255',
             'start_date'   => 'required|date',
             'date_akhir'   => 'nullable|date|after_or_equal:start_date',
+            'start_jam'    => 'nullable|string',
+            'end_jam'      => 'nullable|string',
             'tim'          => 'required|string',
             'pj'           => 'required|string',
             'wilayah'      => 'nullable|array',
@@ -100,6 +102,8 @@ class KetuaTimController extends Controller
 
         $startDate = $request->start_date;
         $endDate   = $request->date_akhir ?: $startDate;
+        $startJam  = $request->start_jam ?: '08:00';
+        $endJam    = $request->end_jam ?: '16:00';
 
         // Calculate duration in days
         $startCarbon = Carbon::parse($startDate);
@@ -122,6 +126,8 @@ class KetuaTimController extends Controller
             'wilayah'          => $wilayahJson,
             'start_date'       => $startDate,
             'date_akhir'       => $endDate,
+            'start_jam'        => $startJam,
+            'end_jam'          => $endJam,
             'duration'         => $duration,
             'penanggung_jawab' => $request->pj,
             'pemimpin'         => $request->pj,
@@ -194,7 +200,7 @@ class KetuaTimController extends Controller
             'sub_kegiatan' => $request->sub_kegiatan,
             'dasar'        => $request->dasar,
             'tanggal'      => $startDate,
-            'jam'          => '08:00:00',
+            'jam'          => (strlen($startJam) == 5 ? $startJam . ':00' : $startJam),
             'tempat'       => 'Wilayah Pelaksanaan',
             'pj'           => $request->pj,
             'tujuan'       => is_array($request->wilayah) ? implode(', ', $request->wilayah) : ($request->wilayah ?: '-'),

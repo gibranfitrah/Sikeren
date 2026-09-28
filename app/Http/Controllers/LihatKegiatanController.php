@@ -255,6 +255,24 @@ class LihatKegiatanController extends Controller
 
         $task = Task::find($taskId);
         if ($task) {
+            $isSelesai = (!empty($task->notulen) || ($task->notulen_selesai ?? 0) == 1);
+            $rapatEnd = $task->date_akhir ?: ($task->start_date ?: date('Y-m-d'));
+            $jamAkhirClean = trim($task->end_jam ?: '23:59:59');
+            if (strlen($jamAkhirClean) === 5) {
+                $jamAkhirClean .= ':00';
+            }
+            $isLewatWaktu = false;
+            try {
+                $waktuAkhirRapat = \Carbon\Carbon::parse($rapatEnd . ' ' . $jamAkhirClean);
+                $isLewatWaktu = \Carbon\Carbon::now()->greaterThan($waktuAkhirRapat) && !$isSelesai;
+            } catch (\Exception $e) {
+                $isLewatWaktu = false;
+            }
+
+            if ($isLewatWaktu) {
+                return redirect()->back()->with(['error' => 'Aksi persetujuan ditolak: Jadwal rapat telah melewati batas waktu pelaksanaan (kedaluwarsa/batal).']);
+            }
+
             $task->update([
                 'setuju_rapat'    => $statusRapat,
                 'status_pemimpin' => $statusPemimpin,
@@ -449,6 +467,31 @@ public function updateNotulen(Request $request)
     ]);
 
     $task = Task::findOrFail($request->id);
+
+    // Cek apakah jadwal pelaksanaan rapat telah lewat batas waktu
+    $isSelesai = (!empty($task->notulen) || ($task->notulen_selesai ?? 0) == 1);
+    $rapatEnd = $task->date_akhir ?: ($task->start_date ?: date('Y-m-d'));
+    $jamAkhirClean = trim($task->end_jam ?: '23:59:59');
+    if (strlen($jamAkhirClean) === 5) {
+        $jamAkhirClean .= ':00';
+    }
+    $isLewatWaktu = false;
+    try {
+        $waktuAkhirRapat = \Carbon\Carbon::parse($rapatEnd . ' ' . $jamAkhirClean);
+        $isLewatWaktu = \Carbon\Carbon::now()->greaterThan($waktuAkhirRapat);
+    } catch (\Exception $e) {
+        $isLewatWaktu = false;
+    }
+
+    if ($isLewatWaktu) {
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pengisian notulen ditolak: Waktu pelaksanaan rapat telah melewati batas jadwal (kedaluwarsa/batal).'
+            ], 422);
+        }
+        return back()->with('error', 'Pengisian notulen ditolak: Waktu pelaksanaan rapat telah melewati batas jadwal (kedaluwarsa/batal).');
+    }
 
     $notulenText = $request->input('notulen');
     $materiLink  = $request->input('materi_link');

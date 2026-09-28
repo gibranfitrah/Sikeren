@@ -44,6 +44,24 @@
         $isPemimpin ||
         $isAdmin
     );
+
+    $isSelesai = (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1);
+
+    // Hitung batas akhir jadwal pelaksanaan rapat
+    $jamAkhirClean = trim($rapatJamSelesai ?: '23:59:59');
+    if (strlen($jamAkhirClean) === 5) {
+        $jamAkhirClean .= ':00';
+    }
+    $isLewatWaktu = false;
+    $waktuAkhirRapat = null;
+    try {
+        $waktuAkhirRapat = \Carbon\Carbon::parse($rapatEnd . ' ' . $jamAkhirClean);
+        $isLewatWaktu = \Carbon\Carbon::now()->greaterThan($waktuAkhirRapat) && !$isSelesai;
+    } catch (\Exception $e) {
+        $isLewatWaktu = false;
+    }
+
+    $canEditNotulen = $isNotulis && !$isLewatWaktu;
 @endphp
 
 <style>
@@ -286,17 +304,21 @@
                     <p class="text-xs text-slate-400 mt-0.5">Pantau dan kelola jalannya 4 tahap siklus rapat.</p>
                 </div>
                 <div id="top-banner-status">
-                    @if($rapatSetuju == 1 && (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1))
+                    @if($isSelesai)
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                             <svg class="w-3 h-3 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> Seluruh Tahap Tuntas (Selesai)
-                        </span>
-                    @elseif($rapatSetuju == 1)
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                            <span class="w-1.5 h-1.5 rounded-full bg-current inline-block"></span> Rapat Disetujui (Sedang Berjalan)
                         </span>
                     @elseif($rapatSetuju == 3)
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-300 border border-red-500/30">
                             <svg class="w-3 h-3 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg> Rapat Ditolak
+                        </span>
+                    @elseif($isLewatWaktu)
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                            <svg class="w-3.5 h-3.5 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Melewati Batas Waktu / Batal
+                        </span>
+                    @elseif($rapatSetuju == 1)
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                            <span class="w-1.5 h-1.5 rounded-full bg-current inline-block"></span> Rapat Disetujui (Sedang Berjalan)
                         </span>
                     @else
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
@@ -318,47 +340,69 @@
                 </div>
 
                 {{-- STEP 2: PERSETUJUAN --}}
-                <div id="step-2-box" class="p-3 rounded-xl {{ $rapatSetuju == 1 ? 'bg-slate-800/80 border-emerald-500/50' : ($rapatSetuju == 3 ? 'bg-slate-800/80 border-red-500/50' : 'bg-slate-800/80 border-amber-500/50 ring-1 ring-amber-500/30') }} border flex items-center gap-3">
-                    <span id="step-2-badge" class="w-8 h-8 rounded-lg {{ $rapatSetuju == 1 ? 'bg-emerald-600' : ($rapatSetuju == 3 ? 'bg-red-600' : 'bg-amber-500') }} text-white font-black text-xs flex items-center justify-center flex-shrink-0">2</span>
+                <div id="step-2-box" class="p-3 rounded-xl {{ $rapatSetuju == 1 ? 'bg-slate-800/80 border-emerald-500/50' : ($rapatSetuju == 3 ? 'bg-slate-800/80 border-red-500/50' : ($isLewatWaktu ? 'bg-slate-800/80 border-rose-500/50' : 'bg-slate-800/80 border-amber-500/50 ring-1 ring-amber-500/30')) }} border flex items-center gap-3">
+                    <span id="step-2-badge" class="w-8 h-8 rounded-lg {{ $rapatSetuju == 1 ? 'bg-emerald-600' : ($rapatSetuju == 3 ? 'bg-red-600' : ($isLewatWaktu ? 'bg-rose-600' : 'bg-amber-500')) }} text-white font-black text-xs flex items-center justify-center flex-shrink-0">2</span>
                     <div>
                         <div class="text-xs font-bold text-white">2. Persetujuan</div>
-                        <div id="step-2-status" class="text-[10px] {{ $rapatSetuju == 1 ? 'text-emerald-400' : ($rapatSetuju == 3 ? 'text-red-400' : 'text-amber-400 font-bold') }}">
-                            {{ $rapatSetuju == 1 ? 'Telah Disetujui' : ($rapatSetuju == 3 ? 'Ditolak' : 'Menunggu Approval') }}
+                        <div id="step-2-status" class="text-[10px] {{ $rapatSetuju == 1 ? 'text-emerald-400' : ($rapatSetuju == 3 ? 'text-red-400' : ($isLewatWaktu ? 'text-rose-400 font-bold' : 'text-amber-400 font-bold')) }}">
+                            {{ $rapatSetuju == 1 ? 'Telah Disetujui' : ($rapatSetuju == 3 ? 'Ditolak' : ($isLewatWaktu ? 'Kedaluwarsa' : 'Menunggu Approval')) }}
                         </div>
                     </div>
                 </div>
 
                 {{-- STEP 3: PRESENSI QR --}}
-                <div id="step-3-box" class="p-3 rounded-xl {{ $rapatSetuju == 1 ? 'bg-slate-800/80 border-blue-500/50' : 'bg-slate-800/40 border-slate-700/50 opacity-60' }} border flex items-center gap-3">
-                    <span id="step-3-badge" class="w-8 h-8 rounded-lg {{ $rapatSetuju == 1 ? 'bg-blue-600' : 'bg-slate-700' }} text-white font-black text-xs flex items-center justify-center flex-shrink-0">3</span>
+                <div id="step-3-box" class="p-3 rounded-xl {{ $isLewatWaktu ? 'bg-slate-800/80 border-rose-500/50' : ($rapatSetuju == 1 ? 'bg-slate-800/80 border-blue-500/50' : 'bg-slate-800/40 border-slate-700/50 opacity-60') }} border flex items-center gap-3">
+                    <span id="step-3-badge" class="w-8 h-8 rounded-lg {{ $isLewatWaktu ? 'bg-rose-600' : ($rapatSetuju == 1 ? 'bg-blue-600' : 'bg-slate-700') }} text-white font-black text-xs flex items-center justify-center flex-shrink-0">3</span>
                     <div>
                         <div class="text-xs font-bold text-white">3. Presensi QR</div>
-                        <div id="step-3-status" class="text-[10px] {{ $rapatSetuju == 1 ? 'text-blue-400' : 'text-slate-500' }}">
-                            {{ $rapatSetuju == 1 ? 'Siap / QR Aktif' : 'Terkunci' }}
+                        <div id="step-3-status" class="text-[10px] {{ $isLewatWaktu ? 'text-rose-400 font-bold' : ($rapatSetuju == 1 ? 'text-blue-400' : 'text-slate-500') }}">
+                            {{ $isLewatWaktu ? 'Presensi Ditutup' : ($rapatSetuju == 1 ? 'Siap / QR Aktif' : 'Terkunci') }}
                         </div>
                     </div>
                 </div>
 
                 {{-- STEP 4: NOTULEN --}}
-                <div id="step-4-box" class="p-3 rounded-xl {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'bg-slate-800/80 border-emerald-500/50' : ($rapatSetuju == 1 ? 'bg-slate-800/80 border-amber-500/50' : 'bg-slate-800/40 border-slate-700/50 opacity-60') }} border flex items-center gap-3">
-                    <span id="step-4-badge" class="w-8 h-8 rounded-lg {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'bg-emerald-600' : ($rapatSetuju == 1 ? 'bg-amber-500' : 'bg-slate-700') }} text-white font-black text-xs flex items-center justify-center flex-shrink-0">4</span>
+                <div id="step-4-box" class="p-3 rounded-xl {{ $isSelesai ? 'bg-slate-800/80 border-emerald-500/50' : ($isLewatWaktu ? 'bg-slate-800/80 border-rose-500/50' : ($rapatSetuju == 1 ? 'bg-slate-800/80 border-amber-500/50' : 'bg-slate-800/40 border-slate-700/50 opacity-60')) }} border flex items-center gap-3">
+                    <span id="step-4-badge" class="w-8 h-8 rounded-lg {{ $isSelesai ? 'bg-emerald-600' : ($isLewatWaktu ? 'bg-rose-600' : ($rapatSetuju == 1 ? 'bg-amber-500' : 'bg-slate-700')) }} text-white font-black text-xs flex items-center justify-center flex-shrink-0">4</span>
                     <div>
                         <div class="text-xs font-bold text-white">4. Notulen & Foto</div>
-                        <div id="step-4-status" class="text-[10px] {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'text-emerald-400' : ($rapatSetuju == 1 ? 'text-amber-400' : 'text-slate-500') }}">
-                            {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'Notulen Selesai' : ($rapatSetuju == 1 ? 'Menunggu Unggah' : 'Terkunci') }}
+                        <div id="step-4-status" class="text-[10px] {{ $isSelesai ? 'text-emerald-400' : ($isLewatWaktu ? 'text-rose-400 font-bold' : ($rapatSetuju == 1 ? 'text-amber-400' : 'text-slate-500')) }}">
+                            {{ $isSelesai ? 'Notulen Selesai' : ($isLewatWaktu ? 'Waktu Habis / Batal' : ($rapatSetuju == 1 ? 'Menunggu Unggah' : 'Terkunci')) }}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
+        {{-- BANNER PERINGATAN JIKA LEWAT WAKTU / BATAL --}}
+        @if($isLewatWaktu)
+        <div class="mx-6 sm:mx-8 mt-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-start gap-3.5 shadow-xs">
+            <div class="w-9 h-9 rounded-xl bg-rose-500 text-white flex items-center justify-center flex-shrink-0 mt-0.5 shadow-xs">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+            <div class="flex-1 text-xs">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <h4 class="font-extrabold text-rose-900 text-sm">Jadwal Rapat Telah Berakhir (Lewat Batas Waktu / Batal)</h4>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-200/80 text-rose-800 border border-rose-300">Akses Pengeditan Dikunci</span>
+                </div>
+                <p class="text-rose-700 mt-1 leading-relaxed">
+                    Jadwal pelaksanaan rapat ini berakhir pada <strong>{{ \Carbon\Carbon::parse($rapatEnd)->translatedFormat('d F Y') }} pukul {{ substr($rapatJamSelesai, 0, 5) }} WITA</strong>. Karena batas waktu telah terlewati sebelum seluruh tahapan tuntas, status rapat menjadi <strong>Melewati Batas Waktu / Batal</strong>.
+                </p>
+                <p class="text-[11px] text-rose-600 mt-1.5 font-medium flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    <span>Ketua Tim / Penanggung Jawab (PJ), Anggota, dan Notulis tidak dapat lagi mengubah data persetujuan, presensi, maupun mengisi notulen untuk rapat ini.</span>
+                </p>
+            </div>
+        </div>
+        @endif
+
         {{-- Detail Konten per Tahap --}}
         <div class="p-6 sm:p-8 space-y-6">
 
             {{-- PANEL TAHAP 2: PERSETUJUAN PEMIMPIN (SEJAJAR & TIDAK MEPET) --}}
-            <div class="approval-container {{ $rapatSetuju == 1 ? 'approval-approved' : ($rapatSetuju == 3 ? 'approval-rejected' : 'approval-waiting') }}">
+            <div class="approval-container {{ $rapatSetuju == 1 ? 'approval-approved' : ($rapatSetuju == 3 ? 'approval-rejected' : ($isLewatWaktu ? 'approval-rejected' : 'approval-waiting')) }}">
                 <div class="flex items-center gap-3.5">
-                    <div class="w-8 h-8 rounded-xl {{ $rapatSetuju == 1 ? 'bg-emerald-600' : ($rapatSetuju == 3 ? 'bg-red-600' : 'bg-amber-500') }} text-white font-black text-xs flex items-center justify-center flex-shrink-0 shadow-xs">
+                    <div class="w-8 h-8 rounded-xl {{ $rapatSetuju == 1 ? 'bg-emerald-600' : ($rapatSetuju == 3 ? 'bg-red-600' : ($isLewatWaktu ? 'bg-rose-600' : 'bg-amber-500')) }} text-white font-black text-xs flex items-center justify-center flex-shrink-0 shadow-xs">
                         2
                     </div>
                     <div>
@@ -373,7 +417,12 @@
 
                 {{-- Action Form / Status Badge (Sejajar di sebelah kanan) --}}
                 <div class="flex items-center gap-3">
-                    @if($isPemimpin && $rapatSetuju == 0)
+                    @if($isLewatWaktu && $rapatSetuju == 0)
+                        <span class="stage-pill stage-pill-rejected">
+                            <svg class="ui-icon-xs text-rose-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Waktu Persetujuan Berakhir (Batal)
+                        </span>
+                    @elseif($isPemimpin && $rapatSetuju == 0)
                         <form action="{{ url('/setuju_rapat') }}" method="POST" class="inline">
                             @csrf
                             <input type="hidden" name="id" value="{{ $rapatId }}">
@@ -423,18 +472,28 @@
                     <div>
                         <div class="flex items-center justify-between pb-4 border-b border-gray-100 mb-5">
                             <div class="flex items-center gap-2.5">
-                                <span class="w-7 h-7 rounded-xl bg-blue-600 text-white text-xs font-black flex items-center justify-center flex-shrink-0 shadow-xs">3</span>
+                                <span class="w-7 h-7 rounded-xl {{ $isLewatWaktu ? 'bg-rose-600' : 'bg-blue-600' }} text-white text-xs font-black flex items-center justify-center flex-shrink-0 shadow-xs">3</span>
                                 <div>
                                     <h4 class="text-xs font-bold uppercase tracking-wider text-gray-800">Tahap Presensi QR Rapat</h4>
                                     <p class="text-[11px] text-gray-400">Pindai QR lewat HP peserta</p>
                                 </div>
                             </div>
-                            <span class="text-[11px] font-bold {{ $rapatSetuju == 1 ? 'text-blue-700 bg-blue-50 border border-blue-200' : 'text-gray-500 bg-gray-100 border border-gray-200' }} px-3 py-1 rounded-full">
-                                {{ $rapatSetuju == 1 ? 'QR Siap & Aktif' : 'Terkunci' }}
+                            <span class="text-[11px] font-bold {{ $isLewatWaktu ? 'text-rose-700 bg-rose-50 border border-rose-200' : ($rapatSetuju == 1 ? 'text-blue-700 bg-blue-50 border border-blue-200' : 'text-gray-500 bg-gray-100 border border-gray-200') }} px-3 py-1 rounded-full">
+                                {{ $isLewatWaktu ? 'Presensi Ditutup (Lewat Waktu)' : ($rapatSetuju == 1 ? 'QR Siap & Aktif' : 'Terkunci') }}
                             </span>
                         </div>
 
-                        @if($rapatSetuju == 1)
+                        @if($isLewatWaktu)
+                            <div class="p-6 text-center text-xs space-y-2 rounded-xl bg-rose-50/50 border border-rose-200">
+                                <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center mx-auto">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                </div>
+                                <p class="font-bold text-rose-900 text-sm">Presensi Telah Ditutup</p>
+                                <p class="text-xs text-rose-700 leading-relaxed max-w-sm mx-auto">
+                                    Waktu pelaksanaan rapat telah berakhir pada pukul {{ substr($rapatJamSelesai, 0, 5) }} WITA. Presensi kehadiran peserta telah ditutup dan tidak dapat lagi dilakukan.
+                                </p>
+                            </div>
+                        @elseif($rapatSetuju == 1)
                             <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5">
                                 <div class="p-3 bg-white rounded-2xl border-2 border-slate-100 shadow-sm flex-shrink-0 flex flex-col items-center">
                                     {!! QrCode::size(120)->generate($qrUrlHadir ?? url('/daftarhadir/' . $rapatId)) !!}
@@ -462,7 +521,7 @@
                         @endif
                     </div>
 
-                    @if($rapatSetuju == 1)
+                    @if($rapatSetuju == 1 && !$isLewatWaktu)
                         <div class="pt-4 mt-5 border-t border-gray-100 flex items-center gap-2 flex-wrap">
                             <a target="_blank" href="{{ url('/qrcode/' . $rapatId) }}" class="btn-primary-action">
                                 <svg class="ui-icon-xs text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
@@ -480,30 +539,35 @@
                     <div>
                         <div class="flex items-center justify-between pb-4 border-b border-gray-100 mb-5">
                             <div class="flex items-center gap-2.5">
-                                <span class="w-7 h-7 rounded-xl bg-emerald-600 text-white text-xs font-black flex items-center justify-center flex-shrink-0 shadow-xs">4</span>
+                                <span class="w-7 h-7 rounded-xl {{ $isSelesai ? 'bg-emerald-600' : ($isLewatWaktu ? 'bg-rose-600' : 'bg-emerald-600') }} text-white text-xs font-black flex items-center justify-center flex-shrink-0 shadow-xs">4</span>
                                 <div>
                                     <h4 class="text-xs font-bold uppercase tracking-wider text-gray-800">Tahap Notulen & Foto Dokumentasi</h4>
                                     <p class="text-[11px] text-gray-400">Ringkasan hasil, materi & foto</p>
                                 </div>
                             </div>
-                            <span id="badge-tahap4-status" class="text-[11px] font-bold {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-amber-700 bg-amber-50 border border-amber-200' }} px-3 py-1 rounded-full">
-                                {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'Selesai (100%)' : 'Menunggu Notulen' }}
+                            <span id="badge-tahap4-status" class="text-[11px] font-bold {{ $isSelesai ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : ($isLewatWaktu ? 'text-rose-700 bg-rose-50 border border-rose-200' : 'text-amber-700 bg-amber-50 border border-amber-200') }} px-3 py-1 rounded-full">
+                                {{ $isSelesai ? 'Selesai (100%)' : ($isLewatWaktu ? 'Waktu Pengisian Berakhir / Batal' : 'Menunggu Notulen') }}
                             </span>
                         </div>
 
-                        @if($rapatSetuju == 1)
+                        @if($isSelesai)
                             {{-- TAMPILAN VIEW NOTULEN & DOKUMENTASI (SELESAI / SUDAH TERISI) --}}
-                            <div id="view-notulen-container" class="{{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? '' : 'hidden' }} space-y-4">
+                            <div id="view-notulen-container" class="space-y-4">
                                 <div class="flex items-center justify-between gap-2 flex-wrap">
                                     <div class="flex items-center gap-2">
                                         <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                                         <h5 class="text-xs font-bold text-gray-900 uppercase tracking-wide">Hasil Notulen & Kesimpulan:</h5>
                                     </div>
-                                    @if($isNotulis)
+                                    @if($canEditNotulen)
                                         <button type="button" onclick="toggleEditNotulen(true)" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-bold transition">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                             <span>Ubah / Edit Notulen</span>
                                         </button>
+                                    @elseif($isLewatWaktu)
+                                        <span class="text-[11px] font-semibold text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-lg flex items-center gap-1">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                            Terkunci (Jadwal Telah Berakhir)
+                                        </span>
                                     @endif
                                 </div>
 
@@ -532,15 +596,25 @@
                                     </a>
                                 </div>
                             </div>
-
+                        @elseif($isLewatWaktu)
+                            <div class="p-6 text-center text-xs space-y-2 rounded-xl bg-rose-50/50 border border-rose-200">
+                                <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center mx-auto">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                </div>
+                                <p class="font-bold text-rose-900 text-sm">Form Notulen & Dokumentasi Dikunci</p>
+                                <p class="text-xs text-rose-700 leading-relaxed max-w-sm mx-auto">
+                                    Batas waktu jadwal pelaksanaan rapat telah berakhir. Pengisian hasil notulen dan dokumentasi tidak dapat dilakukan lagi (status: Melewati Batas Waktu / Batal).
+                                </p>
+                            </div>
+                        @elseif($rapatSetuju == 1)
                             {{-- FORM CONTAINER (PENGISIAN ATAU EDIT NOTULEN) --}}
-                            <div id="form-notulen-container" class="{{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'hidden' : '' }} space-y-4">
+                            <div id="form-notulen-container" class="space-y-4">
                                 @if($isNotulis)
                                     <div class="flex items-center justify-between pb-2 border-b border-gray-100">
                                         <h5 id="form-notulen-title" class="text-xs font-bold text-gray-900">
-                                            {{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? 'Ubah Notulen & Dokumentasi Rapat' : 'Pengisian Notulen & Dokumentasi Rapat' }}
+                                            Pengisian Notulen & Dokumentasi Rapat
                                         </h5>
-                                        <button type="button" id="btn-cancel-edit-notulen" onclick="toggleEditNotulen(false)" class="{{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? '' : 'hidden' }} text-xs font-bold text-gray-500 hover:text-gray-700 px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 transition">
+                                        <button type="button" id="btn-cancel-edit-notulen" onclick="toggleEditNotulen(false)" class="hidden text-xs font-bold text-gray-500 hover:text-gray-700 px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 transition">
                                             Batal
                                         </button>
                                     </div>
@@ -567,7 +641,7 @@
                                         </div>
 
                                         <div class="flex items-center justify-end gap-2 pt-2">
-                                            <button type="button" id="btn-cancel-edit-notulen-bottom" onclick="toggleEditNotulen(false)" class="{{ (!empty($rapatNotulen) || ($firstItem->notulen_selesai ?? 0) == 1) ? '' : 'hidden' }} btn-secondary-action">
+                                            <button type="button" id="btn-cancel-edit-notulen-bottom" onclick="toggleEditNotulen(false)" class="hidden btn-secondary-action">
                                                 Batal
                                             </button>
                                             <button type="submit" id="btn-submit-notulen" class="btn-primary-action">
@@ -972,10 +1046,12 @@ function refreshPresensi() {
                     if (topBanner) {
                         if (r.setuju_rapat == 1 && hasNotulen) {
                             topBanner.innerHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"><svg class="w-3 h-3 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> Seluruh Tahap Tuntas (Selesai)</span>`;
-                        } else if (r.setuju_rapat == 1) {
-                            topBanner.innerHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30"><span class="w-1.5 h-1.5 rounded-full bg-current inline-block"></span> Rapat Disetujui (Sedang Berjalan)</span>`;
                         } else if (r.setuju_rapat == 3) {
                             topBanner.innerHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-300 border border-red-500/30"><svg class="w-3 h-3 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg> Rapat Ditolak</span>`;
+                        } else if (r.is_lewat_waktu) {
+                            topBanner.innerHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30"><svg class="w-3.5 h-3.5 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Melewati Batas Waktu / Batal</span>`;
+                        } else if (r.setuju_rapat == 1) {
+                            topBanner.innerHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30"><span class="w-1.5 h-1.5 rounded-full bg-current inline-block"></span> Rapat Disetujui (Sedang Berjalan)</span>`;
                         } else {
                             topBanner.innerHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse"><svg class="w-3.5 h-3.5 inline-block align-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Menunggu Persetujuan Pemimpin</span>`;
                         }
@@ -991,6 +1067,11 @@ function refreshPresensi() {
                             step4Badge.className = "w-8 h-8 rounded-lg bg-emerald-600 text-white font-black text-xs flex items-center justify-center flex-shrink-0";
                             step4Status.className = "text-[10px] text-emerald-400 font-medium";
                             step4Status.innerText = "Notulen Selesai";
+                        } else if (r.is_lewat_waktu) {
+                            step4Box.className = "p-3 rounded-xl bg-slate-800/80 border-rose-500/50 border flex items-center gap-3";
+                            step4Badge.className = "w-8 h-8 rounded-lg bg-rose-600 text-white font-black text-xs flex items-center justify-center flex-shrink-0";
+                            step4Status.className = "text-[10px] text-rose-400 font-bold";
+                            step4Status.innerText = "Waktu Habis / Batal";
                         } else if (r.setuju_rapat == 1) {
                             step4Box.className = "p-3 rounded-xl bg-slate-800/80 border-amber-500/50 border flex items-center gap-3";
                             step4Badge.className = "w-8 h-8 rounded-lg bg-amber-500 text-white font-black text-xs flex items-center justify-center flex-shrink-0";
@@ -1005,6 +1086,9 @@ function refreshPresensi() {
                         if (hasNotulen) {
                             badgeTahap4.className = "text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full";
                             badgeTahap4.innerText = "Selesai (100%)";
+                        } else if (r.is_lewat_waktu) {
+                            badgeTahap4.className = "text-[11px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1 rounded-full";
+                            badgeTahap4.innerText = "Waktu Habis / Batal";
                         } else {
                             badgeTahap4.className = "text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full";
                             badgeTahap4.innerText = "Menunggu Notulen";

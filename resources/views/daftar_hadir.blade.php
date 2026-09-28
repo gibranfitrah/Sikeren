@@ -79,6 +79,19 @@
             $initialNip  = $assignedParticipants->first()->niplama;
             $initialNama = $assignedParticipants->first()->nama_lengkap;
         }
+        $isSelesai       = (!empty($task->notulen) || ($task->notulen_selesai ?? 0) == 1);
+        $rapatEnd        = $task->date_akhir ?? ($task->start_date ?? ($task->start ?? date('Y-m-d')));
+        $jamAkhirClean   = trim($rapatJamSelesai ?: '23:59:59');
+        if (strlen($jamAkhirClean) === 5) {
+            $jamAkhirClean .= ':00';
+        }
+        $isLewatWaktu    = false;
+        try {
+            $waktuAkhirRapat = \Carbon\Carbon::parse($rapatEnd . ' ' . $jamAkhirClean);
+            $isLewatWaktu    = \Carbon\Carbon::now()->greaterThan($waktuAkhirRapat) && !$isSelesai;
+        } catch (\Exception $e) {
+            $isLewatWaktu    = false;
+        }
     @endphp
 
     {{-- HEADER APP BAR --}}
@@ -94,10 +107,17 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[11px] font-bold">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>QR Live</span>
-            </div>
+            @if($isLewatWaktu)
+                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/20 border border-rose-400/30 text-rose-300 text-[11px] font-bold">
+                    <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+                    <span>Ditutup</span>
+                </div>
+            @else
+                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[11px] font-bold">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>QR Live</span>
+                </div>
+            @endif
         </div>
     </header>
 
@@ -168,6 +188,19 @@
         </div>
 
         {{-- FORM PRESENSI UTAMA --}}
+        @if($isLewatWaktu)
+        <div class="bg-white rounded-2xl p-6 border border-rose-200 shadow-xs text-center space-y-3">
+            <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center mx-auto">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            </div>
+            <div>
+                <h3 class="font-extrabold text-rose-900 text-sm">Presensi Rapat Telah Ditutup</h3>
+                <p class="text-xs text-rose-700 mt-1 leading-relaxed max-w-xs mx-auto">
+                    Jadwal pelaksanaan rapat ini telah berakhir pada {{ \Carbon\Carbon::parse($rapatEnd)->translatedFormat('d M Y') }} pukul {{ substr($rapatJamSelesai, 0, 5) }} WITA. Pengisian konfirmasi kehadiran tidak dapat dilakukan lagi.
+                </p>
+            </div>
+        </div>
+        @else
         <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-4">
 
             <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
@@ -371,6 +404,7 @@
                 </div>
             </form>
         </div>
+        @endif
 
         {{-- DAFTAR PESERTA YANG SUDAH MENGISI PRESENSI --}}
         <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
