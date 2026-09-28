@@ -389,19 +389,40 @@ class User extends Authenticatable
             return true;
         }
 
-        // F. Ditunjuk di field owners (JSON / CSV)
+        // F. Ditunjuk di field owners (JSON / CSV / Array / Single Value)
         $rawOwners = $task->owners;
         if (!empty($rawOwners)) {
-            $ownersList = is_array($rawOwners) ? $rawOwners : (is_string($rawOwners) ? (json_decode($rawOwners, true) ?: array_filter(array_map('trim', explode(',', $rawOwners)))) : []);
-            foreach ($ownersList as $owner) {
-                $ownClean = strtolower(trim($owner));
-                if (
-                    (!empty($nip) && $ownClean === strtolower($nip)) ||
-                    (!empty($nipbaru) && $ownClean === strtolower($nipbaru)) ||
-                    (!empty($nama) && (str_contains($ownClean, $nama) || str_contains($nama, $ownClean))) ||
-                    (!empty($username) && $ownClean === $username)
-                ) {
-                    return true;
+            $ownersList = [];
+            if (is_array($rawOwners)) {
+                $ownersList = $rawOwners;
+            } elseif (is_string($rawOwners)) {
+                $decoded = json_decode($rawOwners, true);
+                if (is_array($decoded)) {
+                    $ownersList = $decoded;
+                } else {
+                    $ownersList = array_filter(array_map('trim', explode(',', $rawOwners)));
+                }
+            } elseif (is_numeric($rawOwners)) {
+                $ownersList = [(string) $rawOwners];
+            }
+
+            if (is_array($ownersList)) {
+                foreach ($ownersList as $owner) {
+                    if (is_array($owner) || is_object($owner)) {
+                        $ownerStr = json_encode($owner);
+                    } else {
+                        $ownerStr = (string) $owner;
+                    }
+                    $ownClean = strtolower(trim($ownerStr));
+                    if (
+                        (!empty($nip) && $ownClean === strtolower($nip)) ||
+                        (!empty($nipbaru) && $ownClean === strtolower($nipbaru)) ||
+                        (!empty($nama) && (str_contains($ownClean, $nama) || str_contains($nama, $ownClean))) ||
+                        (!empty($username) && $ownClean === $username) ||
+                        (!empty($this->id) && $ownClean === (string)$this->id)
+                    ) {
+                        return true;
+                    }
                 }
             }
         }
@@ -409,7 +430,14 @@ class User extends Authenticatable
         // 3. Jika kegiatan/rapat ini adalah kegiatan dari TIM KERJA user sendiri (bukan tim lain):
         if (!empty($task->tim) && $task->tim !== 'Umum') {
             $userTims = \DB::table('groups')
-                ->where('niplama', $this->niplama)
+                ->where(function ($q) use ($nip, $nipbaru) {
+                    if (!empty($nip) && $nip !== '-') {
+                        $q->where('niplama', $nip);
+                    }
+                    if (!empty($nipbaru) && $nipbaru !== '-') {
+                        $q->orWhere('niplama', $nipbaru);
+                    }
+                })
                 ->pluck('grup')
                 ->filter()
                 ->map(fn($t) => strtolower(trim($t)))
