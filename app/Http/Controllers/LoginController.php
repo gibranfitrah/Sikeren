@@ -127,7 +127,7 @@ class LoginController extends Controller
                     $user->nama_lengkap = $personName;
                     $user->username     = $slug;
                     $user->email        = $email;
-                    $user->password     = \Illuminate\Support\Facades\Hash::make('password');
+                    $user->password     = \Illuminate\Support\Facades\Hash::make($slug . '123');
                     $user->niplama      = '7400' . rand(10000, 99999);
                     $user->nipbaru      = '19850101' . date('Y') . '01100' . rand(1, 9);
                     $user->save();
@@ -152,14 +152,39 @@ class LoginController extends Controller
 
         // 4. Autentikasi Pengguna
         if ($user) {
-            $isValid = \Illuminate\Support\Facades\Hash::check($password, $user->password)
-                || in_array($password, ['password', '12345678', 'admin', '123456'])
-                || (isset($user->password) && (md5($password) === $user->password || $password === $user->password))
-                || !empty($password); // Mempermudah login dengan password seragam
+            $userSlug = method_exists($user, 'getDefaultPasswordSlug') ? $user->getDefaultPasswordSlug() : strtolower(preg_replace('/[^a-zA-Z0-9]/', '', explode(',', $user->nama_lengkap ?? '')[0]));
+            $cleanInputPwd = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $password));
+            $expectedWith123 = $userSlug . '123';
+            $expectedPlain   = $userSlug;
+
+            $isValid = false;
+
+            // A. Pola utama: Nama huruf kecil + 123 (contoh: hadisusanto123 atau hadisusanto)
+            if ($cleanInputPwd === $expectedWith123 || $cleanInputPwd === $expectedPlain) {
+                $isValid = true;
+            }
+            // B. Hash check dari database
+            elseif (\Illuminate\Support\Facades\Hash::check($password, $user->password)) {
+                $isValid = true;
+            }
+            // C. Username huruf kecil + 123 (contoh: aseptianto123)
+            elseif (!empty($user->username) && ($cleanInputPwd === strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $user->username)) . '123' || $cleanInputPwd === strtolower($user->username))) {
+                $isValid = true;
+            }
+            // D. Akun Administrator: izinkan 'admin', 'admin123'
+            elseif ($user->isAdmin() && in_array($cleanInputPwd, ['admin', 'admin123'])) {
+                $isValid = true;
+            }
+            // E. Cek MD5 legacy atau plain string password
+            elseif (isset($user->password) && (md5($password) === $user->password || $password === $user->password)) {
+                $isValid = true;
+            }
 
             if ($isValid) {
-                $user->password = \Illuminate\Support\Facades\Hash::make($password);
-                $user->save();
+                if (!\Illuminate\Support\Facades\Hash::check($password, $user->password)) {
+                    $user->password = \Illuminate\Support\Facades\Hash::make($password);
+                    $user->save();
+                }
 
                 Auth::login($user, true);
                 $request->session()->regenerate();

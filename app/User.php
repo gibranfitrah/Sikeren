@@ -286,6 +286,20 @@ class User extends Authenticatable
         })->values();
     }
 
+    /**
+     * Mendapatkan slug nama huruf kecil tanpa gelar untuk pola password default (misal: hadisusanto123)
+     */
+    public function getDefaultPasswordSlug()
+    {
+        $clean = explode(',', $this->nama_lengkap ?? '')[0];
+        $clean = preg_replace('/^(Dr\.|Drs\.|Ir\.|Prof\.|H\.|Hj\.)\s+/i', '', trim($clean));
+        $slug = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $clean));
+        if (empty($slug) && !empty($this->username)) {
+            $slug = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $this->username));
+        }
+        return $slug ?: 'user';
+    }
+
     public function canAccessDetailKegiatan($task = null)
     {
         // 1. Super Administrator memiliki akses penuh ke seluruh kegiatan & rapat

@@ -79,15 +79,19 @@
                 </div>
 
                 <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <div class="flex items-center justify-between">
+                        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                        <span class="text-[11px] text-gray-400 font-mono">huruf kecil + 123</span>
+                    </div>
                     <div class="mt-1 relative rounded-md shadow-sm">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                 <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
                             </svg>
                         </div>
-                        <input type="password" name="password" id="password" required class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 py-3 sm:text-sm border-gray-300 rounded-lg bg-gray-50 border text-gray-900" placeholder="password">
+                        <input type="password" name="password" id="password" required class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 py-3 sm:text-sm border-gray-300 rounded-lg bg-gray-50 border text-gray-900" placeholder="contoh: hadisusanto123">
                     </div>
+                    <p class="text-[11px] text-gray-500 mt-1">Format password: nama tanpa gelar huruf kecil + 123 (contoh: <strong>hadisusanto123</strong>)</p>
                 </div>
 
                 <div>
