@@ -1182,6 +1182,11 @@ class KegiatanController extends Controller
             return redirect()->route('login');
         }
 
+        // Cek hak akses ke rapat / kegiatan ini
+        if (!$currentUser->canAccessDetailKegiatan($task)) {
+            return redirect()->route('kegiatan.kelola')->with('error_access', 'Anda tidak memiliki hak akses untuk rapat/kegiatan ini.');
+        }
+
         // Tentukan user target (default: Auth::user(), atau user spesifik jika dibuka oleh Admin/PJ dari tabel peserta)
         $user = $currentUser;
         if ($request->has('nip') || $request->has('user_id')) {
@@ -1198,6 +1203,33 @@ class KegiatanController extends Controller
             if ($target) {
                 $user = $target;
             }
+        }
+
+        // Pastikan hanya admin / PJ rapat yang dapat melihat tiket user lain
+        $pjName = trim(strtolower($task->penanggung_jawab ?? ''));
+        $pjNipLama = trim(strtolower($task->agenda_ketua_tim ?? ''));
+        $currName = trim(strtolower($currentUser->nama_lengkap ?? ''));
+        $currNipL = trim(strtolower($currentUser->niplama ?? ''));
+        $currNipB = trim(strtolower($currentUser->nipbaru ?? ''));
+        $currentIsPj = (($pjName !== '' && ($pjName === $currName || str_contains($currName, $pjName) || str_contains($pjName, $currName))) ||
+                        ($pjNipLama !== '' && ($pjNipLama === $currNipL || $pjNipLama === $currNipB)));
+
+        if ($user->id !== $currentUser->id && !$currentUser->isAdmin() && !$currentIsPj) {
+            $user = $currentUser;
+        }
+
+        // Validasi: Ketua Tim / PJ tidak menggunakan tiket QR presensi
+        $targetName = trim(strtolower($user->nama_lengkap ?? ''));
+        $targetNipL = trim(strtolower($user->niplama ?? ''));
+        $targetNipB = trim(strtolower($user->nipbaru ?? ''));
+        $targetIsPj = (($pjName !== '' && ($pjName === $targetName || str_contains($targetName, $pjName) || str_contains($pjName, $targetName))) ||
+                       ($pjNipLama !== '' && ($pjNipLama === $targetNipL || $pjNipLama === $targetNipB)));
+
+        if ($targetIsPj) {
+            $pesan = ($user->id === $currentUser->id)
+                ? 'Ketua Tim / Penanggung Jawab (PJ) bertindak sebagai penyelenggara dan memindai kehadiran peserta, sehingga tidak menggunakan tiket QR presensi.'
+                : 'Pegawai (' . ($user->nama_lengkap ?? 'PJ') . ') adalah Ketua Tim / PJ dan tidak menggunakan tiket QR presensi.';
+            return redirect('/daftarkegiatan/' . $task->id)->with('error_access', $pesan);
         }
 
         // Hitung apakah rapat telah melewati batas waktu (expired)
@@ -1305,6 +1337,32 @@ class KegiatanController extends Controller
                 'message' => 'Peserta tidak ditemukan di database.',
                 'task'    => $task,
                 'peserta' => null
+            ]);
+        }
+
+        // Cek apakah user yang dipindai adalah Ketua Tim / PJ (PJ tidak melakukan presensi QR)
+        $pjName = trim(strtolower($task->penanggung_jawab ?? ''));
+        $pjNipLama = trim(strtolower($task->agenda_ketua_tim ?? ''));
+        $targetName = trim(strtolower($targetUser->nama_lengkap ?? ''));
+        $targetNipL = trim(strtolower($targetUser->niplama ?? ''));
+        $targetNipB = trim(strtolower($targetUser->nipbaru ?? ''));
+
+        $isTargetPj = (($pjName !== '' && ($pjName === $targetName || str_contains($targetName, $pjName) || str_contains($pjName, $targetName))) ||
+                       ($pjNipLama !== '' && ($pjNipLama === $targetNipL || $pjNipLama === $targetNipB)));
+
+        if ($isTargetPj) {
+            $pjMsg = 'Presensi QR ditolak. Pegawai (' . ($targetUser->nama_lengkap ?? 'PJ') . ') adalah Ketua Tim / PJ Penyelenggara. Presensi QR hanya diperuntukkan bagi peserta rapat.';
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $pjMsg
+                ], 422);
+            }
+            return view('rapat.verifikasi_hasil', [
+                'success' => false,
+                'message' => $pjMsg,
+                'task'    => $task,
+                'peserta' => $targetUser
             ]);
         }
 

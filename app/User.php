@@ -288,42 +288,142 @@ class User extends Authenticatable
 
     public function canAccessDetailKegiatan($task = null)
     {
-        // 1. Super Admin or Ketua Tim / PJ has full management access
-        if ($this->isAdmin() || $this->isKetuaTimOrPj()) {
+        // 1. Super Administrator memiliki akses penuh ke seluruh kegiatan & rapat
+        if ($this->isAdmin()) {
             return true;
         }
 
-        $username = strtolower(trim($this->username ?? ''));
-        $email = strtolower(trim($this->email ?? ''));
-        if (
-            $username === 'admin' ||
-            str_contains($email, 'admin') ||
-            (isset($this->level) && strtolower($this->level) === 'admin')
-        ) {
+        if (!$task) {
+            return false;
+        }
+
+        $nama      = strtolower(trim($this->nama_lengkap ?? ''));
+        $username  = strtolower(trim($this->username ?? ''));
+        $nip       = trim($this->niplama ?? '');
+        $nipbaru   = trim($this->nipbaru ?? '');
+
+        // 2. Cek apakah user secara spesifik DITUNJUK pada kegiatan / rapat ini:
+        // A. Ditunjuk sebagai Penanggung Jawab (PJ)
+        $pj = strtolower(trim($task->penanggung_jawab ?? ''));
+        if (!empty($pj)) {
+            if (
+                (!empty($nama) && (str_contains($pj, $nama) || str_contains($nama, $pj))) ||
+                (!empty($username) && str_contains($pj, $username)) ||
+                (!empty($nip) && $nip !== '-' && str_contains($pj, $nip)) ||
+                (!empty($nipbaru) && $nipbaru !== '-' && str_contains($pj, $nipbaru))
+            ) {
+                return true;
+            }
+        }
+
+        // Cek juga di agenda_ketua_tim jika ada
+        $isPjAgenda = \DB::table('agenda_ketua_tim')
+            ->where('id', $task->id)
+            ->where(function ($q) use ($nama, $nip, $nipbaru, $username) {
+                if (!empty($nama)) $q->where('pj', 'LIKE', '%' . $nama . '%');
+                if (!empty($nip) && $nip !== '-') $q->orWhere('pj', 'LIKE', '%' . $nip . '%');
+                if (!empty($nipbaru) && $nipbaru !== '-') $q->orWhere('pj', 'LIKE', '%' . $nipbaru . '%');
+                if (!empty($username)) $q->orWhere('pj', 'LIKE', '%' . $username . '%');
+            })
+            ->exists();
+        if ($isPjAgenda) {
             return true;
         }
 
-        // 2. If task provided, check if user is specifically the creator/PJ/Pemimpin/Notulis/Tim Dokumentasi of THIS task
-        if ($task) {
-            $nama = strtolower(trim($this->nama_lengkap ?? ''));
-            
-            $pj = strtolower(trim($task->penanggung_jawab ?? ''));
-            $pemimpin = strtolower(trim($task->pemimpin ?? ''));
-            $notulis = strtolower(trim($task->notulis ?? ''));
-            $timDok = strtolower(trim($task->tim_dokumentasi ?? ''));
+        // B. Ditunjuk sebagai Pemimpin Rapat
+        $pemimpin = strtolower(trim($task->pemimpin ?? ''));
+        if (!empty($pemimpin)) {
+            if (
+                (!empty($nama) && (str_contains($pemimpin, $nama) || str_contains($nama, $pemimpin))) ||
+                (!empty($username) && str_contains($pemimpin, $username)) ||
+                (!empty($nip) && $nip !== '-' && str_contains($pemimpin, $nip)) ||
+                (!empty($nipbaru) && $nipbaru !== '-' && str_contains($pemimpin, $nipbaru))
+            ) {
+                return true;
+            }
+        }
 
-            if (!empty($nama)) {
+        // C. Ditunjuk sebagai Notulis
+        $notulis = strtolower(trim($task->notulis ?? ''));
+        if (!empty($notulis)) {
+            if (
+                (!empty($nama) && (str_contains($notulis, $nama) || str_contains($nama, $notulis))) ||
+                (!empty($username) && str_contains($notulis, $username)) ||
+                (!empty($nip) && $nip !== '-' && str_contains($notulis, $nip)) ||
+                (!empty($nipbaru) && $nipbaru !== '-' && str_contains($notulis, $nipbaru))
+            ) {
+                return true;
+            }
+        }
+
+        // D. Ditunjuk sebagai Tim Dokumentasi
+        $timDok = strtolower(trim($task->tim_dokumentasi ?? ''));
+        if (!empty($timDok)) {
+            if (
+                (!empty($nama) && (str_contains($timDok, $nama) || str_contains($nama, $timDok))) ||
+                (!empty($username) && str_contains($timDok, $username)) ||
+                (!empty($nip) && $nip !== '-' && str_contains($timDok, $nip)) ||
+                (!empty($nipbaru) && $nipbaru !== '-' && str_contains($timDok, $nipbaru))
+            ) {
+                return true;
+            }
+        }
+
+        // E. Ditunjuk sebagai Peserta / Anggota (di tabel penugasans)
+        $isPesertaPenugasan = \DB::table('penugasans')
+            ->where('id_kegiatan', $task->id)
+            ->where(function ($q) use ($nip, $nipbaru, $nama) {
+                if (!empty($nip) && $nip !== '-') {
+                    $q->where('niplama', $nip);
+                }
+                if (!empty($nipbaru) && $nipbaru !== '-') {
+                    $q->orWhere('niplama', $nipbaru);
+                }
+                if (!empty($nama)) {
+                    $q->orWhere('peserta', $this->nama_lengkap);
+                    $q->orWhere('peserta', 'LIKE', '%' . $nama . '%');
+                }
+            })
+            ->exists();
+        if ($isPesertaPenugasan) {
+            return true;
+        }
+
+        // F. Ditunjuk di field owners (JSON / CSV)
+        $rawOwners = $task->owners;
+        if (!empty($rawOwners)) {
+            $ownersList = is_array($rawOwners) ? $rawOwners : (is_string($rawOwners) ? (json_decode($rawOwners, true) ?: array_filter(array_map('trim', explode(',', $rawOwners)))) : []);
+            foreach ($ownersList as $owner) {
+                $ownClean = strtolower(trim($owner));
                 if (
-                    ($pj && (str_contains($pj, $nama) || str_contains($nama, $pj))) ||
-                    ($pemimpin && (str_contains($pemimpin, $nama) || str_contains($nama, $pemimpin))) ||
-                    ($notulis && (str_contains($notulis, $nama) || str_contains($nama, $notulis))) ||
-                    ($timDok && (str_contains($timDok, $nama) || str_contains($nama, $timDok)))
+                    (!empty($nip) && $ownClean === strtolower($nip)) ||
+                    (!empty($nipbaru) && $ownClean === strtolower($nipbaru)) ||
+                    (!empty($nama) && (str_contains($ownClean, $nama) || str_contains($nama, $ownClean))) ||
+                    (!empty($username) && $ownClean === $username)
                 ) {
                     return true;
                 }
             }
         }
 
+        // 3. Jika kegiatan/rapat ini adalah kegiatan dari TIM KERJA user sendiri (bukan tim lain):
+        if (!empty($task->tim) && $task->tim !== 'Umum') {
+            $userTims = \DB::table('groups')
+                ->where('niplama', $this->niplama)
+                ->pluck('grup')
+                ->filter()
+                ->map(fn($t) => strtolower(trim($t)))
+                ->toArray();
+
+            $taskTimLower = strtolower(trim($task->tim));
+            foreach ($userTims as $userTim) {
+                if (!empty($userTim) && (str_contains($taskTimLower, $userTim) || str_contains($userTim, $taskTimLower))) {
+                    return true;
+                }
+            }
+        }
+
+        // Jika dari tim lain dan TIDAK DITUNJUK, maka akses ditolak
         return false;
     }
 }

@@ -41,7 +41,16 @@ class SubKegiatanController extends Controller
         $subKegiatans = $query->get();
 
         // Master data for modal / creation
-        $tasks = Task::orderBy('id', 'desc')->get();
+        $currentUser = Auth::user();
+        $tasksQuery = Task::orderBy('id', 'desc');
+        if ($currentUser && !$currentUser->isAdmin()) {
+            $tasks = $tasksQuery->get()->filter(function ($t) use ($currentUser) {
+                return $currentUser->canAccessDetailKegiatan($t);
+            })->values();
+        } else {
+            $tasks = $tasksQuery->get();
+        }
+
         $masterGroups = master_group::all();
         $allUsers = User::getPegawaiBps();
         $usersByGroup = group::join('users', 'users.niplama', '=', 'groups.niplama')
@@ -80,9 +89,18 @@ class SubKegiatanController extends Controller
         ]);
 
         $task = Task::find($request->task_id);
-        $taskName = $task ? $task->text : 'Kegiatan';
-        $taskTim  = $task ? ($task->tim ?: 'Umum') : 'Umum';
-        $pjNama   = $task && !empty($task->penanggung_jawab) ? $task->penanggung_jawab : (Auth::check() ? Auth::user()->nama_lengkap : 'Ketua Tim / PJ');
+        if (!$task) {
+            return redirect()->back()->with('error', 'Kegiatan induk tidak ditemukan.');
+        }
+
+        $currentUser = Auth::user();
+        if ($currentUser && !$currentUser->canAccessDetailKegiatan($task)) {
+            return redirect()->back()->with('error_access', 'Akses Ditolak: Anda tidak dapat menambahkan sub-kegiatan pada kegiatan tim lain, kecuali kegiatan yang menugaskan Anda.');
+        }
+
+        $taskName = $task->text ?? 'Kegiatan';
+        $taskTim  = $task->tim ?: 'Umum';
+        $pjNama   = !empty($task->penanggung_jawab) ? $task->penanggung_jawab : (Auth::check() ? Auth::user()->nama_lengkap : 'Ketua Tim / PJ');
 
         $anggotaJson = $request->has('anggota') && is_array($request->anggota) 
             ? json_encode($request->anggota) 
@@ -154,6 +172,11 @@ class SubKegiatanController extends Controller
     public function update(Request $request, $id)
     {
         $sub = SubKegiatan::findOrFail($id);
+        $task = $sub->task;
+        $currentUser = Auth::user();
+        if ($currentUser && $task && !$currentUser->canAccessDetailKegiatan($task)) {
+            return redirect()->back()->with('error_access', 'Akses Ditolak: Anda tidak dapat mengubah sub-kegiatan dari tim lain.');
+        }
 
         $request->validate([
             'nama_sub'   => 'required|string|max:255',
@@ -186,6 +209,12 @@ class SubKegiatanController extends Controller
     public function destroy($id)
     {
         $sub = SubKegiatan::findOrFail($id);
+        $task = $sub->task;
+        $currentUser = Auth::user();
+        if ($currentUser && $task && !$currentUser->canAccessDetailKegiatan($task)) {
+            return redirect()->back()->with('error_access', 'Akses Ditolak: Anda tidak dapat menghapus sub-kegiatan dari tim lain.');
+        }
+
         $sub->delete();
 
         return redirect()->back()->with('success', 'Sub Kegiatan berhasil dihapus!');
@@ -194,6 +223,15 @@ class SubKegiatanController extends Controller
     public function updateProgress(Request $request, $id)
     {
         $sub = SubKegiatan::findOrFail($id);
+        $task = $sub->task;
+        $currentUser = Auth::user();
+        if ($currentUser && $task && !$currentUser->canAccessDetailKegiatan($task)) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
+            }
+            return redirect()->back()->with('error_access', 'Akses Ditolak: Anda tidak dapat memperbarui progress sub-kegiatan dari tim lain.');
+        }
+
         $progress = intval($request->input('progress', $sub->progress));
         $status = $request->input('status', $sub->status);
 

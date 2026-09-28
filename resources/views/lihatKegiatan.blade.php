@@ -26,8 +26,24 @@
     $currentUserNama = trim(Auth::user()->nama_lengkap ?? (Auth::user()->name ?? ''));
     $currentUserNip = trim(Auth::user()->niplama ?? '');
     $currentUserNipBaru = trim(Auth::user()->nipbaru ?? '');
-    $isAdmin = Auth::check() && isset(Auth::user()->level) && strtolower(Auth::user()->level) === 'admin';
+    $isAdmin = Auth::check() && (Auth::user()->isAdmin() || (isset(Auth::user()->level) && strtolower(Auth::user()->level) === 'admin'));
     $rapatPj = $firstItem->penanggung_jawab ?? ($task->penanggung_jawab ?? '');
+
+    $isPjRapat = Auth::check() && (
+        (!empty($rapatPj) && (
+            strcasecmp($currentUserNama, trim($rapatPj)) === 0 ||
+            $currentUserNip === trim($rapatPj) ||
+            $currentUserNipBaru === trim($rapatPj) ||
+            str_contains(strtolower($rapatPj), strtolower($currentUserNama)) ||
+            str_contains(strtolower($currentUserNama), strtolower($rapatPj))
+        ))
+    );
+
+    $isUserPeserta = $kegiatans->contains(function($p) use ($currentUserNip, $currentUserNipBaru, $currentUserNama) {
+        return ($currentUserNip && $currentUserNip !== '-' && $p->def === $currentUserNip) ||
+               ($currentUserNipBaru && $currentUserNipBaru !== '-' && $p->nipbaru === $currentUserNipBaru) ||
+               (!empty($currentUserNama) && strcasecmp($p->abc ?? '', $currentUserNama) === 0);
+    });
 
     $isPemimpin = Auth::check() && (
         strcasecmp($currentUserNama, trim($rapatPemimpin ?? '')) === 0 ||
@@ -289,6 +305,26 @@
         </div>
     </div>
     @endif
+    @if (session('error_access'))
+    <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl shadow-xs">
+        <div class="flex items-center">
+            <svg class="ui-icon-md text-amber-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <p class="text-xs font-bold text-amber-900">{{ session('error_access') }}</p>
+        </div>
+    </div>
+    @endif
+    @if (session('error'))
+    <div class="bg-rose-50 border-l-4 border-rose-500 p-4 rounded-r-xl shadow-xs">
+        <div class="flex items-center">
+            <svg class="ui-icon-md text-rose-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            <p class="text-xs font-bold text-rose-900">{{ session('error') }}</p>
+        </div>
+    </div>
+    @endif
 
     {{-- ==========================================
         CARD UTAMA: PEMANTAUAN TAHAPAN ALUR RAPAT
@@ -515,15 +551,24 @@
                                     </div>
 
                                     <div class="pt-2 flex flex-wrap items-center gap-2">
+                                        @if(!$isPjRapat && $isUserPeserta)
                                         <a target="_blank" href="{{ route('rapat.tiketQr', $rapatId) }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
                                             <span>Buka Tiket QR Saya</span>
                                         </a>
+                                        @elseif($isPjRapat)
+                                        <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-medium">
+                                            <svg class="w-4 h-4 text-amber-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                                            <span>Sebagai Ketua Tim / PJ Penyelenggara, Anda memindai QR peserta (bukan scan tiket sendiri).</span>
+                                        </div>
+                                        @endif
 
+                                        @if($isPjRapat || $isPemimpin || $isAdmin)
                                         <button type="button" onclick="openScannerPetugas()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                             <span>Pindai QR Peserta (Kamera PJ)</span>
                                         </button>
+                                        @endif
                                     </div>
                                 </div>
 
@@ -833,6 +878,18 @@
                             @php
                                 $st = $pesertaItem->status_kehadiran ?? 'Belum Hadir';
                                 $pTargetNip = ($pesertaItem->nipbaru && $pesertaItem->nipbaru !== '-') ? $pesertaItem->nipbaru : $pesertaItem->def;
+                                $isThisRowPj = false;
+                                if ($task) {
+                                    $pjName = trim(strtolower($task->penanggung_jawab ?? ''));
+                                    $pjNipLama = trim(strtolower($task->agenda_ketua_tim ?? ''));
+                                    $pName = trim(strtolower($pesertaItem->abc ?? ''));
+                                    $pNipLama = trim(strtolower($pesertaItem->def ?? ''));
+                                    $pNipBaru = trim(strtolower($pesertaItem->nipbaru ?? ''));
+                                    if (($pjName !== '' && ($pjName === $pName || str_contains($pName, $pjName) || str_contains($pjName, $pName))) ||
+                                        ($pjNipLama !== '' && ($pjNipLama === $pNipLama || $pjNipLama === $pNipBaru))) {
+                                        $isThisRowPj = true;
+                                    }
+                                }
                             @endphp
                             <tr class="hover:bg-gray-50/50 transition-colors">
                                 <td class="px-5 py-3 text-gray-400 font-medium">{{ $idx + 1 }}</td>
@@ -844,10 +901,17 @@
                                 </td>
                                 <td class="px-5 py-3 text-gray-500 font-mono text-xs">{{ $pesertaItem->nipbaru ?? $pesertaItem->def }}</td>
                                 <td class="px-5 py-3 text-center">
-                                    <a href="{{ route('rapat.tiketQr', $rapatId) }}?nip={{ urlencode($pTargetNip) }}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-[10px] font-bold transition shadow-2xs" title="Lihat Tiket Presensi QR">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
-                                        <span>Tiket QR</span>
-                                    </a>
+                                    @if($isThisRowPj)
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold" title="Ketua Tim / Penanggung Jawab Penyelenggara">
+                                            <svg class="w-3.5 h-3.5 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                                            <span>Ketua Tim / PJ</span>
+                                        </span>
+                                    @else
+                                        <a href="{{ route('rapat.tiketQr', $rapatId) }}?nip={{ urlencode($pTargetNip) }}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-[10px] font-bold transition shadow-2xs" title="Lihat Tiket Presensi QR">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+                                            <span>Tiket QR</span>
+                                        </a>
+                                    @endif
                                 </td>
                                 <td class="px-5 py-3 text-right">
                                     @if($st === 'Hadir')
@@ -1036,6 +1100,8 @@ function refreshPresensi() {
                 // Update table rows
                 const tbody = document.getElementById('presensi-table-body');
                 if (tbody && data.peserta && data.peserta.length > 0) {
+                    const meetingPjName = @json(strtolower(trim($task->penanggung_jawab ?? '')));
+                    const meetingPjNip = @json(strtolower(trim($task->agenda_ketua_tim ?? '')));
                     let html = '';
                     data.peserta.forEach((p, idx) => {
                         let statusBadge = '';
@@ -1064,14 +1130,30 @@ function refreshPresensi() {
                             </span>`;
                         }
 
+                        const pName = (p.nama || '').toLowerCase().trim();
+                        const pNip = (p.nip || '').toLowerCase().trim();
+                        const pNipB = (p.nipbaru || '').toLowerCase().trim();
+                        const isPj = (meetingPjName && (pName.includes(meetingPjName) || meetingPjName.includes(pName))) ||
+                                     (meetingPjNip && (meetingPjNip === pNip || meetingPjNip === pNipB));
+
                         const targetNip = (p.nipbaru && p.nipbaru !== '-') ? p.nipbaru : p.nip;
                         const tiketUrl = `{{ url('/rapat/tiket-qr/' . $rapatId) }}?nip=${encodeURIComponent(targetNip)}`;
-                        const tiketCell = `<td class="px-5 py-3 text-center">
-                            <a href="${tiketUrl}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-[10px] font-bold transition shadow-2xs" title="Lihat Tiket Presensi QR">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
-                                <span>Tiket QR</span>
-                            </a>
-                        </td>`;
+                        let tiketCell = '';
+                        if (isPj) {
+                            tiketCell = `<td class="px-5 py-3 text-center">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold" title="Ketua Tim / Penanggung Jawab Penyelenggara">
+                                    <svg class="w-3.5 h-3.5 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                                    <span>Ketua Tim / PJ</span>
+                                </span>
+                            </td>`;
+                        } else {
+                            tiketCell = `<td class="px-5 py-3 text-center">
+                                <a href="${tiketUrl}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-[10px] font-bold transition shadow-2xs" title="Lihat Tiket Presensi QR">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+                                    <span>Tiket QR</span>
+                                </a>
+                            </td>`;
+                        }
 
                         html += `<tr class="hover:bg-gray-50/50 transition-colors">
                             <td class="px-5 py-3 text-gray-400 font-medium">${idx + 1}</td>
