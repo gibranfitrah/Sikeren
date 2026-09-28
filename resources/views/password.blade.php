@@ -19,8 +19,9 @@
 
     <link rel="stylesheet" href="{{ asset('assets/vendors_mazer/perfect-scrollbar/perfect-scrollbar.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/vendors_mazer/bootstrap-icons/bootstrap-icons.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css_mazer/app.css') }}">
-    <link rel="shortcut icon" href="{{ asset('assets/images_mazer/favicon.svg') }}" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('assets/img/favicon-32x32.png') }}?v=2">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=2" type="image/x-icon">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('assets/img/apple-icon.png') }}?v=2">
 </head>
 
 <body>
