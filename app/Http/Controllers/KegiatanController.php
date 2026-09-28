@@ -514,7 +514,29 @@ class KegiatanController extends Controller
         }
 
         $realId = $task ? $task->id : $id;
-        $user   = Auth::user();
+        $currentUser = Auth::user();
+        if (!$currentUser) {
+            session()->put('url.intended', request()->fullUrl());
+            return redirect()->route('login')->with('info', 'Silakan masuk ke akun Anda terlebih dahulu untuk mengisi kehadiran rapat.');
+        }
+
+        // Cek apakah akun yang login adalah PJ rapat (PJ tidak mengisi presensi mandiri)
+        if ($task) {
+            $pjName = trim(strtolower($task->penanggung_jawab ?? ''));
+            $pjNipLama = trim(strtolower($task->agenda_ketua_tim ?? ''));
+            $currName = trim(strtolower($currentUser->nama_lengkap ?? ''));
+            $currNipL = trim(strtolower($currentUser->niplama ?? ''));
+            $currNipB = trim(strtolower($currentUser->nipbaru ?? ''));
+
+            $isPj = (($pjName !== '' && ($pjName === $currName || str_contains($currName, $pjName) || str_contains($pjName, $currName))) ||
+                     ($pjNipLama !== '' && ($pjNipLama === $currNipL || $pjNipLama === $currNipB)));
+
+            if ($isPj) {
+                return redirect('/daftarkegiatan/' . $task->id)->with('error_access', 'Sebagai Ketua Tim / PJ Penyelenggara, Anda bertugas memindai kehadiran peserta (bukan mengisi lembar presensi sendiri).');
+            }
+        }
+
+        $user = $currentUser;
         
         // 1. Ambil data presensi yang sudah tercatat di penugasans
         $existingPenugasans = penugasan::leftJoin('users', 'penugasans.niplama', '=', 'users.niplama')
@@ -591,11 +613,25 @@ class KegiatanController extends Controller
 
     public function submitDaftarHadir(Request $request)
     {
+        $currentUser = Auth::user();
+        if (!$currentUser) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Silakan masuk ke akun Anda terlebih dahulu.'], 401);
+            }
+            return redirect()->route('login')->with('info', 'Silakan masuk ke akun Anda terlebih dahulu.');
+        }
+
         $idKegiatan      = $request->input('id_kegiatan');
         $niplama         = trim($request->input('niplama', ''));
         $namaManual      = trim($request->input('peserta_manual', ''));
         $statusKehadiran = $request->input('status_kehadiran', 'Hadir');
         $keterangan      = trim($request->input('keterangan', ''));
+
+        // Jika peserta biasa (non-admin), kunci kehadiran ke akun yang sedang login
+        if (!$currentUser->isAdmin()) {
+            $niplama    = $currentUser->niplama ?: ($currentUser->nipbaru ?: $currentUser->id);
+            $namaManual = $currentUser->nama_lengkap;
+        }
 
         // Cek apakah jadwal pelaksanaan rapat telah lewat batas waktu
         $task = is_numeric($idKegiatan) ? Task::find($idKegiatan) : Task::where('id', $idKegiatan)->orWhere('text', $idKegiatan)->first();

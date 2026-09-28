@@ -77,13 +77,15 @@ Route::get('/color6/{id}/edit6/',  [BMNController::class, 'update6'])->name('col
 Route::post('/color6/{id}/',  [BMNController::class, 'edit6'])->name('color.edit6');
 
 
-Route::get('daftarhadir/{id}', [KegiatanController::class, 'daftarHadir'])->where('id','(.*)');
-Route::post('daftarhadir/submit', [KegiatanController::class, 'submitDaftarHadir'])->name('daftarhadir.submit');
 Route::get('/api/presensi-rapat/{id}', [KegiatanController::class, 'apiStatusPresensi'])->name('api.presensi.status');
 
 Route::group(['middleware' => 'auth'], function () {
     
-Route::get('dashboard', [DashboardController::class, 'index']);
+    // Presensi Kehadiran Rapat (Wajib Login Terlebih Dahulu)
+    Route::get('daftarhadir/{id}', [KegiatanController::class, 'daftarHadir'])->where('id','(.*)')->name('daftarhadir');
+    Route::post('daftarhadir/submit', [KegiatanController::class, 'submitDaftarHadir'])->name('daftarhadir.submit');
+    
+    Route::get('dashboard', [DashboardController::class, 'index']);
 
 Route::get('/notification/{id}', [NotificationController::class, 'read'])
     ->name('notification.read');

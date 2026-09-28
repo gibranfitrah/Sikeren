@@ -219,11 +219,11 @@
 
                 {{-- 1. IDENTITAS PESERTA --}}
                 
-                {{-- Quick Assigned Participant Chips (Misal: St. Rasnani Manafi) --}}
-                @if(isset($assignedParticipants) && $assignedParticipants->count() > 0)
+                {{-- Quick Assigned Participant Chips (Hanya untuk Admin saat mendampingi) --}}
+                @if(Auth::check() && Auth::user()->isAdmin() && isset($assignedParticipants) && $assignedParticipants->count() > 0)
                 <div id="section-assigned" class="space-y-1.5">
                     <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                        Peserta Rapat Ditugaskan (Sentuh untuk memilih):
+                        Peserta Rapat Ditugaskan (Admin Assistant):
                     </label>
                     <div class="flex flex-wrap gap-1.5">
                         @foreach($assignedParticipants as $ap)
@@ -238,13 +238,18 @@
                 </div>
                 @endif
 
-                {{-- KARTU PEGAWAI TERPILIH --}}
+                {{-- KARTU PEGAWAI TERPILIH (TERIKAT DENGAN AKUN LOGIN) --}}
                 <div id="card-selected-user" class="{{ !empty($initialNama) ? '' : 'hidden' }} p-3.5 rounded-xl bg-blue-50/80 border border-blue-200 space-y-2">
                     <div class="flex items-center justify-between">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-blue-700">Peserta Terpilih</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-blue-700 flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5 text-blue-600 inline" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                            <span>Akun Peserta (Terverifikasi)</span>
+                        </span>
+                        @if(Auth::check() && Auth::user()->isAdmin())
                         <button type="button" onclick="resetPilihanPegawai()" class="text-[11px] font-bold text-blue-600 hover:text-blue-800 underline">
-                            Ganti Nama
+                            Ganti Nama (Admin)
                         </button>
+                        @endif
                     </div>
                     <div class="flex items-center gap-3">
                         <div id="user-avatar" class="w-10 h-10 rounded-xl bg-blue-600 text-white font-bold text-sm flex items-center justify-center flex-shrink-0 shadow-xs">
