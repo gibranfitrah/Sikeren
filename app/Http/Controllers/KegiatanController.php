@@ -1167,7 +1167,7 @@ class KegiatanController extends Controller
      * Halaman Tiket QR Presensi Rapat Khusus Peserta
      * Dipicu langsung saat peserta menekan notifikasi undangan rapat
      */
-    public function tiketQr($id)
+    public function tiketQr(Request $request, $id)
     {
         $task = is_numeric($id) ? Task::find($id) : Task::where('id', $id)->orWhere('text', $id)->first();
         if (!$task) {
@@ -1177,9 +1177,41 @@ class KegiatanController extends Controller
             abort(404, 'Kegiatan / Rapat tidak ditemukan.');
         }
 
-        $user = Auth::user();
-        if (!$user) {
+        $currentUser = Auth::user();
+        if (!$currentUser) {
             return redirect()->route('login');
+        }
+
+        // Tentukan user target (default: Auth::user(), atau user spesifik jika dibuka oleh Admin/PJ dari tabel peserta)
+        $user = $currentUser;
+        if ($request->has('nip') || $request->has('user_id')) {
+            $paramNip = $request->query('nip');
+            $paramUserId = $request->query('user_id');
+            $target = User::when($paramNip, function ($q) use ($paramNip) {
+                    $q->where('niplama', $paramNip)->orWhere('nipbaru', $paramNip);
+                })
+                ->when($paramUserId, function ($q) use ($paramUserId) {
+                    $q->orWhere('id', $paramUserId);
+                })
+                ->first();
+
+            if ($target) {
+                $user = $target;
+            }
+        }
+
+        // Hitung apakah rapat telah melewati batas waktu (expired)
+        $isLewatWaktu = false;
+        $dateAkhir = $task->date_akhir ?: ($task->end_date ?: $task->start_date);
+        $jamAkhir  = $task->end_jam ?: '23:59';
+        if (!empty($dateAkhir)) {
+            try {
+                $endDateTimeStr = date('Y-m-d', strtotime($dateAkhir)) . ' ' . (strlen($jamAkhir) <= 5 ? ($jamAkhir . ':00') : $jamAkhir);
+                $endCarbon = \Carbon\Carbon::parse($endDateTimeStr, 'Asia/Makassar');
+                if (now('Asia/Makassar')->gt($endCarbon) && ($task->status ?? '') !== 'Selesai') {
+                    $isLewatWaktu = true;
+                }
+            } catch (\Exception $e) {}
         }
 
         // Cari record penugasan peserta untuk rapat ini
@@ -1212,12 +1244,14 @@ class KegiatanController extends Controller
         return view('rapat.tiket_qr', compact(
             'task',
             'user',
+            'currentUser',
             'penugasan',
             'statusKehadiran',
             'waktuHadir',
             'qrSvg',
             'verifyUrl',
-            'urlPresensiRuangan'
+            'urlPresensiRuangan',
+            'isLewatWaktu'
         ));
     }
 
@@ -1234,6 +1268,20 @@ class KegiatanController extends Controller
             abort(404, 'Rapat tidak ditemukan.');
         }
 
+        // Cek apakah rapat sudah lewat batas waktu (kunci presensi)
+        $isLewatWaktu = false;
+        $dateAkhir = $task->date_akhir ?: ($task->end_date ?: $task->start_date);
+        $jamAkhir  = $task->end_jam ?: '23:59';
+        if (!empty($dateAkhir)) {
+            try {
+                $endDateTimeStr = date('Y-m-d', strtotime($dateAkhir)) . ' ' . (strlen($jamAkhir) <= 5 ? ($jamAkhir . ':00') : $jamAkhir);
+                $endCarbon = \Carbon\Carbon::parse($endDateTimeStr, 'Asia/Makassar');
+                if (now('Asia/Makassar')->gt($endCarbon) && ($task->status ?? '') !== 'Selesai') {
+                    $isLewatWaktu = true;
+                }
+            } catch (\Exception $e) {}
+        }
+
         $nip = $request->query('nip');
         $token = $request->query('token');
 
@@ -1246,11 +1294,32 @@ class KegiatanController extends Controller
         }
 
         if (!$targetUser) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Peserta tidak ditemukan di database.'
+                ], 404);
+            }
             return view('rapat.verifikasi_hasil', [
                 'success' => false,
                 'message' => 'Peserta tidak ditemukan di database.',
                 'task'    => $task,
                 'peserta' => null
+            ]);
+        }
+
+        if ($isLewatWaktu) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Presensi ditolak. Waktu pelaksanaan rapat telah berakhir (Melewati Batas Waktu / Batal).'
+                ], 422);
+            }
+            return view('rapat.verifikasi_hasil', [
+                'success' => false,
+                'message' => 'Presensi ditolak. Waktu pelaksanaan rapat telah berakhir (Melewati Batas Waktu / Batal).',
+                'task'    => $task,
+                'peserta' => $targetUser
             ]);
         }
 
@@ -1274,6 +1343,16 @@ class KegiatanController extends Controller
                 'peserta'          => $targetUser->nama_lengkap,
                 'status_kehadiran' => 'Hadir',
                 'waktu_kehadiran'  => now(),
+            ]);
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success'   => true,
+                'message'   => 'Kehadiran peserta ' . ($targetUser->nama_lengkap ?? 'Peserta') . ' berhasil diverifikasi!',
+                'task'      => $task,
+                'peserta'   => $targetUser,
+                'penugasan' => $penugasan
             ]);
         }
 

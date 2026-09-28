@@ -82,62 +82,113 @@
             {{-- Participant Info & Verification Status --}}
             <div class="p-5 sm:p-6 space-y-6">
                 
-                {{-- Status Banner --}}
-                <div class="p-3.5 rounded-2xl flex items-center justify-between gap-3 {{ $statusKehadiran === 'Hadir' ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-amber-50 border border-amber-200 text-amber-900' }}">
-                    <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold shrink-0 {{ $statusKehadiran === 'Hadir' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white' }}">
-                            @if($statusKehadiran === 'Hadir')
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                            @else
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            @endif
-                        </div>
-                        <div>
-                            <span class="text-[10px] font-bold uppercase tracking-wider block opacity-75">Status Presensi</span>
-                            <span class="text-sm font-extrabold block">
-                                {{ $statusKehadiran === 'Hadir' ? 'Terverifikasi Hadir' : 'Menunggu Scan Presensi' }}
-                            </span>
-                        </div>
+                @if(isset($currentUser) && $currentUser->id !== $user->id)
+                    <div class="p-3 bg-blue-50 border border-blue-200 rounded-2xl flex items-center gap-2 text-xs text-blue-900">
+                        <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Mode PJ/Admin: Menampilkan Tiket QR milik <strong>{{ $user->nama_lengkap }}</strong></span>
                     </div>
+                @endif
 
-                    <a href="{{ url()->current() }}" class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1 shadow-2xs">
-                        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                        <span>Cek</span>
-                    </a>
-                </div>
+                {{-- Status Banner --}}
+                @if($isLewatWaktu && $statusKehadiran !== 'Hadir')
+                    <div class="p-3.5 rounded-2xl flex items-center justify-between gap-3 bg-rose-50 border border-rose-200 text-rose-900">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold shrink-0 bg-rose-500 text-white">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                            </div>
+                            <div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider block opacity-75">Status Presensi</span>
+                                <span class="text-sm font-extrabold block">
+                                    Presensi Ditutup (Lewat Batas Waktu)
+                                </span>
+                            </div>
+                        </div>
+
+                        <span class="px-2.5 py-1 rounded-lg bg-rose-100 text-rose-800 text-[10px] font-extrabold">Kedaluwarsa</span>
+                    </div>
+                    <div class="p-3 bg-rose-50/60 border border-rose-200 rounded-2xl text-[11px] text-rose-700 leading-relaxed text-center">
+                        Jadwal rapat ini telah berakhir. Presensi fisik dan kode QR tidak dapat lagi digunakan untuk verifikasi kehadiran.
+                    </div>
+                @else
+                    <div class="p-3.5 rounded-2xl flex items-center justify-between gap-3 {{ $statusKehadiran === 'Hadir' ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-amber-50 border border-amber-200 text-amber-900' }}">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold shrink-0 {{ $statusKehadiran === 'Hadir' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white' }}">
+                                @if($statusKehadiran === 'Hadir')
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                @else
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                @endif
+                            </div>
+                            <div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider block opacity-75">Status Presensi</span>
+                                <span class="text-sm font-extrabold block">
+                                    {{ $statusKehadiran === 'Hadir' ? 'Terverifikasi Hadir Fisik' : 'Menunggu Scan Presensi' }}
+                                </span>
+                                @if($statusKehadiran === 'Hadir' && $waktuHadir)
+                                    <span class="text-[10px] text-emerald-700 font-mono block">
+                                        Waktu: {{ \Carbon\Carbon::parse($waktuHadir)->format('H:i') }} WITA
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <a href="{{ url()->current() }}" class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1 shadow-2xs">
+                            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            <span>Cek</span>
+                        </a>
+                    </div>
+                @endif
 
                 {{-- QR Container --}}
                 <div class="flex flex-col items-center justify-center text-center space-y-3 pt-2">
-                    <div class="p-4 bg-white rounded-3xl border-2 border-slate-200 shadow-md inline-block">
+                    <div class="p-4 bg-white rounded-3xl border-2 border-slate-200 shadow-md inline-block relative {{ ($isLewatWaktu && $statusKehadiran !== 'Hadir') ? 'opacity-40 grayscale' : '' }}">
                         <div class="w-64 h-64 flex items-center justify-center">
                             {!! $qrSvg !!}
                         </div>
+                        @if($isLewatWaktu && $statusKehadiran !== 'Hadir')
+                            <div class="absolute inset-0 bg-slate-900/60 rounded-3xl backdrop-blur-xs flex flex-col items-center justify-center p-4 text-white text-center">
+                                <svg class="w-10 h-10 text-rose-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                <span class="font-black text-sm">QR DIKUNCI</span>
+                                <span class="text-[11px] text-slate-200 mt-1">Batas waktu rapat telah lewat</span>
+                            </div>
+                        @endif
                     </div>
 
                     <div class="space-y-1 max-w-xs">
                         <h4 class="font-bold text-slate-900 text-sm">{{ $user->nama_lengkap }}</h4>
                         <p class="text-xs text-slate-500 font-mono">{{ $user->nipbaru ?? ($user->niplama ?? '-') }}</p>
-                        <p class="text-[11px] text-slate-400 leading-relaxed pt-1">
-                            Tunjukkan kode QR ini kepada <strong>Penanggung Jawab / Admin</strong> di ruangan rapat untuk memverifikasi kehadiran fisik Anda.
-                        </p>
+                        @if(!$isLewatWaktu)
+                            <p class="text-[11px] text-slate-500 leading-relaxed pt-1">
+                                Tunjukkan kode QR ini kepada <strong>Petugas / Penanggung Jawab (PJ)</strong> di ruangan rapat untuk memverifikasi kehadiran fisik Anda.
+                            </p>
+                        @endif
                     </div>
                 </div>
 
                 {{-- Action / Ruangan Alternative --}}
                 <div class="pt-4 border-t border-slate-100 space-y-2.5">
-                    <a href="{{ $urlPresensiRuangan }}" target="_blank"
-                       class="w-full py-3 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                        </svg>
-                        <span>Atau Buka Lembar Presensi Digital Rapat</span>
-                    </a>
+                    @if(!$isLewatWaktu)
+                        <a href="{{ $urlPresensiRuangan }}" target="_blank"
+                           class="w-full py-3 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                            </svg>
+                            <span>Atau Buka Lembar Presensi Digital Rapat</span>
+                        </a>
+                    @endif
 
-                    <a href="{{ url('/detail_kegiatan/' . $task->id) }}" 
-                       class="w-full py-2.5 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition flex items-center justify-center gap-1.5">
-                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span>Lihat Detail Agenda & Notulensi Kegiatan</span>
-                    </a>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="window.print()" class="py-2.5 px-3 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-2xs">
+                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            <span>Cetak Tiket</span>
+                        </button>
+
+                        <a href="{{ url('/daftarkegiatan/' . $task->id) }}" 
+                           class="py-2.5 px-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition flex items-center justify-center gap-1.5">
+                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span>Detail Rapat</span>
+                        </a>
+                    </div>
                 </div>
 
             </div>

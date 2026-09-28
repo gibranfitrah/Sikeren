@@ -467,19 +467,19 @@
             {{-- PANEL TAHAP 3 & 4 (DIBAGI 2 KOLOM) --}}
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-                {{-- PANEL TAHAP 3: PRESENSI QR CODE --}}
-                <div id="presensi-qr" class="stage-card-panel">
+                {{-- PANEL TAHAP 3: PRESENSI QR CODE & VERIFIKASI KEHADIRAN FISIK --}}
+                <div id="presensi-qr" class="stage-card-panel flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between pb-4 border-b border-gray-100 mb-5">
                             <div class="flex items-center gap-2.5">
                                 <span class="w-7 h-7 rounded-xl {{ $isLewatWaktu ? 'bg-rose-600' : 'bg-blue-600' }} text-white text-xs font-black flex items-center justify-center flex-shrink-0 shadow-xs">3</span>
                                 <div>
-                                    <h4 class="text-xs font-bold uppercase tracking-wider text-gray-800">Tahap Presensi QR Rapat</h4>
-                                    <p class="text-[11px] text-gray-400">Pindai QR lewat HP peserta</p>
+                                    <h4 class="text-xs font-bold uppercase tracking-wider text-gray-800">Tahap Scan QR & Presensi Rapat</h4>
+                                    <p class="text-[11px] text-gray-400">Tiket QR peserta & verifikasi kehadiran fisik</p>
                                 </div>
                             </div>
                             <span class="text-[11px] font-bold {{ $isLewatWaktu ? 'text-rose-700 bg-rose-50 border border-rose-200' : ($rapatSetuju == 1 ? 'text-blue-700 bg-blue-50 border border-blue-200' : 'text-gray-500 bg-gray-100 border border-gray-200') }} px-3 py-1 rounded-full">
-                                {{ $isLewatWaktu ? 'Presensi Ditutup (Lewat Waktu)' : ($rapatSetuju == 1 ? 'QR Siap & Aktif' : 'Terkunci') }}
+                                {{ $isLewatWaktu ? 'Presensi Ditutup (Lewat Waktu)' : ($rapatSetuju == 1 ? 'QR & Verifikasi Aktif' : 'Terkunci') }}
                             </span>
                         </div>
 
@@ -494,44 +494,77 @@
                                 </p>
                             </div>
                         @elseif($rapatSetuju == 1)
-                            <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-                                <div class="p-3 bg-white rounded-2xl border-2 border-slate-100 shadow-sm flex-shrink-0 flex flex-col items-center">
-                                    {!! QrCode::size(120)->generate($qrUrlHadir ?? url('/daftarhadir/' . $rapatId)) !!}
-                                    <span class="text-[10px] text-slate-400 font-mono mt-1.5 font-bold">SCAN DARI HP</span>
-                                </div>
-                                <div class="space-y-3 text-xs text-gray-600 flex-1 w-full">
-                                    <div>
-                                        <p class="font-bold text-gray-900 text-sm">QR Code Presensi Peserta</p>
-                                        <p class="text-xs text-gray-500 leading-relaxed mt-1">Peserta rapat (seperti <strong class="text-gray-800">St. Rasnani Manafi</strong>) memindai kode QR ini dari HP untuk memilih status: <strong>Hadir</strong>, <strong>Sedang Ada Kegiatan Lain</strong>, atau <strong>Tidak Hadir</strong>.</p>
+                            <div class="space-y-4">
+                                {{-- CARD 1: SISTEM TIKET QR PESERTA & VERIFIKASI PETUGAS (ALUR UTAMA) --}}
+                                <div class="p-4 rounded-2xl bg-gradient-to-br from-blue-50/70 to-indigo-50/60 border border-blue-200/80 space-y-3">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+                                            </svg>
+                                        </div>
+                                        <div class="text-xs flex-1">
+                                            <div class="flex items-center gap-2">
+                                                <h5 class="font-bold text-slate-900 text-sm">Halaman Khusus Tiket QR Peserta</h5>
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">Alur Utama</span>
+                                            </div>
+                                            <p class="text-[11px] text-slate-600 mt-1 leading-relaxed">
+                                                Setiap peserta rapat memiliki tiket QR unik di HP masing-masing (dapat diakses via notifikasi undangan). <strong>Petugas / PJ / Admin</strong> memindai QR peserta di lokasi rapat untuk memastikan kehadiran fisik secara valid.
+                                            </p>
+                                        </div>
                                     </div>
-                                    
-                                    <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-mono text-slate-700 break-all flex items-center justify-between gap-2">
-                                        <span class="truncate select-all">{{ $qrUrlHadir ?? url('/daftarhadir/' . $rapatId) }}</span>
-                                        <button type="button" onclick="navigator.clipboard.writeText('{{ $qrUrlHadir ?? url('/daftarhadir/' . $rapatId) }}'); alert('Tautan presensi berhasil disalin!');" class="text-blue-600 hover:text-blue-800 font-bold shrink-0 font-sans px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 transition">
-                                            Salin
+
+                                    <div class="pt-2 flex flex-wrap items-center gap-2">
+                                        <a target="_blank" href="{{ route('rapat.tiketQr', $rapatId) }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+                                            <span>Buka Tiket QR Saya</span>
+                                        </a>
+
+                                        <button type="button" onclick="openScannerPetugas()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                            <span>Pindai QR Peserta (Kamera PJ)</span>
                                         </button>
+                                    </div>
+                                </div>
+
+                                {{-- CARD 2: KODE QR RUANGAN (OPSI ALTERNATIF) --}}
+                                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+                                    <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                                        <div class="p-2 bg-white rounded-xl border border-slate-200 shadow-2xs flex-shrink-0 flex flex-col items-center">
+                                            {!! QrCode::size(80)->generate($qrUrlHadir ?? url('/daftarhadir/' . $rapatId)) !!}
+                                            <span class="text-[9px] text-slate-400 font-mono mt-1 font-bold">QR RUANGAN</span>
+                                        </div>
+                                        <div class="space-y-1.5 flex-1 w-full text-left">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="font-bold text-slate-800 text-xs">Lembar Presensi Ruangan</span>
+                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-200 text-slate-600">Alternatif</span>
+                                            </div>
+                                            <p class="text-[11px] text-slate-500 leading-relaxed">
+                                                Disediakan pula opsi mandiri jika peserta ingin memindai lembar presensi yang dipajang di layar atau ruangan rapat.
+                                            </p>
+                                            <div class="flex items-center gap-2 pt-1 flex-wrap">
+                                                <a target="_blank" href="{{ url('/qrcode/' . $rapatId) }}" class="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 hover:text-slate-900 bg-white border border-slate-200 px-2.5 py-1 rounded-lg transition shadow-2xs">
+                                                    <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                                                    <span>Layar Penuh</span>
+                                                </a>
+                                                <a target="_blank" href="{{ $qrUrlHadir ?? url('/daftarhadir/' . $rapatId) }}" class="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-lg transition">
+                                                    <span>Buka Tautan</span>
+                                                </a>
+                                                <button type="button" onclick="navigator.clipboard.writeText('{{ $qrUrlHadir ?? url('/daftarhadir/' . $rapatId) }}'); alert('Tautan lembar presensi ruangan disalin!');" class="text-[11px] font-bold text-slate-600 hover:text-slate-800 bg-white border border-slate-200 px-2 py-1 rounded-lg transition">
+                                                    Salin Link
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         @else
                             <div class="p-8 text-center text-xs text-gray-400">
                                 <svg class="ui-icon-lg mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                                Presensi QR Code akan otomatis aktif setelah rapat disetujui oleh Pemimpin Rapat.
+                                Presensi Tiket QR & Lembar Presensi akan otomatis aktif setelah rapat disetujui oleh Pemimpin Rapat.
                             </div>
                         @endif
                     </div>
-
-                    @if($rapatSetuju == 1 && !$isLewatWaktu)
-                        <div class="pt-4 mt-5 border-t border-gray-100 flex items-center gap-2 flex-wrap">
-                            <a target="_blank" href="{{ url('/qrcode/' . $rapatId) }}" class="btn-primary-action">
-                                <svg class="ui-icon-xs text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
-                                Layar Penuh
-                            </a>
-                            <a target="_blank" href="{{ $qrUrlHadir ?? url('/daftarhadir/' . $rapatId) }}" class="btn-secondary-action">
-                                Buka Link Hadir
-                            </a>
-                        </div>
-                    @endif
                 </div>
 
                 {{-- PANEL TAHAP 4: NOTULEN & DOKUMENTASI --}}
@@ -791,6 +824,7 @@
                                 <th class="px-5 py-2.5 w-10">No</th>
                                 <th class="px-5 py-2.5">Nama Peserta</th>
                                 <th class="px-5 py-2.5">NIP</th>
+                                <th class="px-5 py-2.5 text-center">Tiket QR</th>
                                 <th class="px-5 py-2.5 text-right">Status Kehadiran</th>
                             </tr>
                         </thead>
@@ -798,6 +832,7 @@
                             @forelse($kegiatans as $idx => $pesertaItem)
                             @php
                                 $st = $pesertaItem->status_kehadiran ?? 'Belum Hadir';
+                                $pTargetNip = ($pesertaItem->nipbaru && $pesertaItem->nipbaru !== '-') ? $pesertaItem->nipbaru : $pesertaItem->def;
                             @endphp
                             <tr class="hover:bg-gray-50/50 transition-colors">
                                 <td class="px-5 py-3 text-gray-400 font-medium">{{ $idx + 1 }}</td>
@@ -808,6 +843,12 @@
                                     @endif
                                 </td>
                                 <td class="px-5 py-3 text-gray-500 font-mono text-xs">{{ $pesertaItem->nipbaru ?? $pesertaItem->def }}</td>
+                                <td class="px-5 py-3 text-center">
+                                    <a href="{{ route('rapat.tiketQr', $rapatId) }}?nip={{ urlencode($pTargetNip) }}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-[10px] font-bold transition shadow-2xs" title="Lihat Tiket Presensi QR">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+                                        <span>Tiket QR</span>
+                                    </a>
+                                </td>
                                 <td class="px-5 py-3 text-right">
                                     @if($st === 'Hadir')
                                         <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
@@ -843,7 +884,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="px-5 py-6 text-center text-gray-400">
+                                <td colspan="5" class="px-5 py-6 text-center text-gray-400">
                                     Tidak ada data peserta penugasan.
                                 </td>
                             </tr>
@@ -1023,6 +1064,15 @@ function refreshPresensi() {
                             </span>`;
                         }
 
+                        const targetNip = (p.nipbaru && p.nipbaru !== '-') ? p.nipbaru : p.nip;
+                        const tiketUrl = `{{ url('/rapat/tiket-qr/' . $rapatId) }}?nip=${encodeURIComponent(targetNip)}`;
+                        const tiketCell = `<td class="px-5 py-3 text-center">
+                            <a href="${tiketUrl}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-[10px] font-bold transition shadow-2xs" title="Lihat Tiket Presensi QR">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+                                <span>Tiket QR</span>
+                            </a>
+                        </td>`;
+
                         html += `<tr class="hover:bg-gray-50/50 transition-colors">
                             <td class="px-5 py-3 text-gray-400 font-medium">${idx + 1}</td>
                             <td class="px-5 py-3">
@@ -1030,6 +1080,7 @@ function refreshPresensi() {
                                 ${p.keterangan ? `<span class="text-[10px] text-amber-700 font-medium block truncate max-w-xs">Ket: ${p.keterangan}</span>` : ''}
                             </td>
                             <td class="px-5 py-3 text-gray-500 font-mono text-xs">${p.nipbaru || p.nip}</td>
+                            ${tiketCell}
                             <td class="px-5 py-3 text-right">${statusBadge}</td>
                         </tr>`;
                     });
@@ -1148,5 +1199,174 @@ function refreshPresensi() {
 
 // Auto refresh polling every 5 seconds
 setInterval(refreshPresensi, 5000);
+</script>
+
+{{-- MODAL PEMINDAI QR PESERTA OLEH PETUGAS / PJ / ADMIN --}}
+<div id="modal-scanner-petugas" class="fixed inset-0 z-50 hidden bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden flex flex-col">
+        {{-- Modal Header --}}
+        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </div>
+                <div>
+                    <h4 class="text-sm font-bold text-slate-900">Pemindai QR Presensi Peserta</h4>
+                    <p class="text-[11px] text-slate-500">Verifikasi kehadiran fisik oleh PJ / Petugas</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeScannerPetugas()" class="p-1.5 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        {{-- Modal Body --}}
+        <div class="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+            <div id="scanner-result-banner" class="hidden p-3 rounded-2xl text-xs font-bold transition"></div>
+
+            {{-- Camera viewport --}}
+            <div class="bg-slate-900 rounded-2xl overflow-hidden relative border border-slate-300">
+                <div id="reader-scanner-petugas" class="w-full"></div>
+            </div>
+
+            <p class="text-[11px] text-slate-500 text-center leading-relaxed">
+                Arahkan kamera ke <strong>Tiket QR Presensi</strong> yang ada di HP peserta rapat untuk memverifikasi kehadiran.
+            </p>
+
+            {{-- Fallback Manual NIP Input --}}
+            <div class="pt-3 border-t border-slate-100">
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">Verifikasi Manual via NIP / Nama:</label>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="manual-nip-input" placeholder="Masukkan NIP peserta..." class="flex-1 text-xs border border-slate-300 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white text-slate-800">
+                    <button type="button" onclick="submitManualVerification()" class="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs shrink-0">
+                        Verifikasi
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {{-- Modal Footer --}}
+        <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span class="text-[11px] text-slate-400">SIKEREN &bull; BPS Sultra</span>
+            <button type="button" onclick="closeScannerPetugas()" class="px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-100 transition shadow-2xs">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script>
+let petugasQrScanner = null;
+let isScanningActive = false;
+
+function openScannerPetugas() {
+    const modal = document.getElementById('modal-scanner-petugas');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+
+    const resultBanner = document.getElementById('scanner-result-banner');
+    if (resultBanner) {
+        resultBanner.classList.add('hidden');
+        resultBanner.innerText = '';
+    }
+
+    // Mulai kamera dengan Html5QrcodeScanner
+    setTimeout(() => {
+        if (!petugasQrScanner) {
+            petugasQrScanner = new Html5QrcodeScanner("reader-scanner-petugas", {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0
+            });
+            petugasQrScanner.render(onParticipantScanSuccess, onParticipantScanFailure);
+            isScanningActive = true;
+        }
+    }, 200);
+}
+
+function closeScannerPetugas() {
+    const modal = document.getElementById('modal-scanner-petugas');
+    if (modal) modal.classList.add('hidden');
+
+    if (petugasQrScanner) {
+        try {
+            petugasQrScanner.clear();
+        } catch (e) {}
+        petugasQrScanner = null;
+        isScanningActive = false;
+    }
+}
+
+function onParticipantScanFailure(error) {
+    // Abaikan frame scan yang belum mendeteksi QR
+}
+
+function onParticipantScanSuccess(decodedText, decodedResult) {
+    if (!isScanningActive) return;
+    isScanningActive = false;
+
+    processVerificationUrl(decodedText);
+}
+
+function processVerificationUrl(rawUrl) {
+    const banner = document.getElementById('scanner-result-banner');
+    if (banner) {
+        banner.className = "p-3 rounded-2xl text-xs font-bold bg-blue-50 border border-blue-200 text-blue-800 flex items-center gap-2";
+        banner.innerHTML = `<span class="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full inline-block"></span> Memverifikasi data peserta...`;
+        banner.classList.remove('hidden');
+    }
+
+    let fetchUrl = rawUrl;
+    // Jika format scan adalah teks NIP bukan URL lengkap
+    if (!rawUrl.includes('/rapat/verifikasi-kehadiran/')) {
+        fetchUrl = `{{ url('/rapat/verifikasi-kehadiran/' . $rapatId) }}?nip=${encodeURIComponent(rawUrl.trim())}`;
+    }
+
+    fetch(fetchUrl, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            if (banner) {
+                banner.className = "p-3 rounded-2xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-2";
+                banner.innerHTML = `<svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> <span>${data.message}</span>`;
+            }
+            // Segarkan data presensi secara langsung di tabel
+            refreshPresensi();
+        } else {
+            if (banner) {
+                banner.className = "p-3 rounded-2xl text-xs font-bold bg-rose-50 border border-rose-200 text-rose-800 flex items-center gap-2";
+                banner.innerHTML = `<svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg> <span>${data.message || 'Verifikasi gagal.'}</span>`;
+            }
+        }
+    })
+    .catch(err => {
+        if (banner) {
+            banner.className = "p-3 rounded-2xl text-xs font-bold bg-rose-50 border border-rose-200 text-rose-800 flex items-center gap-2";
+            banner.innerHTML = `<svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg> <span>Terjadi kesalahan saat memproses verifikasi.</span>`;
+        }
+    })
+    .finally(() => {
+        // Beri jeda 2.5 detik lalu buka scanner kembali untuk peserta berikutnya
+        setTimeout(() => {
+            isScanningActive = true;
+        }, 2500);
+    });
+}
+
+function submitManualVerification() {
+    const input = document.getElementById('manual-nip-input');
+    if (!input || !input.value.trim()) {
+        alert('Silakan masukkan NIP peserta.');
+        return;
+    }
+    processVerificationUrl(input.value.trim());
+    input.value = '';
+}
 </script>
 @endsection

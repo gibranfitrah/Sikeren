@@ -163,7 +163,7 @@ class KetuaTimController extends Controller
                     'data'            => json_encode([
                         'judul' => 'Undangan Penugasan Kegiatan: ' . $request->agenda,
                         'pesan' => 'Anda ditugaskan oleh ' . $pjNama . ' (Ketua Tim / PJ) untuk mengikuti kegiatan "' . $request->agenda . '" mulai tanggal ' . date('d M Y', strtotime($startDate)) . '.',
-                        'url'   => '/tugas-saya',
+                        'url'   => ($request->jenis === 'Rapat' || !empty($request->start_jam)) ? ('/rapat/tiket-qr/' . $task->id) : '/tugas-saya',
                     ]),
                     'read_at'         => null,
                     'created_at'      => now(),
