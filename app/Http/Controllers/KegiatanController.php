@@ -536,13 +536,9 @@ class KegiatanController extends Controller
 
         $realId = $task ? $task->id : $id;
         $currentUser = Auth::user();
-        if (!$currentUser) {
-            session()->put('url.intended', request()->fullUrl());
-            return redirect()->route('login')->with('info', 'Silakan masuk ke akun Anda terlebih dahulu untuk mengisi kehadiran rapat.');
-        }
 
         // Cek apakah akun yang login adalah PJ rapat (PJ tidak mengisi presensi mandiri)
-        if ($task) {
+        if ($currentUser && $task) {
             $pjName = trim(strtolower($task->penanggung_jawab ?? ''));
             $pjNipLama = trim(strtolower($task->agenda_ketua_tim ?? ''));
             $currName = trim(strtolower($currentUser->nama_lengkap ?? ''));
@@ -644,24 +640,8 @@ class KegiatanController extends Controller
     public function submitDaftarHadir(Request $request)
     {
         $currentUser = Auth::user();
-        if (!$currentUser) {
-            if ($request->expectsJson() || $request->ajax()) {
-                return response()->json(['success' => false, 'message' => 'Silakan masuk ke akun Anda terlebih dahulu.'], 401);
-            }
-            return redirect()->route('login')->with('info', 'Silakan masuk ke akun Anda terlebih dahulu.');
-        }
-
-        $idKegiatan      = $request->input('id_kegiatan');
-        $niplama         = trim($request->input('niplama', ''));
-        $namaManual      = trim($request->input('peserta_manual', ''));
-        $statusKehadiran = $request->input('status_kehadiran', 'Hadir');
-        $keterangan      = trim($request->input('keterangan', ''));
-
-        // Jika peserta biasa (non-admin), kunci kehadiran ke akun yang sedang login
-        if (!$currentUser->isAdmin()) {
-            $niplama    = $currentUser->niplama ?: ($currentUser->nipbaru ?: $currentUser->id);
-            $namaManual = $currentUser->nama_lengkap;
-        }
+        $idKegiatan  = $request->input('id_kegiatan');
+        $tipePeserta = $request->input('tipe_peserta', 'bps');
 
         // Cek apakah jadwal pelaksanaan rapat telah lewat batas waktu
         $task = is_numeric($idKegiatan) ? Task::find($idKegiatan) : Task::where('id', $idKegiatan)->orWhere('text', $idKegiatan)->first();
@@ -686,6 +666,74 @@ class KegiatanController extends Controller
                 }
                 return redirect()->back()->with('error_presensi', 'Presensi ditutup karena jadwal pelaksanaan rapat telah berakhir.');
             }
+        }
+
+        // PENANGANAN TAMU EKSTERNAL (Bukan Pegawai BPS / Instansi Lain)
+        if ($tipePeserta === 'eksternal' || (!$currentUser && $request->filled('nama_eksternal'))) {
+            $namaEksternal = trim($request->input('nama_eksternal', ''));
+            $instansi      = trim($request->input('instansi', ''));
+            $keteranganEks = trim($request->input('keterangan_eksternal', ''));
+
+            if (empty($namaEksternal) || empty($instansi)) {
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json(['success' => false, 'message' => 'Nama lengkap dan Instansi wajib diisi.'], 422);
+                }
+                return redirect()->back()->with('error_presensi', 'Nama Lengkap dan Asal Instansi wajib diisi untuk tamu eksternal.');
+            }
+
+            $realId = $task ? $task->id : $idKegiatan;
+            $namaFormatted = $namaEksternal . ' (' . $instansi . ')';
+
+            $penugasan = penugasan::where('id_kegiatan', $realId)
+                ->where('peserta', $namaFormatted)
+                ->first();
+
+            if (!$penugasan) {
+                $penugasan = new penugasan();
+                $penugasan->id_kegiatan = $realId;
+                $penugasan->niplama     = 'EKSTERNAL';
+            }
+
+            $penugasan->peserta          = $namaFormatted;
+            $penugasan->status_kehadiran = 'Hadir'; // Tamu eksternal otomatis Hadir
+            $penugasan->keterangan       = 'Tamu Eksternal - Instansi: ' . $instansi . ($keteranganEks ? ' (' . $keteranganEks . ')' : '');
+            $penugasan->waktu_kehadiran  = now();
+            $penugasan->save();
+
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success'  => true,
+                    'message'  => 'Kehadiran tamu eksternal berhasil dicatat sebagai Hadir.',
+                    'peserta'  => $namaFormatted,
+                    'instansi' => $instansi
+                ]);
+            }
+
+            return redirect()->route('daftarhadir', ['id' => $realId])
+                ->with('eksternal_success', true)
+                ->with('eksternal_nama', $namaEksternal)
+                ->with('eksternal_instansi', $instansi)
+                ->with('success_presensi', 'Selamat Datang! Kehadiran Anda sebagai Tamu Eksternal (' . $namaEksternal . ' - ' . $instansi . ') telah berhasil dicatat sebagai HADIR.');
+        }
+
+        // PENANGANAN PEGAWAI BPS (Wajib Login)
+        if (!$currentUser) {
+            session()->put('url.intended', request()->fullUrl());
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Silakan masuk ke akun BPS Anda terlebih dahulu.'], 401);
+            }
+            return redirect()->route('login')->with('info', 'Silakan masuk ke akun BPS Anda terlebih dahulu untuk mengisi kehadiran.');
+        }
+
+        $niplama         = trim($request->input('niplama', ''));
+        $namaManual      = trim($request->input('peserta_manual', ''));
+        $statusKehadiran = $request->input('status_kehadiran', 'Hadir');
+        $keterangan      = trim($request->input('keterangan', ''));
+
+        // Jika peserta biasa (non-admin), kunci kehadiran ke akun yang sedang login
+        if (!$currentUser->isAdmin()) {
+            $niplama    = $currentUser->niplama ?: ($currentUser->nipbaru ?: $currentUser->id);
+            $namaManual = $currentUser->nama_lengkap;
         }
 
         if (empty($niplama) && empty($namaManual)) {

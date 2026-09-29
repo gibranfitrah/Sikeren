@@ -139,13 +139,25 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @if($task->penanggung_jawab == Auth::user()->nama_lengkap)
-                                <span class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100">Penanggung Jawab</span>
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200 shadow-sm">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                                    <span>Penanggung Jawab</span>
+                                </span>
                             @elseif($task->pemimpin == Auth::user()->nama_lengkap)
-                                <span class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100">Pemimpin Rapat</span>
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 shadow-sm">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                    <span>Pemimpin Rapat</span>
+                                </span>
                             @elseif($task->notulis == Auth::user()->nama_lengkap)
-                                <span class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">Notulis</span>
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    <span>Notulis</span>
+                                </span>
                             @else
-                                <span class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-gray-100 text-gray-700">Anggota Tim</span>
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-50 text-slate-700 border border-slate-200 shadow-sm">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                    <span>Anggota Tim</span>
+                                </span>
                             @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-gray-600 font-medium">

@@ -81,11 +81,11 @@ Route::post('/color6/{id}/',  [BMNController::class, 'edit6'])->name('color.edit
 
 Route::get('/api/presensi-rapat/{id}', [KegiatanController::class, 'apiStatusPresensi'])->name('api.presensi.status');
 
+// Presensi Kehadiran Rapat (Dapat diakses oleh Pegawai BPS setelah login, atau Tamu Eksternal secara langsung)
+Route::get('daftarhadir/{id}', [KegiatanController::class, 'daftarHadir'])->where('id','(.*)')->name('daftarhadir');
+Route::post('daftarhadir/submit', [KegiatanController::class, 'submitDaftarHadir'])->name('daftarhadir.submit');
+
 Route::group(['middleware' => 'auth'], function () {
-    
-    // Presensi Kehadiran Rapat (Wajib Login Terlebih Dahulu)
-    Route::get('daftarhadir/{id}', [KegiatanController::class, 'daftarHadir'])->where('id','(.*)')->name('daftarhadir');
-    Route::post('daftarhadir/submit', [KegiatanController::class, 'submitDaftarHadir'])->name('daftarhadir.submit');
     
     Route::get('dashboard', [DashboardController::class, 'index']);
 
@@ -185,6 +185,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/ketua-tim', [KetuaTimController::class, 'index'])->name('ketua-tim.index');
     Route::get('/ketua-tim/create', [KetuaTimController::class, 'create'])->name('ketua-tim.create');
     Route::post('/ketua-tim/store', [KetuaTimController::class, 'store'])->name('ketua-tim.store');
+    Route::post('/ketua-tim/upload-template-pst', [KetuaTimController::class, 'uploadTemplatePst'])->name('ketua-tim.upload-pst');
     Route::get('/ketua-tim/{id}', [KetuaTimController::class, 'show'])->name('ketua-tim.show');
     Route::delete('/ketua-tim/{id}', [KetuaTimController::class, 'destroy'])->name('ketua-tim.destroy');
     Route::get('/ketua-tim/{id}/edit', [KetuaTimController::class, 'edit'])->name('ketua-tim.edit');

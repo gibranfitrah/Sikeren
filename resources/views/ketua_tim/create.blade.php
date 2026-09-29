@@ -37,28 +37,55 @@
         </div>
     @endif
 
-    {{-- FORMULIR 1 LAYAR TERPADU --}}
+    {{-- BANNER UPLOAD TEMPLATE PST STARLA (OPSIONAL CEPAT) --}}
+    <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 rounded-2xl p-5 text-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-start sm:items-center gap-3.5">
+            <div class="w-12 h-12 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded bg-white/20 text-[10px] font-extrabold uppercase tracking-wider text-emerald-100">Fitur Otomatis Starla</span>
+                    <span class="text-xs text-emerald-100 font-semibold">• Senin s.d. Jumat (2 Sesi/Hari)</span>
+                </div>
+                <h3 class="text-base font-extrabold text-white mt-0.5">Upload Jadwal Petugas PST (Template Starla)</h3>
+                <p class="text-xs text-emerald-100/90 leading-relaxed mt-0.5 max-w-2xl">
+                    Import otomatis jadwal petugas Pelayanan Statistik Terpadu (PST) dari template Excel Starla. Jadwal otomatis berulang per hari kerja dan dapat diklik di kalender dashboard untuk melihat petugas yang bertugas.
+                </p>
+            </div>
+        </div>
+        <button type="button" 
+                onclick="document.getElementById('modalUploadPst').classList.remove('hidden')"
+                class="px-4 py-2.5 rounded-xl bg-white hover:bg-emerald-50 text-emerald-800 font-extrabold text-xs shadow-md transition flex items-center justify-center gap-2 shrink-0 active:scale-95">
+            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            <span>Upload Template PST</span>
+        </button>
+    </div>
+
+    {{-- FORMULIR 1 LAYAR TERPADU (BERURUTAN VERTIKAL) --}}
     <form id="formKegiatan"
           action="{{ route('ketua-tim.store') }}"
           method="POST"
-          class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6 sm:p-8 space-y-6">
+          class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6 sm:p-8 space-y-8">
         @csrf
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div class="space-y-8">
             
-            {{-- KOLOM KIRI (5 COLS): INFORMASI KEGIATAN & WAKTU / WILAYAH --}}
-            <div class="lg:col-span-5 space-y-6">
-                
-                {{-- SECTION 1: TIM & AGENDA --}}
-                <div class="space-y-4">
-                    <div class="flex items-center gap-2.5 pb-2 border-b border-gray-100">
-                        <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 font-bold text-xs flex items-center justify-center border border-blue-100">
-                            1
-                        </div>
-                        <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">
+            {{-- SECTION 1: TIM & AGENDA KEGIATAN --}}
+            <div class="space-y-5 bg-slate-50/60 p-5 sm:p-6 rounded-2xl border border-slate-200/80">
+                <div class="flex items-center gap-2.5 pb-3 border-b border-gray-200">
+                    <div class="w-8 h-8 rounded-xl bg-blue-600 text-white font-extrabold text-sm flex items-center justify-center shadow-xs">
+                        1
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold text-gray-900 uppercase tracking-wider">
                             Tim & Agenda Kegiatan
                         </h3>
+                        <p class="text-[11px] text-gray-500">Pilih tim pengampu atau integrasikan dengan proyek SIMPATI</p>
                     </div>
+                </div>
 
                     {{-- PILIH DARI MASTER PROYEK SIMPATI --}}
                     <div class="p-3.5 bg-gradient-to-r from-blue-50/90 to-indigo-50/90 rounded-2xl border border-blue-200 shadow-2xs space-y-2">
@@ -150,105 +177,108 @@
                                    name="dasar"
                                    value="{{ old('dasar') }}"
                                    placeholder="No. Surat Tugas"
-                                   class="w-full px-3.5 py-2 bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition">
+                                    class="w-full px-3.5 py-2 bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition">
                         </div>
                     </div>
                 </div>
+            </div> {{-- END SECTION 1 --}}
 
-                {{-- SECTION 2: JADWAL & WILAYAH --}}
-                <div class="space-y-4 pt-2">
-                    <div class="flex items-center gap-2.5 pb-2 border-b border-gray-100">
-                        <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 font-bold text-xs flex items-center justify-center border border-amber-100">
-                            2
-                        </div>
-                        <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">
+            {{-- SECTION 2: JADWAL & WILAYAH --}}
+            <div class="space-y-5 bg-amber-50/40 p-5 sm:p-6 rounded-2xl border border-amber-200/80">
+                <div class="flex items-center gap-2.5 pb-3 border-b border-amber-200/60">
+                    <div class="w-8 h-8 rounded-xl bg-amber-500 text-white font-extrabold text-sm flex items-center justify-center shadow-xs">
+                        2
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold text-gray-900 uppercase tracking-wider">
                             Jadwal Pelaksanaan & Wilayah
                         </h3>
-                    </div>
-
-                    {{-- RENTANG TANGGAL & JAM PELAKSANAAN --}}
-                    <div class="space-y-3 bg-amber-50/40 p-3.5 rounded-xl border border-amber-100">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
-                                    Tanggal Mulai <span class="text-rose-500">*</span>
-                                </label>
-                                <input type="date"
-                                       name="start_date"
-                                       id="startDate"
-                                       value="{{ old('start_date', date('Y-m-d')) }}"
-                                       required
-                                       class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition">
-                            </div>
-
-                            <div>
-                                <label class="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
-                                    Tanggal Selesai <span class="text-rose-500">*</span>
-                                </label>
-                                <input type="date"
-                                       name="date_akhir"
-                                       id="dateAkhir"
-                                       value="{{ old('date_akhir', date('Y-m-d')) }}"
-                                       required
-                                       class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2.5 border-t border-amber-200/60">
-                            <div>
-                                <label class="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1 flex items-center justify-between">
-                                    <span>Jam Mulai</span>
-                                    <span class="text-[10px] text-amber-600 font-normal">WITA</span>
-                                </label>
-                                <input type="time"
-                                       name="start_jam"
-                                       id="startJam"
-                                       value="{{ old('start_jam', '08:00') }}"
-                                       class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition">
-                            </div>
-
-                            <div>
-                                <label class="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1 flex items-center justify-between">
-                                    <span>Jam Selesai</span>
-                                    <span class="text-[10px] text-amber-600 font-normal">WITA</span>
-                                </label>
-                                <input type="time"
-                                       name="end_jam"
-                                       id="endJam"
-                                       value="{{ old('end_jam', '16:00') }}"
-                                       class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition">
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- DROPDOWN WILAYAH KEGIATAN --}}
-                    <div>
-                        <x-dropdown-wilayah :selected="old('wilayah', [])" />
+                        <p class="text-[11px] text-gray-500">Rentang waktu pelaksanaan kegiatan dan cakupan wilayah kabupaten/kota</p>
                     </div>
                 </div>
 
-            </div>
+                {{-- RENTANG TANGGAL & JAM PELAKSANAAN --}}
+                <div class="space-y-3 bg-white p-4 rounded-xl border border-amber-200/70 shadow-2xs">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                                Tanggal Mulai <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="date"
+                                   name="start_date"
+                                   id="startDate"
+                                   value="{{ old('start_date', date('Y-m-d')) }}"
+                                   required
+                                   class="w-full px-3.5 py-2 bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition">
+                        </div>
 
-            {{-- KOLOM KANAN (7 COLS): PENUGASAN PJ & ANGGOTA TIM --}}
-            <div class="lg:col-span-7 space-y-5">
-                
-                {{-- SECTION 3: PENUGASAN TIM --}}
-                <div class="flex items-center justify-between pb-2 border-b border-gray-100">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                                Tanggal Selesai <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="date"
+                                   name="date_akhir"
+                                   id="dateAkhir"
+                                   value="{{ old('date_akhir', date('Y-m-d')) }}"
+                                   required
+                                   class="w-full px-3.5 py-2 bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                                <span>Jam Mulai</span>
+                                <span class="text-[10px] text-amber-700 font-semibold bg-amber-50 px-1.5 py-0.5 rounded">WITA</span>
+                            </label>
+                            <input type="time"
+                                   name="start_jam"
+                                   id="startJam"
+                                   value="{{ old('start_jam', '08:00') }}"
+                                   class="w-full px-3.5 py-2 bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                                <span>Jam Selesai</span>
+                                <span class="text-[10px] text-amber-700 font-semibold bg-amber-50 px-1.5 py-0.5 rounded">WITA</span>
+                            </label>
+                            <input type="time"
+                                   name="end_jam"
+                                   id="endJam"
+                                   value="{{ old('end_jam', '16:00') }}"
+                                   class="w-full px-3.5 py-2 bg-gray-50 focus:bg-white border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition">
+                        </div>
+                    </div>
+                </div>
+
+                {{-- DROPDOWN WILAYAH KEGIATAN --}}
+                <div class="bg-white p-4 rounded-xl border border-amber-200/70 shadow-2xs">
+                    <x-dropdown-wilayah :selected="old('wilayah', [])" />
+                </div>
+            </div> {{-- END SECTION 2 --}}
+
+            {{-- SECTION 3: PENUGASAN TIM --}}
+            <div class="space-y-5 bg-emerald-50/40 p-5 sm:p-6 rounded-2xl border border-emerald-200/80">
+                <div class="flex items-center justify-between pb-3 border-b border-emerald-200/60">
                     <div class="flex items-center gap-2.5">
-                        <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 font-bold text-xs flex items-center justify-center border border-emerald-100">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white font-extrabold text-sm flex items-center justify-center shadow-xs">
                             3
                         </div>
-                        <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">
-                            Penugasan PJ & Anggota Tim
-                        </h3>
+                        <div>
+                            <h3 class="text-sm font-extrabold text-gray-900 uppercase tracking-wider">
+                                Penugasan PJ & Anggota Tim
+                            </h3>
+                            <p class="text-[11px] text-gray-500">Tentukan penanggung jawab dan delegasikan tugas kepada anggota tim</p>
+                        </div>
                     </div>
-                    <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    <span class="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200">
                         Prioritas: Ketua Tim / Ahli Madya
                     </span>
                 </div>
 
                 {{-- 1. PENANGGUNG JAWAB (PJ) --}}
-                <div>
+                <div class="bg-white p-4 rounded-xl border border-emerald-200/70 shadow-2xs">
                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
                         Penanggung Jawab (PJ) Kegiatan <span class="text-rose-500">*</span>
                     </label>
@@ -381,6 +411,66 @@
         </div>
 
     </form>
+</div>
+
+{{-- MODAL UPLOAD TEMPLATE PST STARLA --}}
+<div id="modalUploadPst" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs hidden transition-opacity">
+    <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
+        <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 p-5 text-white flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-black text-sm text-white">Upload Jadwal Petugas PST (Starla)</h3>
+                    <p class="text-[11px] text-emerald-100">Jadwal Harian Senin - Jumat & Penugasan Petugas</p>
+                </div>
+            </div>
+            <button type="button" onclick="document.getElementById('modalUploadPst').classList.add('hidden')" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/25 flex items-center justify-center text-white transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <form action="{{ route('ketua-tim.upload-pst') }}" method="POST" enctype="multipart/form-data" class="p-6 space-y-4">
+            @csrf
+
+            <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 space-y-1.5">
+                <div class="flex items-center gap-1.5 font-bold text-emerald-900">
+                    <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Ketentuan Template Excel Starla:</span>
+                </div>
+                <ul class="text-[11px] text-emerald-800 space-y-1 pl-5 list-disc">
+                    <li>Sheet <strong>"Entri Disini"</strong> berisi tanggal, sesi (1: Pagi, 2: Siang), & petugas 1 s.d. 4.</li>
+                    <li>Sheet <strong>"petugas"</strong> berisi pemetaan nama panggilan ke nama lengkap & NIP pegawai.</li>
+                    <li>Sistem otomatis hanya mengimpor hari kerja (<strong>Senin s.d. Jumat</strong>) dan melewati akhir pekan (Sabtu & Minggu).</li>
+                    <li>Setiap jadwal sesi otomatis muncul di <strong>Kalender Dashboard</strong> dan dapat ditekan untuk melihat detail petugas bertugas.</li>
+                </ul>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Pilih File Template Excel (.xlsx)
+                </label>
+                <input type="file" 
+                       name="file_pst" 
+                       accept=".xlsx,.xls"
+                       class="w-full text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-xl file:mr-3 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer">
+                <p class="text-[10px] text-slate-400 mt-1">Kosongkan jika ingin langsung menggunakan template PST September yang telah tersedia di sistem.</p>
+            </div>
+
+            <div class="pt-2 flex items-center justify-between gap-3 border-t border-slate-100">
+                <button type="button" onclick="document.getElementById('modalUploadPst').classList.add('hidden')" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+                    Batal
+                </button>
+                <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-sm active:scale-95">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    <span>Import Jadwal Petugas PST</span>
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>

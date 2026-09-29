@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class group extends Model
 {
-    //
-   
-      protected $fillable = [
-        'grup'
+    public $timestamps = false;
+    
+    protected $fillable = [
+        'grup',
+        'niplama'
     ];
 
     

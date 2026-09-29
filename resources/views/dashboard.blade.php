@@ -699,8 +699,8 @@
 
         </div>
 
-        {{-- SISI KANAN: KALENDER AGENDA & KEGIATAN BPS --}}
-        <div class="xl:col-span-7 calendar-section-card space-y-4">
+        {{-- SISI KANAN: KALENDER AGENDA & GANTT CHART WAKTU LOWONG --}}
+        <div class="xl:col-span-7 calendar-section-card space-y-4" x-data="{ dashboardTab: 'gantt' }">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold">
@@ -709,24 +709,182 @@
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-sm sm:text-base font-bold text-gray-900 leading-tight">Kalender Agenda & Kegiatan BPS</h3>
-                        <p class="text-[11px] text-gray-400">Klik agenda untuk menampilkan pop-up detail</p>
+                        <h3 class="text-sm sm:text-base font-bold text-gray-900 leading-tight">Jadwal & Ketersediaan Waktu BPS</h3>
+                        <p class="text-[11px] text-gray-400">Pantau jadwal agenda dan deteksi waktu lowong pegawai & ruangan</p>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-3 text-xs font-semibold">
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 inline-block"></span>
-                        <span class="text-gray-700 text-[11px]">Rapat</span>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span>
-                        <span class="text-gray-700 text-[11px]">Kegiatan</span>
-                    </div>
+                {{-- Tab Switcher: Gantt Chart vs Kalender --}}
+                <div class="flex items-center p-1 bg-gray-100 rounded-xl shrink-0">
+                    <button type="button" 
+                            @click="dashboardTab = 'gantt'"
+                            :class="dashboardTab === 'gantt' ? 'bg-white text-emerald-700 shadow-xs' : 'text-gray-600 hover:text-gray-900'"
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        <span>Gantt Chart (Waktu Lowong)</span>
+                    </button>
+                    <button type="button" 
+                            @click="dashboardTab = 'calendar'; $nextTick(() => { if (window.calendar) window.calendar.updateSize(); })"
+                            :class="dashboardTab === 'calendar' ? 'bg-white text-blue-700 shadow-xs' : 'text-gray-600 hover:text-gray-900'"
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <span>Kalender Bulanan</span>
+                    </button>
                 </div>
             </div>
 
-            <div id="dashboardCalendar" class="min-h-[540px]"></div>
+            {{-- 1. TAB GANTT CHART: VISUALISASI WAKTU LOWONG & AGENDA HARIAN --}}
+            <div x-show="dashboardTab === 'gantt'" class="space-y-4">
+                {{-- Legend & Summary Header --}}
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div class="flex items-center gap-3">
+                        <span class="font-bold text-slate-700">Legenda Status:</span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded bg-emerald-500 inline-block shadow-2xs"></span>
+                            <span class="text-emerald-800 font-bold">Waktu Lowong (Tersedia)</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded bg-indigo-600 inline-block"></span>
+                            <span class="text-indigo-900 font-semibold">Rapat Kedinasan</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded bg-sky-500 inline-block"></span>
+                            <span class="text-sky-900 font-semibold">Kegiatan / Proyek</span>
+                        </div>
+                    </div>
+                    <span class="text-[11px] text-slate-500 font-mono">Jam Kerja BPS: 07:30 - 16:30 WITA</span>
+                </div>
+
+                @php
+                    $startOfWeekDate = \Carbon\Carbon::now()->startOfWeek();
+                    $daysOfWeek = [];
+                    for ($d = 0; $d < 5; $d++) {
+                        $daysOfWeek[] = $startOfWeekDate->copy()->addDays($d);
+                    }
+                @endphp
+
+                {{-- Timeline Grid Hari Kerja Minggu Ini (Senin s.d. Jumat) --}}
+                <div class="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+                    @foreach($daysOfWeek as $day)
+                    @php
+                        $dayStr = $day->format('Y-m-d');
+                        $isToday = $day->isToday();
+                        
+                        // Cari event/task pada tanggal ini
+                        $tasksOnDay = $allTasks->filter(function($t) use ($dayStr) {
+                            $tStart = $t->start_date ?: '';
+                            $tEnd = $t->date_akhir ?: $tStart;
+                            return ($dayStr >= $tStart && $dayStr <= $tEnd);
+                        })->sortBy('start_jam');
+
+                        $totalAgenda = $tasksOnDay->count();
+                        $hasMeeting = $tasksOnDay->contains('jenis', 'Rapat');
+                    @endphp
+                    <div class="rounded-2xl border {{ $isToday ? 'border-blue-400 bg-blue-50/20 shadow-xs' : 'border-slate-200 bg-white' }} p-4 space-y-3 transition">
+                        {{-- Day Header --}}
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <div class="px-2.5 py-1 rounded-xl {{ $isToday ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700' }} text-xs font-black">
+                                    {{ $day->translatedFormat('l') }}
+                                </div>
+                                <span class="font-bold text-slate-800 text-xs">
+                                    {{ $day->translatedFormat('d F Y') }}
+                                </span>
+                                @if($isToday)
+                                    <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-extrabold text-[10px] uppercase">
+                                        Hari Ini
+                                    </span>
+                                @endif
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                @if($totalAgenda === 0)
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        <span>Full Lowong (Bebas Agenda)</span>
+                                    </span>
+                                @else
+                                    <span class="text-[11px] text-slate-500">
+                                        {{ $totalAgenda }} Agenda Terjadwal
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+
+                        {{-- Gantt Timeline Bars --}}
+                        <div class="space-y-2">
+                            @if($totalAgenda === 0)
+                                {{-- Free Slot Banner --}}
+                                <div class="p-3 rounded-xl bg-emerald-50/70 border border-dashed border-emerald-300 text-emerald-800 flex items-center justify-between gap-3 text-xs">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        <span><strong>Waktu Lowong Penuh (07:30 - 16:30 WITA):</strong> Tidak ada jadwal kegiatan atau rapat. Waktu ini ideal untuk membuat agenda baru.</span>
+                                    </div>
+                                    <a href="{{ route('buat_rapat', ['date' => $dayStr]) }}" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] shrink-0 transition shadow-2xs">
+                                        + Buat Rapat
+                                    </a>
+                                </div>
+                            @else
+                                {{-- Render Task Bars & Free Intervals --}}
+                                <div class="space-y-1.5">
+                                    @foreach($tasksOnDay as $item)
+                                    @php
+                                        $isRapat = ($item->jenis === 'Rapat');
+                                        $jamMulai = $item->start_jam ? substr($item->start_jam, 0, 5) : '08:30';
+                                        $jamSelesai = $item->end_jam ? substr($item->end_jam, 0, 5) : 'Selesai';
+                                    @endphp
+                                    <div class="p-2.5 rounded-xl border {{ $isRapat ? 'bg-indigo-50/80 border-indigo-200 text-indigo-950' : 'bg-sky-50/80 border-sky-200 text-sky-950' }} flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs hover:shadow-2xs transition">
+                                        <div class="flex items-center gap-2 min-w-0">
+                                            <span class="w-2.5 h-2.5 rounded-full {{ $isRapat ? 'bg-indigo-600' : 'bg-sky-500' }} shrink-0"></span>
+                                            <span class="font-extrabold truncate">{{ $item->text }}</span>
+                                            <span class="text-[10px] text-slate-400 font-semibold">• {{ $item->tim ?? '-' }}</span>
+                                        </div>
+                                        <div class="flex items-center gap-3 shrink-0">
+                                            <span class="font-mono font-bold text-[11px] {{ $isRapat ? 'text-indigo-700' : 'text-sky-700' }} bg-white/80 px-2 py-0.5 rounded-md border border-slate-200">
+                                                {{ $jamMulai }} - {{ $jamSelesai }} WITA
+                                            </span>
+                                            <a href="{{ url('/daftarkegiatan/' . $item->id) }}" class="text-[11px] font-bold text-blue-600 hover:text-blue-800 underline">
+                                                Detail &rarr;
+                                            </a>
+                                        </div>
+                                    </div>
+                                    @endforeach
+
+                                    {{-- Free time indicator for remaining hours --}}
+                                    <div class="p-2 rounded-xl bg-emerald-50/50 border border-emerald-200/60 text-emerald-800 flex items-center justify-between text-[11px]">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                            <span>Sisa slot di luar jam agenda di atas merupakan <strong>Waktu Lowong</strong> yang dapat digunakan.</span>
+                                        </div>
+                                        <a href="{{ route('buat_rapat', ['date' => $dayStr]) }}" class="font-bold text-emerald-700 hover:text-emerald-900 underline text-[10px]">
+                                            + Jadwalkan di Waktu Lowong
+                                        </a>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+
+            {{-- 2. TAB KALENDER: FULLCALENDAR BULANAN --}}
+            <div x-show="dashboardTab === 'calendar'" class="space-y-4">
+                <div class="flex items-center justify-between text-xs text-slate-500 pb-1">
+                    <span>Klik item agenda pada kalender untuk melihat pop-up informasi lengkap & tiket QR.</span>
+                    <div class="flex items-center gap-3 font-semibold">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 inline-block"></span>
+                            <span class="text-gray-700 text-[11px]">Rapat</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span>
+                            <span class="text-gray-700 text-[11px]">Kegiatan</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="dashboardCalendar" class="min-h-[540px]"></div>
+            </div>
         </div>
 
     </div>

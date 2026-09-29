@@ -117,41 +117,206 @@
     </div>
 
     {{-- MAIN TABLE & FILTERS --}}
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden" x-data="{ viewMode: 'hirarki' }">
         {{-- Search and Filter Toolbar --}}
         <div class="p-4 sm:p-6 border-b border-gray-100 bg-gray-50/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div class="flex items-center gap-3">
-                <h3 class="font-bold text-gray-800 text-sm">Semua Sub Kegiatan</h3>
+                <div>
+                    <h3 class="font-bold text-gray-800 text-sm">Kelola Sub Kegiatan</h3>
+                    <p class="text-[11px] text-gray-400">Dikelompokkan secara berhirarki per Kegiatan Induk agar rapi</p>
+                </div>
                 <span class="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-semibold">{{ count($subKegiatans) }} Data</span>
             </div>
 
-            <form method="GET" action="{{ route('sub-kegiatan.index') }}" class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
-                <div class="relative min-w-[200px]">
-                    <input type="text"
-                           name="search"
-                           value="{{ $search }}"
-                           placeholder="Cari sub kegiatan, PJ..."
-                           class="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
-                    <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
+            <div class="flex items-center gap-3 flex-wrap">
+                {{-- Toggle View Mode --}}
+                <div class="flex items-center p-1 bg-gray-100 rounded-xl">
+                    <button type="button" 
+                            @click="viewMode = 'hirarki'"
+                            :class="viewMode === 'hirarki' ? 'bg-white text-blue-700 shadow-xs' : 'text-gray-600 hover:text-gray-900'"
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                        <span>Tampilan Hirarki</span>
+                    </button>
+                    <button type="button" 
+                            @click="viewMode = 'table'"
+                            :class="viewMode === 'table' ? 'bg-white text-blue-700 shadow-xs' : 'text-gray-600 hover:text-gray-900'"
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                        <span>Tabel Lengkap</span>
+                    </button>
                 </div>
 
-                <select name="status" onchange="this.form.submit()" class="py-2 px-3 text-xs rounded-xl border border-gray-200 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
-                    <option value="all">Semua Status</option>
-                    <option value="Sedang Berjalan" {{ $statusFilter == 'Sedang Berjalan' ? 'selected' : '' }}>Sedang Berjalan</option>
-                    <option value="Mendekati Deadline" {{ $statusFilter == 'Mendekati Deadline' ? 'selected' : '' }}>Mendekati Deadline</option>
-                    <option value="Selesai" {{ $statusFilter == 'Selesai' ? 'selected' : '' }}>Selesai</option>
-                </select>
+                <form method="GET" action="{{ route('sub-kegiatan.index') }}" class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+                    <div class="relative min-w-[180px]">
+                        <input type="text"
+                               name="search"
+                               value="{{ $search }}"
+                               placeholder="Cari sub kegiatan, PJ..."
+                               class="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                        <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
 
-                <button type="submit" class="px-3.5 py-2 bg-gray-800 hover:bg-gray-900 text-white text-xs font-bold rounded-xl transition">
-                    Filter
-                </button>
-            </form>
+                    <select name="status" onchange="this.form.submit()" class="py-1.5 px-3 text-xs rounded-xl border border-gray-200 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                        <option value="all">Semua Status</option>
+                        <option value="Sedang Berjalan" {{ $statusFilter == 'Sedang Berjalan' ? 'selected' : '' }}>Sedang Berjalan</option>
+                        <option value="Mendekati Deadline" {{ $statusFilter == 'Mendekati Deadline' ? 'selected' : '' }}>Mendekati Deadline</option>
+                        <option value="Selesai" {{ $statusFilter == 'Selesai' ? 'selected' : '' }}>Selesai</option>
+                    </select>
+
+                    <button type="submit" class="px-3.5 py-1.5 bg-gray-800 hover:bg-gray-900 text-white text-xs font-bold rounded-xl transition">
+                        Filter
+                    </button>
+                </form>
+            </div>
         </div>
 
-        {{-- Table Content --}}
-        <div class="overflow-x-auto">
+        {{-- 1. VIEW MODE: HIRARKI (ACCORDION PER KEGIATAN INDUK) --}}
+        <div x-show="viewMode === 'hirarki'" class="p-4 sm:p-6 space-y-4">
+            @php
+                $groupedByTask = $subKegiatans->groupBy(function($item) {
+                    return $item->task_id ?: 0;
+                });
+            @endphp
+
+            @forelse($groupedByTask as $taskId => $subList)
+            @php
+                $parentTask = $subList->first()->task;
+                $avgProgress = round($subList->avg('progress'));
+                $totalInGroup = count($subList);
+                $doneInGroup = $subList->where('progress', '>=', 100)->count();
+            @endphp
+            <div x-data="{ open: true }" class="bg-slate-50/70 border border-slate-200/90 rounded-2xl overflow-hidden shadow-2xs transition">
+                {{-- Header Kegiatan Induk (Parent) --}}
+                <div class="p-4 sm:p-5 bg-white border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-start gap-3">
+                        <button type="button" @click="open = !open" class="mt-0.5 w-8 h-8 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 flex items-center justify-center transition shrink-0">
+                            <svg class="w-4 h-4 transform transition-transform" :class="open ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wider">
+                                    Kegiatan Induk
+                                </span>
+                                <span class="text-xs text-slate-400">•</span>
+                                <span class="text-xs font-semibold text-slate-600">
+                                    Tim: {{ $parentTask ? ($parentTask->tim ?: 'Umum') : 'Sub Kegiatan Mandiri' }}
+                                </span>
+                                @if($parentTask && $parentTask->penanggung_jawab)
+                                    <span class="text-xs text-slate-400">•</span>
+                                    <span class="text-[11px] text-slate-500">PJ Induk: <strong>{{ $parentTask->penanggung_jawab }}</strong></span>
+                                @endif
+                            </div>
+                            <h4 class="text-sm sm:text-base font-extrabold text-slate-900 leading-snug">
+                                {{ $parentTask ? $parentTask->text : 'Sub Kegiatan Mandiri / Umum' }}
+                            </h4>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 shrink-0 justify-between md:justify-end">
+                        {{-- Ringkasan Progress --}}
+                        <div class="text-right space-y-1 min-w-[120px]">
+                            <div class="flex items-center justify-between text-[11px]">
+                                <span class="text-slate-500 font-medium">{{ $doneInGroup }}/{{ $totalInGroup }} Selesai</span>
+                                <span class="font-extrabold text-slate-800">{{ $avgProgress }}%</span>
+                            </div>
+                            <div class="w-28 bg-slate-200 rounded-full h-2 overflow-hidden">
+                                <div class="h-2 rounded-full {{ $avgProgress >= 100 ? 'bg-emerald-500' : 'bg-blue-600' }}" style="width: {{ $avgProgress }}%"></div>
+                            </div>
+                        </div>
+
+                        <span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                            {{ $totalInGroup }} Sub
+                        </span>
+
+                        @if($parentTask)
+                        <button type="button" 
+                                @click="modalTambah = true; $nextTick(() => { document.getElementById('selectParentTask').value = '{{ $parentTask->id }}'; })"
+                                class="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition flex items-center gap-1 border border-blue-200/80 shadow-2xs">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            <span>+ Sub</span>
+                        </button>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Daftar Sub Kegiatan Anak (Tree Hierarchy) --}}
+                <div x-show="open" class="p-4 sm:p-5 space-y-3 bg-slate-50/50">
+                    @foreach($subList as $sub)
+                    @php
+                        $deadline = $sub->deadline_status;
+                    @endphp
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3 relative hover:border-blue-200 transition">
+                        <div class="flex items-start gap-3">
+                            <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-mono font-bold text-xs shrink-0 mt-0.5">
+                                ↳
+                            </div>
+                            <div class="space-y-1">
+                                <h5 class="text-xs sm:text-sm font-bold text-slate-900">{{ $sub->nama_sub }}</h5>
+                                <div class="flex items-center gap-2 text-[11px] text-slate-500 flex-wrap">
+                                    <span>PIC/PJ: <strong class="text-slate-700">{{ $sub->pj ?: '-' }}</strong></span>
+                                    <span>•</span>
+                                    <span>Waktu: {{ $sub->start_date ? \Carbon\Carbon::parse($sub->start_date)->translatedFormat('d M') : '-' }} s.d. {{ $sub->end_date ? \Carbon\Carbon::parse($sub->end_date)->translatedFormat('d M Y') : '-' }}</span>
+                                </div>
+                                @if(!empty($sub->anggota_list))
+                                    <div class="flex items-center gap-1 flex-wrap pt-0.5">
+                                        <span class="text-[10px] text-slate-400">Anggota:</span>
+                                        @foreach(array_slice($sub->anggota_list, 0, 3) as $ang)
+                                            <span class="px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-700">{{ $ang }}</span>
+                                        @endforeach
+                                        @if(count($sub->anggota_list) > 3)
+                                            <span class="text-[10px] text-slate-400 font-semibold">+{{ count($sub->anggota_list) - 3 }}</span>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 shrink-0 justify-between md:justify-end border-t md:border-t-0 pt-2 md:pt-0">
+                            {{-- Deadline Badge --}}
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] font-bold border {{ $deadline['class'] }}">
+                                <span class="w-1.5 h-1.5 rounded-full {{ $deadline['dot'] }}"></span>
+                                <span>{{ $deadline['label'] }}</span>
+                            </span>
+
+                            {{-- Progress Quick Dropdown --}}
+                            <form action="{{ route('sub-kegiatan.progress', $sub->id) }}" method="POST" class="flex items-center gap-1.5">
+                                @csrf
+                                <select name="progress" onchange="this.form.submit()" class="text-[11px] py-1 px-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 font-semibold">
+                                    <option value="0" {{ $sub->progress == 0 ? 'selected' : '' }}>0%</option>
+                                    <option value="25" {{ $sub->progress == 25 ? 'selected' : '' }}>25%</option>
+                                    <option value="50" {{ $sub->progress == 50 ? 'selected' : '' }}>50%</option>
+                                    <option value="75" {{ $sub->progress == 75 ? 'selected' : '' }}>75%</option>
+                                    <option value="100" {{ $sub->progress == 100 ? 'selected' : '' }}>100% Selesai</option>
+                                </select>
+                            </form>
+
+                            {{-- Actions --}}
+                            <form action="{{ route('sub-kegiatan.destroy', $sub->id) }}" method="POST" onsubmit="return confirm('Hapus sub kegiatan ini?');" class="inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Hapus Sub Kegiatan">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @empty
+            <div class="text-center py-12 text-slate-400">
+                <p class="text-xs">Belum ada sub kegiatan yang terdaftar.</p>
+            </div>
+            @endforelse
+        </div>
+
+        {{-- 2. VIEW MODE: TABEL LENGKAP --}}
+        <div x-show="viewMode === 'table'" class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
                 <thead class="bg-gray-50 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
                     <tr>

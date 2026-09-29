@@ -247,4 +247,170 @@ class KetuaTimController extends Controller
 
         return redirect()->back()->with('success', 'Kegiatan berhasil dihapus!');
     }
+
+    /**
+     * Import Jadwal Petugas PST dari Template Starla (.xlsx)
+     */
+    public function uploadTemplatePst(Request $request)
+    {
+        $defaultPath = 'D:/MAGANG/yang mau dijadikan database/template-petugas-pst september_.xlsx';
+        $filePath = null;
+
+        if ($request->hasFile('file_pst') && $request->file('file_pst')->isValid()) {
+            $filePath = $request->file('file_pst')->getRealPath();
+        } elseif (file_exists($defaultPath)) {
+            $filePath = $defaultPath;
+        }
+
+        if (!$filePath || !file_exists($filePath)) {
+            return redirect()->back()->with('error', 'File template PST tidak ditemukan. Silakan unggah file template .xlsx.');
+        }
+
+        try {
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
+
+            // 1. Baca master petugas dari sheet 'petugas'
+            $sheetPetugas = $spreadsheet->getSheetByName('petugas');
+            $petugasMap = [];
+            if ($sheetPetugas) {
+                $maxRowP = $sheetPetugas->getHighestRow();
+                for ($r = 2; $r <= $maxRowP; $r++) {
+                    $nip       = trim((string)$sheetPetugas->getCellByColumnAndRow(1, $r)->getValue());
+                    $nama      = trim((string)$sheetPetugas->getCellByColumnAndRow(2, $r)->getValue());
+                    $panggilan = strtolower(trim((string)$sheetPetugas->getCellByColumnAndRow(3, $r)->getValue()));
+
+                    if ($panggilan && $nama) {
+                        $petugasMap[$panggilan] = [
+                            'nip'  => $nip,
+                            'nama' => $nama
+                        ];
+                    }
+                }
+            }
+
+            // 2. Baca jadwal harian dari sheet 'Entri Disini'
+            $sheetEntri = $spreadsheet->getSheetByName('Entri Disini');
+            if (!$sheetEntri) {
+                return redirect()->back()->with('error', 'Sheet "Entri Disini" tidak ditemukan dalam file Excel.');
+            }
+
+            $maxRowE = $sheetEntri->getHighestRow();
+            $importedCount = 0;
+
+            for ($r = 2; $r <= $maxRowE; $r++) {
+                $rawTanggal = trim((string)$sheetEntri->getCellByColumnAndRow(1, $r)->getValue());
+                $sesi       = trim((string)$sheetEntri->getCellByColumnAndRow(2, $r)->getValue());
+
+                if (empty($rawTanggal) || empty($sesi)) {
+                    continue;
+                }
+
+                // Parse tanggal
+                try {
+                    // Cek jika excel numeric date
+                    if (is_numeric($rawTanggal)) {
+                        $carbonTgl = \Carbon\Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($rawTanggal));
+                    } else {
+                        $carbonTgl = \Carbon\Carbon::parse($rawTanggal);
+                    }
+                } catch (\Exception $e) {
+                    continue;
+                }
+
+                // Lewati hari Sabtu dan Minggu (hanya hari kerja)
+                if ($carbonTgl->isWeekend()) {
+                    continue;
+                }
+
+                $tglStr = $carbonTgl->format('Y-m-d');
+                $startJam = ($sesi == '1') ? '08:00' : '13:00';
+                $endJam   = ($sesi == '1') ? '12:00' : '16:00';
+
+                // Kumpulkan petugas (Kolom C, D, E, F)
+                $petugasList = [];
+                for ($c = 3; $c <= 6; $c++) {
+                    $pCall = strtolower(trim((string)$sheetEntri->getCellByColumnAndRow($c, $r)->getValue()));
+                    if ($pCall && isset($petugasMap[$pCall])) {
+                        $petugasList[] = $petugasMap[$pCall];
+                    } elseif ($pCall) {
+                        // Coba cari nama user yang mirip di DB
+                        $u = User::where('nama_lengkap', 'like', '%' . $pCall . '%')->first();
+                        if ($u) {
+                            $petugasList[] = [
+                                'nip'  => $u->niplama,
+                                'nama' => $u->nama_lengkap
+                            ];
+                        } else {
+                            $petugasList[] = [
+                                'nip'  => 'NIP' . rand(100000, 999999),
+                                'nama' => ucfirst($pCall)
+                            ];
+                        }
+                    }
+                }
+
+                if (empty($petugasList)) {
+                    continue;
+                }
+
+                $namesOnly = array_column($petugasList, 'nama');
+                $nipsOnly  = array_column($petugasList, 'nip');
+                $judulKegiatan = "Petugas PST Sesi " . $sesi . " (" . $carbonTgl->translatedFormat('d M Y') . ")";
+                $agenda = "Jadwal Petugas Pelayanan Statistik Terpadu (PST) Sesi " . $sesi . " (" . $startJam . " - " . $endJam . " WITA). Petugas: " . implode(', ', $namesOnly);
+
+                // Buat atau Update Task Kegiatan
+                $task = Task::where('start_date', $tglStr)
+                    ->where('jenis_kegiatan', 'Pelayanan Statistik Terpadu (PST)')
+                    ->where('text', 'like', '%Sesi ' . $sesi . '%')
+                    ->first();
+
+                if (!$task) {
+                    $task = new Task();
+                    $task->text             = $judulKegiatan;
+                    $task->start_date       = $tglStr;
+                    $task->date_akhir       = $tglStr;
+                    $task->start_jam        = $startJam;
+                    $task->end_jam          = $endJam;
+                    $task->jenis            = 'Kegiatan';
+                    $task->jenis_kegiatan   = 'Pelayanan Statistik Terpadu (PST)';
+                    $task->tim              = 'Diseminasi dan Layanan Statistik';
+                    $task->tempat           = 'Ruang PST BPS Provinsi Sulawesi Tenggara';
+                    $task->status           = 'Sedang Berjalan';
+                    $task->setuju_rapat     = 1;
+                }
+
+                $task->agenda           = $agenda;
+                $task->penanggung_jawab = $namesOnly[0] ?? 'Ketua Tim PST';
+                $task->owners           = json_encode($nipsOnly);
+                $task->save();
+
+                // Simpan penugasan petugas
+                foreach ($petugasList as $p) {
+                    $existingP = \App\penugasan::where('id_kegiatan', $task->id)
+                        ->where(function($q) use ($p) {
+                            $q->where('niplama', $p['nip'])
+                              ->orWhere('peserta', $p['nama']);
+                        })->first();
+
+                    if (!$existingP) {
+                        $existingP = new \App\penugasan();
+                        $existingP->id_kegiatan = $task->id;
+                        $existingP->niplama     = $p['nip'];
+                        $existingP->peserta     = $p['nama'];
+                    }
+
+                    $existingP->keterangan       = "Petugas PST Sesi " . $sesi;
+                    $existingP->status_kehadiran = 'Hadir';
+                    $existingP->waktu_kehadiran  = $tglStr . ' ' . $startJam . ':00';
+                    $existingP->save();
+                }
+
+                $importedCount++;
+            }
+
+            return redirect()->route('kegiatan.daftar')->with('success', "Berhasil mengimpor {$importedCount} sesi jadwal Petugas PST (Senin - Jumat) dari template Starla! Jadwal kini tampil di kalender dashboard.");
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal memproses template PST: ' . $e->getMessage());
+        }
+    }
 }

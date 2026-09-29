@@ -147,6 +147,61 @@
             <button type="button" onclick="document.getElementById('toast-error').classList.add('hidden')" class="text-rose-500 hover:text-rose-700 text-lg font-bold leading-none">&times;</button>
         </div>
 
+        {{-- BANNER PENEGASAN PRESENSI FISIK RUANG RAPAT --}}
+        <div class="p-3.5 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 text-blue-950 flex items-start gap-3 shadow-2xs">
+            <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <div class="text-xs space-y-0.5">
+                <h4 class="font-black text-blue-900 text-xs flex items-center gap-1.5">
+                    <span>Presensi Fisik di Ruangan Rapat</span>
+                    <span class="px-1.5 py-0.2 rounded bg-blue-200/80 text-blue-800 text-[9px] font-extrabold uppercase">Wajib Hadir Fisik</span>
+                </h4>
+                <p class="text-[11px] text-blue-800 leading-relaxed">
+                    Kode QR dan presensi ini hanya tersedia di ruangan rapat untuk memastikan peserta hadir secara fisik di lokasi rapat BPS Provinsi Sulawesi Tenggara.
+                </p>
+            </div>
+        </div>
+
+        {{-- TAMPILAN KHUSUS SETELAH TAMU EKSTERNAL MENGISI PRESENSI (LANGSUNG HADIR) --}}
+        @if(session('eksternal_success'))
+        <div class="bg-white rounded-3xl p-6 border-2 border-emerald-300 shadow-md text-center space-y-4">
+            <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 border-4 border-emerald-200 flex items-center justify-center mx-auto">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <div class="space-y-1">
+                <span class="inline-block px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[11px] uppercase tracking-wider">
+                    Status: Hadir Terverifikasi
+                </span>
+                <h3 class="text-base sm:text-lg font-black text-slate-900 pt-1">
+                    Terima Kasih, Kehadiran Anda Telah Dicatat!
+                </h3>
+                <p class="text-xs text-slate-600 max-w-xs mx-auto leading-relaxed">
+                    Kehadiran Anda sebagai tamu eksternal pada rapat kedinasan ini telah resmi tersimpan.
+                </p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left text-xs space-y-2">
+                <div class="flex justify-between py-1 border-b border-slate-100">
+                    <span class="text-slate-500">Nama Tamu:</span>
+                    <span class="font-bold text-slate-900">{{ session('eksternal_nama') }}</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-slate-100">
+                    <span class="text-slate-500">Asal Instansi:</span>
+                    <span class="font-bold text-slate-900">{{ session('eksternal_instansi') }}</span>
+                </div>
+                <div class="flex justify-between py-1">
+                    <span class="text-slate-500">Waktu Presensi:</span>
+                    <span class="font-bold text-slate-900 font-mono">{{ now()->format('H:i') }} WITA</span>
+                </div>
+            </div>
+
+            <p class="text-[11px] text-slate-400 italic">
+                Selamat mengikuti kegiatan di BPS Provinsi Sulawesi Tenggara. Anda tidak perlu login ke Sikeren Mobile.
+            </p>
+        </div>
+        @endif
+
         {{-- INFORMASI RAPAT --}}
         <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-3">
             <div>
@@ -206,11 +261,107 @@
             <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
                 <div>
                     <h3 class="font-bold text-slate-900 text-sm">Form Konfirmasi Kehadiran</h3>
-                    <p class="text-[11px] text-slate-500 mt-0.5">Tekan tombol kehadiran Anda di bawah</p>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Pilih jenis peserta dan konfirmasi kehadiran fisik</p>
                 </div>
             </div>
 
-            @if(Auth::check() && !Auth::user()->isAdmin() && isset($isAssigned) && !$isAssigned && isset($assignedParticipants) && $assignedParticipants->isNotEmpty())
+            {{-- TAB PILIHAN: PEGAWAI BPS VS TAMU / INSTANSI LAIN --}}
+            <div class="flex items-center p-1 bg-slate-100 rounded-2xl">
+                <button type="button" id="tab-btn-bps" onclick="switchTipePeserta('bps')" 
+                        class="flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-blue-700 shadow-xs">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    <span>Pegawai BPS</span>
+                </button>
+                <button type="button" id="tab-btn-eksternal" onclick="switchTipePeserta('eksternal')" 
+                        class="flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    <span>Tamu / Instansi Lain</span>
+                </button>
+            </div>
+
+            {{-- PANEL TAMU EKSTERNAL (LANGSUNG HADIR TANPA LOGIN) --}}
+            <div id="panel-eksternal" class="hidden space-y-4 pt-1">
+                <div class="p-3.5 rounded-xl bg-indigo-50/80 border border-indigo-100 text-xs text-indigo-950 space-y-1">
+                    <span class="font-extrabold text-[11px] uppercase tracking-wider text-indigo-800 flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Presensi Peserta / Tamu Eksternal</span>
+                    </span>
+                    <p class="text-[11px] text-indigo-800 leading-relaxed">
+                        Tamu dari instansi atau lembaga luar BPS cukup mengisi Nama dan Asal Instansi di bawah ini. Anda akan <strong>langsung tercatat Hadir</strong> tanpa perlu akun Sikeren Mobile.
+                    </p>
+                </div>
+
+                <form action="{{ route('daftarhadir.submit') }}" method="POST" class="space-y-3.5">
+                    @csrf
+                    <input type="hidden" name="id_kegiatan" value="{{ $rapatId }}">
+                    <input type="hidden" name="tipe_peserta" value="eksternal">
+                    <input type="hidden" name="status_kehadiran" value="Hadir">
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">
+                            Nama Lengkap Tamu <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" 
+                               name="nama_eksternal" 
+                               required
+                               placeholder="Contoh: Dr. Ir. Rahmat Hidayat, M.Si" 
+                               class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">
+                            Asal Instansi / Kantor / Lembaga <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" 
+                               name="instansi" 
+                               required
+                               placeholder="Contoh: Bappeda Prov. Sultra / Dinas Kominfo" 
+                               class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">
+                            Keterangan / Jabatan (Opsional)
+                        </label>
+                        <input type="text" 
+                               name="keterangan_eksternal" 
+                               placeholder="Contoh: Kepala Bidang Perencanaan" 
+                               class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+
+                    <button type="submit" 
+                            class="w-full py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 active:scale-98">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                        <span>Konfirmasi Kehadiran Tamu (Langsung Hadir)</span>
+                    </button>
+                </form>
+            </div>
+
+            {{-- PANEL PEGAWAI BPS --}}
+            <div id="panel-bps" class="space-y-4">
+
+            @if(!Auth::check())
+            {{-- Jika belum login, wajib masuk ke akun BPS --}}
+            <div class="p-4 rounded-2xl bg-blue-50/70 border border-blue-200 text-center space-y-3">
+                <div class="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center mx-auto shadow-xs">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+                </div>
+                <div>
+                    <h4 class="font-extrabold text-slate-900 text-sm">Masuk ke Akun BPS Anda</h4>
+                    <p class="text-xs text-slate-600 mt-1 leading-relaxed max-w-xs mx-auto">
+                        Untuk memverifikasi presensi mandiri pegawai BPS, silakan masuk ke akun Sikeren Mobile Anda terlebih dahulu.
+                    </p>
+                </div>
+                <a href="{{ route('login') }}" 
+                   class="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+                    <span>Masuk Akun BPS & Isi Kehadiran</span>
+                </a>
+            </div>
+            @else
+            {{-- Jika sudah login, tampilkan form kehadiran pegawai BPS --}}
+
+            @if(!Auth::user()->isAdmin() && isset($isAssigned) && !$isAssigned && isset($assignedParticipants) && $assignedParticipants->isNotEmpty())
             <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-1.5 shadow-xs">
                 <div class="flex items-center gap-1.5 font-bold text-amber-800">
                     <svg class="w-4 h-4 text-amber-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
@@ -232,6 +383,7 @@
             <form id="form-presensi" action="{{ route('daftarhadir.submit') }}" method="POST" class="space-y-4">
                 @csrf
                 <input type="hidden" name="id_kegiatan" value="{{ $rapatId }}">
+                <input type="hidden" name="tipe_peserta" value="bps">
                 <input type="hidden" id="input-niplama" name="niplama" value="{{ $initialNip }}">
                 <input type="hidden" id="input-nama" name="peserta_manual" value="{{ $initialNama }}">
                 <input type="hidden" id="input-status" name="status_kehadiran" value="Hadir">
@@ -433,6 +585,8 @@
                     </button>
                 </div>
             </form>
+            @endif
+            </div> {{-- end panel-bps --}}
         </div>
         @endif
 
@@ -521,6 +675,25 @@
     <script>
         let currentStatus = 'Hadir';
         let isManualMode = false;
+
+        function switchTipePeserta(tipe) {
+            const btnBps = document.getElementById('tab-btn-bps');
+            const btnEks = document.getElementById('tab-btn-eksternal');
+            const panelBps = document.getElementById('panel-bps');
+            const panelEks = document.getElementById('panel-eksternal');
+
+            if (tipe === 'eksternal') {
+                btnEks.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-indigo-700 shadow-xs';
+                btnBps.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900';
+                panelEks.classList.remove('hidden');
+                panelBps.classList.add('hidden');
+            } else {
+                btnBps.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-blue-700 shadow-xs';
+                btnEks.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900';
+                panelBps.classList.remove('hidden');
+                panelEks.classList.add('hidden');
+            }
+        }
 
         function pilihPegawaiDirect(nip, nama) {
             document.getElementById('input-niplama').value = nip;

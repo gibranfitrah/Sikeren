@@ -51,7 +51,15 @@
                             {{ $task->text ?? 'Rapat Koordinasi BPS' }}
                         </h1>
                         @if(!empty($task->agenda))
-                            <p class="text-xs text-blue-100/90 line-clamp-2">{{ $task->agenda }}</p>
+                            <div class="mt-1">
+                                <p class="text-xs text-blue-100/90 line-clamp-2 leading-relaxed">{{ $task->agenda }}</p>
+                                @if(strlen($task->agenda) > 80)
+                                    <button type="button" onclick="document.getElementById('modalAgendaLengkap').classList.remove('hidden')" class="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-amber-300 hover:text-amber-200 transition underline underline-offset-2">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        <span>Baca Agenda Lengkap (Pop-up)</span>
+                                    </button>
+                                @endif
+                            </div>
                         @endif
                     </div>
                 </div>
@@ -199,6 +207,57 @@
     <footer class="text-center py-4 text-[11px] text-slate-400">
         SIKEREN &bull; BPS Provinsi Sulawesi Tenggara
     </footer>
+
+    {{-- Modal Pop-up Agenda Lengkap --}}
+    <div id="modalAgendaLengkap" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs hidden transition-opacity">
+        <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
+            <div class="bg-gradient-to-r from-blue-700 to-indigo-800 p-5 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white font-bold">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-sm text-white">Detail Agenda & Catatan Rapat</h3>
+                        <p class="text-[10px] text-blue-200">Informasi lengkap kegiatan kedinasan</p>
+                    </div>
+                </div>
+                <button type="button" onclick="document.getElementById('modalAgendaLengkap').classList.add('hidden')" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/25 flex items-center justify-center text-white transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                <div>
+                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Nama Kegiatan</span>
+                    <h4 class="font-extrabold text-slate-900 text-base mt-0.5">{{ $task->text ?? 'Rapat' }}</h4>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 text-xs text-slate-700 space-y-2">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Agenda Lengkap:</span>
+                    <p class="leading-relaxed whitespace-pre-line text-slate-800 text-sm font-normal">{{ $task->agenda ?? 'Tidak ada rincian agenda tambahan.' }}</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 text-xs pt-1">
+                    <div class="p-3 rounded-xl bg-blue-50/70 border border-blue-100">
+                        <span class="text-[10px] text-blue-600 block font-semibold uppercase">Jadwal</span>
+                        <span class="font-bold text-slate-900 block mt-0.5">{{ $task->start_date ? \Carbon\Carbon::parse($task->start_date)->translatedFormat('d F Y') : '-' }}</span>
+                        <span class="text-[11px] text-slate-600">{{ substr($task->start_jam ?? '08:30', 0, 5) }} WITA - {{ !empty($task->end_jam) ? substr($task->end_jam, 0, 5) . ' WITA' : 'Selesai' }}</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-indigo-50/70 border border-indigo-100">
+                        <span class="text-[10px] text-indigo-600 block font-semibold uppercase">Ruangan</span>
+                        <span class="font-bold text-slate-900 block mt-0.5 truncate">{{ $task->tempat ?? 'Aula Kantor BPS' }}</span>
+                        <span class="text-[11px] text-slate-600 truncate block">PJ: {{ $task->penanggung_jawab ?? '-' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+                <button type="button" onclick="document.getElementById('modalAgendaLengkap').classList.add('hidden')" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs transition">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>

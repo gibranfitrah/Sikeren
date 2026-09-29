@@ -66,10 +66,10 @@
                     <span x-text="connectionStatus === 'online' ? 'SIMPATI API Terhubung (Online)' : 'Alur SDM SIMPATI Siap Digunakan'"></span>
                 </div>
                 <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white">
-                    Integrasi Data SIMPATI &harr; SIKEREN
+                    SIMPATI
                 </h1>
                 <p class="text-sm text-blue-100 max-w-2xl leading-relaxed font-medium">
-                    Alur SDM SIMPATI: Penarikan data per-Satker, Deteksi Pindah Satker, Generate QR Nametag, serta sinkronisasi Struktur Tim Kerja ke Database Tim & Kegiatan.
+                    Sinkronisasi & Manajemen Data SDM SIMPATI BPS, Deteksi Pindah Satker, Generate QR Nametag, serta Struktur Tim Kerja.
                 </p>
             </div>
             <div class="flex flex-wrap items-center gap-3">
@@ -153,8 +153,8 @@
         </div>
 
         {{-- Statistik Alur SDM --}}
-        <div id="simpati-stats" class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1" :class="isFiltering ? 'simpati-filtering' : ''">
-            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+        <div id="simpati-stats" class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1" :class="isFiltering ? 'simpati-filtering' : ''">
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-semibold text-gray-500">Total SDM Pegawai</span>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.111 48.111 0 00-7.5 0"/></svg>
@@ -172,16 +172,8 @@
                 <span class="text-[11px] text-indigo-500/80 mt-1 block">Struktur Tim Aktif</span>
             </div>
 
-            <div class="p-4 rounded-2xl bg-purple-50 border border-purple-100">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-semibold text-purple-700">Pegawai Multi-Tim</span>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
-                </div>
-                <div class="text-2xl font-black text-purple-700 mt-2 tabular-nums" x-text="stats.totalMultiTim">{{ $totalMultiTim }}</div>
-                <span class="text-[11px] text-purple-500/80 mt-1 block">Anggota di &gt; 1 Tim</span>
-            </div>
-
-            <div class="p-4 rounded-2xl border transition-colors duration-300"
+            <div class="p-4 rounded-2xl border transition-all duration-300 cursor-pointer hover:shadow-md active:scale-95"
+                 @click="modalPindahSatker.show = true"
                  :class="stats.totalPindah > 0 ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-emerald-50 border-emerald-100 text-emerald-900'">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-semibold" :class="stats.totalPindah > 0 ? 'text-amber-800' : 'text-emerald-700'">Pindah SATKER</span>
@@ -193,9 +185,12 @@
                 <div class="text-2xl font-black mt-2 tabular-nums"
                      :class="stats.totalPindah > 0 ? 'text-amber-700' : 'text-emerald-700'"
                      x-text="stats.totalPindah">{{ $totalPindah }}</div>
-                <span class="text-[11px] mt-1 block"
-                      :class="stats.totalPindah > 0 ? 'text-amber-700 font-semibold' : 'text-emerald-600'"
-                      x-text="stats.totalPindah > 0 ? 'Perlu Verifikasi Status!' : 'Semua Status Normal'">{{ $totalPindah > 0 ? 'Perlu Verifikasi Status!' : 'Semua Status Normal' }}</span>
+                <div class="flex items-center justify-between mt-1">
+                    <span class="text-[11px]"
+                          :class="stats.totalPindah > 0 ? 'text-amber-700 font-semibold' : 'text-emerald-600'"
+                          x-text="stats.totalPindah > 0 ? 'Perlu Verifikasi Status!' : 'Semua Status Normal'">{{ $totalPindah > 0 ? 'Perlu Verifikasi Status!' : 'Semua Status Normal' }}</span>
+                    <span class="text-[10px] text-blue-600 font-bold underline">Lihat Rincian &rarr;</span>
+                </div>
             </div>
         </div>
         <p x-show="filterError" x-text="filterError" class="text-xs font-semibold text-rose-600 pt-1"></p>
@@ -289,7 +284,7 @@
                         <tr>
                             <th class="px-4 py-3.5">Pegawai & Identitas</th>
                             <th class="px-4 py-3.5">Jabatan & Satker</th>
-                            <th class="px-4 py-3.5">Tim Kerja (Multi-Tim)</th>
+                            <th class="px-4 py-3.5">Tim Kerja</th>
                             <th class="px-4 py-3.5 text-center">Status Kepegawaian</th>
                             <th class="px-4 py-3.5 text-center">Aksi & Manajemen</th>
                         </tr>
@@ -315,9 +310,6 @@
                                         <div class="flex flex-wrap gap-1.5 items-center">
                                             <template x-for="timName in p.tims" :key="timName">
                                                 <span class="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 text-[11px] font-medium" x-text="timName"></span>
-                                            </template>
-                                            <template x-if="p.tims.length > 1">
-                                                <span class="px-1.5 py-0.5 rounded-md bg-purple-100 text-purple-700 text-[10px] font-bold" title="Pegawai tergabung di lebih dari 1 tim kerja" x-text="'Multi-Tim (' + p.tims.length + ')'"></span>
                                             </template>
                                         </div>
                                     </template>
@@ -823,6 +815,69 @@
         </div>
     </div>
 
+    {{-- MODAL DETAIL PEGAWAI PINDAH SATKER --}}
+    <div x-show="modalPindahSatker.show" 
+         x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-100"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+        <div @click.away="modalPindahSatker.show = false" class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 bg-gradient-to-r from-amber-600 to-amber-700 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                    <h4 class="font-bold text-sm">Daftar Keterangan Pegawai Pindah SATKER</h4>
+                </div>
+                <button @click="modalPindahSatker.show = false" class="text-white/80 hover:text-white transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs">
+                    Pegawai di bawah ini teridentifikasi melakukan mutasi / pindah Satker pada sistem SIMPATI. Pastikan riwayat penugasan dan tim kerja telah disesuaikan di Satker terkait.
+                </div>
+
+                <div class="space-y-3">
+                    <template x-for="p in pegawaiList.filter(item => item.is_pindahsatker == 1)" :key="p.id">
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 font-bold flex items-center justify-center shrink-0" x-text="p.initial"></div>
+                                <div>
+                                    <h5 class="text-xs font-bold text-slate-900" x-text="p.nama_lengkap"></h5>
+                                    <p class="text-[11px] text-slate-500 font-mono" x-text="'NIP: ' + p.formatted_nip + ' • ' + (p.email || '-')"></p>
+                                    <p class="text-[11px] text-slate-700 font-medium" x-text="'Jabatan: ' + p.nm_jabatan"></p>
+                                </div>
+                            </div>
+                            <div class="sm:text-right shrink-0">
+                                <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px] inline-flex items-center gap-1 border border-amber-300">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                    <span>Pindah SATKER</span>
+                                </span>
+                                <p class="text-[11px] font-semibold text-slate-700 mt-1" x-text="'Satker Baru: ' + p.nm_satker"></p>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="pegawaiList.filter(item => item.is_pindahsatker == 1).length === 0">
+                        <div class="p-8 text-center text-xs text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                            Tidak ada pegawai yang terdeteksi pindah Satker pada Satker terpilih saat ini.
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <div class="px-6 py-3 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <button type="button" @click="modalPindahSatker.show = false" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl text-xs transition">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
     {{-- MODAL INTERAKTIF: EDIT DATA PEGAWAI SIMPATI (AKSES ADMIN) --}}
     <div x-show="modalEditPegawai.show" 
          x-cloak
@@ -1090,6 +1145,9 @@ function simpatiManager() {
             title: '',
             message: '',
             showTroubleshoot: false
+        },
+        modalPindahSatker: {
+            show: false
         },
         modalNametag: {
             show: false,
