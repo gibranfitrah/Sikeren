@@ -230,7 +230,7 @@ class DashboardController extends Controller
 
             // Calculate busy intervals in working hours (07:30 to 16:30 -> 450 to 990 min)
             $occupied = [];
-            foreach ($activeAgendas as $ag) {
+            foreach ($activeAgendas as &$ag) {
                 $sM = 450;
                 if (!empty($ag['start_jam'])) {
                     $parts = explode(':', $ag['start_jam']);
@@ -242,7 +242,10 @@ class DashboardController extends Controller
                     $eM = min(990, max($sM + 30, ((int)$parts[0] * 60) + (int)($parts[1] ?? 0)));
                 }
                 $occupied[] = ['start' => $sM, 'end' => $eM];
+                $ag['left_pct'] = round((($sM - 450) / 540) * 100, 1);
+                $ag['width_pct'] = max(7, round((($eM - $sM) / 540) * 100, 1));
             }
+            unset($ag);
 
             usort($occupied, fn($a, $b) => $a['start'] <=> $b['start']);
             $merged = [];

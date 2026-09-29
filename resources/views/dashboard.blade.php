@@ -905,36 +905,116 @@
                 <template x-if="currentDay">
                     <div class="rounded-2xl border border-slate-200 bg-white p-4 space-y-4 shadow-2xs">
                         
-                        {{-- 1. Visual Track Gantt Horizontal (07:30 - 16:30) --}}
-                        <div class="space-y-1.5">
-                            <div class="flex items-center justify-between text-[11px] font-bold text-slate-600">
-                                <span>Visualisasi Waktu Kerja BPS (07:30 - 16:30 WITA)</span>
-                                <span class="text-emerald-700 font-extrabold" x-text="'Lowong: ' + currentDay.total_free_hours + ' Jam'"></span>
+                        {{-- 1. Visual Gantt Chart Bentuk Balok (07:30 - 16:30 WITA) --}}
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-xs font-bold text-slate-700">
+                                <span class="flex items-center gap-1.5">
+                                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                                    <span>Bagan Balok Jadwal & Waktu Lowong (07:30 - 16:30 WITA)</span>
+                                </span>
+                                <span class="text-emerald-700 font-extrabold text-[11px]" x-text="'Lowong Tersedia: ' + currentDay.total_free_hours + ' Jam'"></span>
                             </div>
 
-                            {{-- Gantt Timeline Bar --}}
-                            <div class="relative h-10 w-full bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-stretch p-0.5 shadow-inner">
-                                <template x-for="(block, bIdx) in currentDay.timeline_blocks" :key="bIdx">
-                                    <div :style="'left: ' + block.left_pct + '%; width: ' + block.width_pct + '%;'"
-                                         :title="block.title + ' (' + block.time + ' WITA)'"
-                                         :class="block.type === 'free' 
-                                            ? 'bg-emerald-500/80 hover:bg-emerald-600 text-white' 
-                                            : (block.type === 'rapat' ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-sky-500 hover:bg-sky-600 text-white')"
-                                         class="absolute top-0.5 bottom-0.5 rounded-lg flex items-center justify-center px-1 text-[9px] font-bold overflow-hidden transition cursor-pointer select-none">
-                                        <span class="truncate" x-text="block.width_pct > 10 ? block.title : (block.width_pct > 5 ? block.time : '')"></span>
+                            {{-- Tabel Gantt Chart Balok --}}
+                            <div class="border border-slate-200 rounded-2xl overflow-x-auto bg-white shadow-2xs">
+                                <div class="min-w-[680px]">
+                                    {{-- Header Skala Jam --}}
+                                    <div class="flex items-center border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700">
+                                        <div class="w-56 sm:w-64 p-3 border-r border-slate-200 shrink-0 flex items-center justify-between">
+                                            <span>Agenda / Rapat</span>
+                                            <span class="text-[10px] text-slate-400 font-medium">Jam BPS</span>
+                                        </div>
+                                        <div class="flex-1 grid grid-cols-6 sm:grid-cols-9 text-center divide-x divide-slate-200/80 text-[10px] font-mono py-2 bg-slate-100/60">
+                                            <span>07:30</span>
+                                            <span>08:30</span>
+                                            <span>09:30</span>
+                                            <span>10:30</span>
+                                            <span>11:30</span>
+                                            <span>12:30</span>
+                                            <span class="hidden sm:block">13:30</span>
+                                            <span class="hidden sm:block">14:30</span>
+                                            <span class="hidden sm:block">15:30</span>
+                                        </div>
                                     </div>
-                                </template>
-                            </div>
 
-                            {{-- Time Ticks --}}
-                            <div class="flex justify-between text-[9px] font-mono text-slate-400 px-1 pt-0.5">
-                                <span>07:30</span>
-                                <span>09:00</span>
-                                <span>10:30</span>
-                                <span>12:00</span>
-                                <span>13:30</span>
-                                <span>15:00</span>
-                                <span>16:30</span>
+                                    {{-- Baris 1: Balok Waktu Lowong (Tersedia) --}}
+                                    <div class="flex items-center border-b border-slate-100 bg-emerald-50/20 hover:bg-emerald-50/40 transition">
+                                        <div class="w-56 sm:w-64 p-3 border-r border-slate-200/80 shrink-0 flex items-center gap-2">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                                            <div class="min-w-0">
+                                                <p class="font-bold text-xs text-emerald-950 truncate">Waktu Lowong (Tersedia)</p>
+                                                <p class="text-[10px] text-emerald-700 font-semibold" x-text="currentDay.total_free_hours + ' Jam Bebas Agenda'"></p>
+                                            </div>
+                                        </div>
+                                        <div class="flex-1 relative h-12 p-1.5 flex items-center">
+                                            <!-- Vertical Grid Lines Background -->
+                                            <div class="absolute inset-0 grid grid-cols-6 sm:grid-cols-9 divide-x divide-slate-200/40 pointer-events-none">
+                                                <div></div><div></div><div></div><div></div><div></div><div></div>
+                                                <div class="hidden sm:block"></div><div class="hidden sm:block"></div><div class="hidden sm:block"></div>
+                                            </div>
+                                            <!-- Balok-Balok Hijau Waktu Lowong -->
+                                            <template x-for="(fs, fIdx) in currentDay.free_slots" :key="fIdx">
+                                                <a :href="currentDay.url_buat_rapat"
+                                                   :style="'left: ' + fs.left_pct + '%; width: ' + fs.width_pct + '%;'"
+                                                   :title="'Waktu Lowong: ' + fs.start + ' - ' + fs.end + ' WITA (Klik untuk jadwalkan rapat)'"
+                                                   class="absolute h-8.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-extrabold text-[10px] shadow-xs flex items-center justify-between px-2.5 transition-all group z-10 cursor-pointer overflow-hidden border border-emerald-400">
+                                                    <span class="truncate flex items-center gap-1">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping shrink-0"></span>
+                                                        <span class="truncate" x-text="'Lowong ' + fs.start + ' - ' + fs.end"></span>
+                                                    </span>
+                                                    <span class="hidden group-hover:inline text-[9px] bg-white text-emerald-800 px-1 rounded font-black shrink-0">+ Jadwalkan</span>
+                                                </a>
+                                            </template>
+                                        </div>
+                                    </div>
+
+                                    {{-- Baris-baris Tiap Balok Agenda Terjadwal --}}
+                                    <template x-if="currentDay.active_agendas.length === 0">
+                                        <div class="p-8 text-center text-xs text-slate-400 italic">
+                                            Tidak ada rapat atau kegiatan terjadwal pada hari ini. Seluruh jam kerja (07:30 - 16:30 WITA) full tersedia sebagai waktu lowong.
+                                        </div>
+                                    </template>
+
+                                    <template x-for="item in currentDay.active_agendas" :key="item.id">
+                                        <div class="flex items-center border-b border-slate-100 hover:bg-slate-50/70 transition">
+                                            <!-- Kolom Kiri: Detail Agenda -->
+                                            <div class="w-56 sm:w-64 p-3 border-r border-slate-200/80 shrink-0 flex items-center justify-between gap-2">
+                                                <div class="min-w-0">
+                                                    <div class="flex items-center gap-1.5 mb-0.5">
+                                                        <span :class="item.is_rapat ? 'bg-indigo-600 text-white' : 'bg-sky-500 text-white'" 
+                                                              class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase shrink-0" 
+                                                              x-text="item.jenis"></span>
+                                                        <span class="font-extrabold text-xs text-slate-900 truncate block" x-text="item.text" :title="item.text"></span>
+                                                    </div>
+                                                    <p class="text-[10px] text-slate-400 font-medium truncate" x-text="(item.tim || '-') + ' • PJ: ' + (item.pj || '-')"></p>
+                                                </div>
+                                                <a :href="item.url" class="text-blue-600 hover:text-blue-800 font-bold text-[11px] shrink-0">Detail &rarr;</a>
+                                            </div>
+
+                                            <!-- Kolom Kanan: Balok Agenda di Jalur Timeline -->
+                                            <div class="flex-1 relative h-12 p-1.5 flex items-center">
+                                                <!-- Vertical Grid Lines Background -->
+                                                <div class="absolute inset-0 grid grid-cols-6 sm:grid-cols-9 divide-x divide-slate-200/50 pointer-events-none">
+                                                    <div></div><div></div><div></div><div></div><div></div><div></div>
+                                                    <div class="hidden sm:block"></div><div class="hidden sm:block"></div><div class="hidden sm:block"></div>
+                                                </div>
+
+                                                <!-- BALOK AGENDA -->
+                                                <a :href="item.url"
+                                                   :style="'left: ' + item.left_pct + '%; width: ' + item.width_pct + '%;'"
+                                                   :title="item.text + ' (' + item.start_jam + ' - ' + item.end_jam + ' WITA)'"
+                                                   :class="item.is_rapat ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-indigo-400 shadow-indigo-100' : 'bg-gradient-to-r from-sky-500 to-blue-600 text-white border-sky-400 shadow-sky-100'"
+                                                   class="absolute h-8.5 rounded-xl text-white font-bold text-[10px] shadow-xs flex items-center justify-between px-2.5 transition-all hover:scale-[1.01] hover:shadow-md z-10 cursor-pointer overflow-hidden border">
+                                                    <span class="truncate font-extrabold flex items-center gap-1.5">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-white shrink-0"></span>
+                                                        <span class="truncate" x-text="item.text"></span>
+                                                    </span>
+                                                    <span class="ml-2 font-mono font-bold text-[9px] bg-black/25 px-1.5 py-0.5 rounded shrink-0" x-text="item.start_jam + ' - ' + item.end_jam"></span>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
                         </div>
 
@@ -972,63 +1052,6 @@
                                 </a>
                             </div>
                         </template>
-
-                        {{-- 3. Daftar Agenda Hari Terpilih (Kompak & Paginated agar tidak memanjang) --}}
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between text-xs">
-                                <span class="font-bold text-slate-800">
-                                    Agenda Terjadwal (<span x-text="currentAgendas.length"></span>)
-                                </span>
-
-                                {{-- Pager tombol next-prev jika agenda lebih dari 4 --}}
-                                <template x-if="totalPages > 1">
-                                    <div class="flex items-center gap-1.5 text-[11px]">
-                                        <span class="text-slate-500 font-medium" x-text="'Hal ' + (agendaPage + 1) + ' dari ' + totalPages"></span>
-                                        <button type="button" 
-                                                @click="prevAgendaPage()" 
-                                                :disabled="agendaPage === 0"
-                                                :class="agendaPage === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-slate-100 text-slate-700'"
-                                                class="px-2 py-0.5 rounded border border-slate-200 font-bold transition">
-                                            &larr;
-                                        </button>
-                                        <button type="button" 
-                                                @click="nextAgendaPage()" 
-                                                :disabled="agendaPage >= totalPages - 1"
-                                                :class="agendaPage >= totalPages - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-slate-100 text-slate-700'"
-                                                class="px-2 py-0.5 rounded border border-slate-200 font-bold transition">
-                                            &rarr;
-                                        </button>
-                                    </div>
-                                </template>
-                            </div>
-
-                            <template x-if="currentAgendas.length === 0">
-                                <p class="text-xs text-slate-400 italic py-2 text-center">Tidak ada agenda spesifik pada tanggal ini.</p>
-                            </template>
-
-                            {{-- Render Kartu Agenda --}}
-                            <div class="space-y-2">
-                                <template x-for="item in paginatedAgendas" :key="item.id">
-                                    <div :class="item.is_rapat ? 'bg-indigo-50/80 border-indigo-200 text-indigo-950' : 'bg-sky-50/80 border-sky-200 text-sky-950'"
-                                         class="p-2.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs hover:shadow-2xs transition">
-                                        <div class="flex items-center gap-2 min-w-0">
-                                            <span :class="item.is_rapat ? 'bg-indigo-600' : 'bg-sky-500'" class="w-2.5 h-2.5 rounded-full shrink-0"></span>
-                                            <span class="font-extrabold truncate" x-text="item.text"></span>
-                                            <span class="text-[10px] text-slate-400 font-semibold" x-text="'• ' + (item.tim || '-')"></span>
-                                        </div>
-                                        <div class="flex items-center gap-3 shrink-0">
-                                            <span :class="item.is_rapat ? 'text-indigo-700' : 'text-sky-700'" 
-                                                  class="font-mono font-bold text-[11px] bg-white/80 px-2 py-0.5 rounded-md border border-slate-200">
-                                                <span x-text="item.start_jam + ' - ' + item.end_jam + ' WITA'"></span>
-                                            </span>
-                                            <a :href="item.url" class="text-[11px] font-bold text-blue-600 hover:text-blue-800 underline">
-                                                Detail &rarr;
-                                            </a>
-                                        </div>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
 
                         {{-- 4. Collapsible Proyek Tahunan (Sedang Berjalan Tahun 2026) --}}
                         <template x-if="currentDay.total_proyek_tahunan > 0">

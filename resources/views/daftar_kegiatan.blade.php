@@ -463,7 +463,7 @@
                         </tr>
 
                         {{-- EXPANDED SUB KEGIATAN ACCORDION / DROPDOWN PANEL --}}
-                        <tr x-show="expandedSub === {{ $item->id }}" x-cloak class="bg-indigo-50/30">
+                        <tr x-show="expandedSub === {{ $item->id }}" x-cloak class="bg-indigo-50/30 sub-kegiatan-row">
                             <td colspan="6" class="px-8 py-4 border-t border-b border-indigo-100">
                                 <div class="bg-white rounded-2xl p-4 border border-indigo-100 shadow-2xs space-y-3">
                                     <div class="flex items-center justify-between">
@@ -534,6 +534,23 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            {{-- Footer Pagination untuk Kegiatan Penugasan --}}
+            <div id="pagination-kegiatan" class="px-6 py-3.5 border-t border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div class="flex items-center gap-3 text-gray-500">
+                    <span id="kegiatan-page-info" class="font-medium text-slate-700">Menampilkan 1 - 10 dari {{ count($kegiatans2) }} kegiatan</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[11px] text-gray-400">Tampilkan:</span>
+                        <select id="kegiatan-per-page" onchange="changePerPage('kegiatan', this.value)" class="bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1" id="kegiatan-page-buttons"></div>
             </div>
         </div>
 
@@ -688,6 +705,23 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            {{-- Footer Pagination untuk Agenda Rapat --}}
+            <div id="pagination-rapat" class="px-6 py-3.5 border-t border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div class="flex items-center gap-3 text-gray-500">
+                    <span id="rapat-page-info" class="font-medium text-slate-700">Menampilkan 1 - 10 dari {{ count($kegiatans) }} agenda rapat</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[11px] text-gray-400">Tampilkan:</span>
+                        <select id="rapat-per-page" onchange="changePerPage('rapat', this.value)" class="bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1" id="rapat-page-buttons"></div>
             </div>
         </div>
 
@@ -867,7 +901,22 @@
     </div>
 
 <script>
+const paginationState = {
+    kegiatan: {
+        currentPage: 1,
+        perPage: 10
+    },
+    rapat: {
+        currentPage: 1,
+        perPage: 10
+    }
+};
+
+let currentTab = 'tab-kegiatan';
+
 function switchTab(tabId) {
+    currentTab = tabId;
+
     document.querySelectorAll('.tab-panel').forEach(function(el) {
         el.classList.add('hidden');
     });
@@ -888,21 +937,185 @@ function switchTab(tabId) {
         targetBtn.classList.add('border-blue-600', 'text-blue-600');
     }
 
-    filterTable();
+    // Refresh pagination for active tab
+    if (tabId === 'tab-kegiatan') {
+        renderPagination('kegiatan');
+    } else if (tabId === 'tab-rapat') {
+        renderPagination('rapat');
+    }
 }
 
 function filterTable() {
-    const searchVal = document.getElementById('tableSearchInput').value.toLowerCase();
-
-    document.querySelectorAll('.kegiatan-row').forEach(function(row) {
-        const text = row.innerText.toLowerCase();
-        row.style.display = text.includes(searchVal) ? '' : 'none';
-    });
-
-    document.querySelectorAll('.rapat-row').forEach(function(row) {
-        const text = row.innerText.toLowerCase();
-        row.style.display = text.includes(searchVal) ? '' : 'none';
-    });
+    // When searching, reset to page 1 for both
+    paginationState.kegiatan.currentPage = 1;
+    paginationState.rapat.currentPage = 1;
+    renderPagination('kegiatan');
+    renderPagination('rapat');
 }
+
+function changePerPage(type, val) {
+    paginationState[type].perPage = parseInt(val, 10) || 10;
+    paginationState[type].currentPage = 1;
+    renderPagination(type);
+}
+
+function goToPage(type, page) {
+    paginationState[type].currentPage = page;
+    renderPagination(type);
+}
+
+function renderPagination(type) {
+    const isKegiatan = (type === 'kegiatan');
+    const rowClass = isKegiatan ? '.kegiatan-row' : '.rapat-row';
+    const infoEl = document.getElementById(type + '-page-info');
+    const btnsEl = document.getElementById(type + '-page-buttons');
+    const searchVal = (document.getElementById('tableSearchInput')?.value || '').toLowerCase().trim();
+
+    const allRows = Array.from(document.querySelectorAll(rowClass));
+    if (allRows.length === 0) return;
+
+    // Filter matching rows
+    const matchingRows = allRows.filter(function(row) {
+        if (!searchVal) return true;
+        return row.innerText.toLowerCase().includes(searchVal);
+    });
+
+    const total = matchingRows.length;
+    const perPage = paginationState[type].perPage;
+    const totalPages = Math.max(1, Math.ceil(total / perPage));
+
+    if (paginationState[type].currentPage > totalPages) {
+        paginationState[type].currentPage = totalPages;
+    }
+    if (paginationState[type].currentPage < 1) {
+        paginationState[type].currentPage = 1;
+    }
+    const curPage = paginationState[type].currentPage;
+
+    const startIdx = (curPage - 1) * perPage;
+    const endIdx = startIdx + perPage;
+
+    // Apply visibility to rows
+    allRows.forEach(function(row) {
+        const matchIdx = matchingRows.indexOf(row);
+        const isVisible = (matchIdx >= startIdx && matchIdx < endIdx);
+
+        row.style.display = isVisible ? '' : 'none';
+
+        if (isKegiatan) {
+            const nextRow = row.nextElementSibling;
+            if (nextRow && nextRow.classList.contains('sub-kegiatan-row')) {
+                if (!isVisible) {
+                    nextRow.style.display = 'none';
+                }
+            }
+        }
+    });
+
+    // Update info text
+    if (infoEl) {
+        if (total === 0) {
+            infoEl.textContent = `0 data ditemukan`;
+        } else {
+            const displayStart = startIdx + 1;
+            const displayEnd = Math.min(endIdx, total);
+            const label = isKegiatan ? 'kegiatan' : 'agenda rapat';
+            infoEl.textContent = `Menampilkan ${displayStart} - ${displayEnd} dari ${total} ${label}`;
+        }
+    }
+
+    // Build pagination buttons
+    if (btnsEl) {
+        btnsEl.innerHTML = '';
+
+        if (totalPages <= 1 && total <= perPage) {
+            return;
+        }
+
+        // Prev Button
+        const prevBtn = document.createElement('button');
+        prevBtn.type = 'button';
+        prevBtn.className = `px-2.5 py-1 rounded-lg border text-xs font-semibold flex items-center gap-1 transition ${
+            curPage <= 1 
+                ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed' 
+                : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 shadow-2xs'
+        }`;
+        prevBtn.innerHTML = `
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            <span class="hidden sm:inline">Sebelumnya</span>
+        `;
+        if (curPage > 1) {
+            prevBtn.onclick = function() { goToPage(type, curPage - 1); };
+        } else {
+            prevBtn.disabled = true;
+        }
+        btnsEl.appendChild(prevBtn);
+
+        // Page Numbers Generator
+        const pagesToDisplay = [];
+        if (totalPages <= 7) {
+            for (let i = 1; i <= totalPages; i++) pagesToDisplay.push(i);
+        } else {
+            pagesToDisplay.push(1);
+            if (curPage > 3) pagesToDisplay.push('...');
+            const start = Math.max(2, curPage - 1);
+            const end = Math.min(totalPages - 1, curPage + 1);
+            for (let i = start; i <= end; i++) {
+                if (!pagesToDisplay.includes(i)) pagesToDisplay.push(i);
+            }
+            if (curPage < totalPages - 2) pagesToDisplay.push('...');
+            if (!pagesToDisplay.includes(totalPages)) pagesToDisplay.push(totalPages);
+        }
+
+        pagesToDisplay.forEach(function(p) {
+            if (p === '...') {
+                const dots = document.createElement('span');
+                dots.className = 'px-2 py-1 text-gray-400 text-xs select-none';
+                dots.textContent = '...';
+                btnsEl.appendChild(dots);
+            } else {
+                const pBtn = document.createElement('button');
+                pBtn.type = 'button';
+                pBtn.className = `w-7 h-7 rounded-lg text-xs font-bold transition flex items-center justify-center ${
+                    p === curPage
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300'
+                }`;
+                pBtn.textContent = p;
+                pBtn.onclick = function() { goToPage(type, p); };
+                btnsEl.appendChild(pBtn);
+            }
+        });
+
+        // Next Button
+        const nextBtn = document.createElement('button');
+        nextBtn.type = 'button';
+        nextBtn.className = `px-2.5 py-1 rounded-lg border text-xs font-semibold flex items-center gap-1 transition ${
+            curPage >= totalPages 
+                ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed' 
+                : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 shadow-2xs'
+        }`;
+        nextBtn.innerHTML = `
+            <span class="hidden sm:inline">Berikutnya</span>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        `;
+        if (curPage < totalPages) {
+            nextBtn.onclick = function() { goToPage(type, curPage + 1); };
+        } else {
+            nextBtn.disabled = true;
+        }
+        btnsEl.appendChild(nextBtn);
+    }
+}
+
+// Inisialisasi saat dokumen siap
+document.addEventListener('DOMContentLoaded', function() {
+    renderPagination('kegiatan');
+    renderPagination('rapat');
+});
 </script>
 @endsection
