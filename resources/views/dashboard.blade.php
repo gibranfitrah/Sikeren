@@ -820,7 +820,7 @@
                                         <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                         <span><strong>Waktu Lowong Penuh (07:30 - 16:30 WITA):</strong> Tidak ada jadwal kegiatan atau rapat. Waktu ini ideal untuk membuat agenda baru.</span>
                                     </div>
-                                    <a href="{{ route('buat_rapat', ['date' => $dayStr]) }}" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] shrink-0 transition shadow-2xs">
+                                    <a href="{{ url('/rapat?date=' . $dayStr) }}" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] shrink-0 transition shadow-2xs">
                                         + Buat Rapat
                                     </a>
                                 </div>
@@ -856,7 +856,7 @@
                                             <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                                             <span>Sisa slot di luar jam agenda di atas merupakan <strong>Waktu Lowong</strong> yang dapat digunakan.</span>
                                         </div>
-                                        <a href="{{ route('buat_rapat', ['date' => $dayStr]) }}" class="font-bold text-emerald-700 hover:text-emerald-900 underline text-[10px]">
+                                        <a href="{{ url('/rapat?date=' . $dayStr) }}" class="font-bold text-emerald-700 hover:text-emerald-900 underline text-[10px]">
                                             + Jadwalkan di Waktu Lowong
                                         </a>
                                     </div>
