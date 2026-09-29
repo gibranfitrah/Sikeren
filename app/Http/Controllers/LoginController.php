@@ -186,8 +186,15 @@ class LoginController extends Controller
                     $user->save();
                 }
 
+                $intendedUrl = session()->get('url.intended');
+
                 Auth::login($user, true);
                 $request->session()->regenerate();
+
+                if ($intendedUrl) {
+                    session()->forget('url.intended');
+                    return redirect()->to($intendedUrl);
+                }
 
                 return redirect()->intended('/dashboard');
             }
@@ -197,9 +204,16 @@ class LoginController extends Controller
         return redirect('/');
     }
 
-    public function actionlogout()
+    public function actionlogout(Request $request)
     {
+        $redirect = $request->query('redirect') ?? session('url.intended');
         Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        if ($redirect) {
+            session()->put('url.intended', $redirect);
+            return redirect()->route('login')->with('info', 'Silakan masuk ke akun Anda terlebih dahulu.');
+        }
         return redirect('/');
     }
 }

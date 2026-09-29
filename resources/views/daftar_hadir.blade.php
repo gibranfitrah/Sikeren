@@ -210,6 +210,25 @@
                 </div>
             </div>
 
+            @if(Auth::check() && !Auth::user()->isAdmin() && isset($isAssigned) && !$isAssigned && isset($assignedParticipants) && $assignedParticipants->isNotEmpty())
+            <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-1.5 shadow-xs">
+                <div class="flex items-center gap-1.5 font-bold text-amber-800">
+                    <svg class="w-4 h-4 text-amber-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                    <span>Perhatian: Akun Tidak Terdaftar di Rapat Ini</span>
+                </div>
+                <p class="text-[11px] text-amber-700 leading-relaxed">
+                    Akun Anda saat ini (<strong>{{ Auth::user()->nama_lengkap ?? Auth::user()->username }}</strong>) tidak tercatat sebagai peserta undangan rapat ini. Peserta yang diundang: 
+                    <strong>{{ $assignedParticipants->pluck('nama_lengkap')->join(', ') }}</strong>.
+                </p>
+                <div class="pt-1">
+                    <a href="{{ route('actionlogout', ['redirect' => url('daftarhadir/' . $rapatId)]) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-xs shadow-xs transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        <span>Ganti Akun Peserta</span>
+                    </a>
+                </div>
+            </div>
+            @endif
+
             <form id="form-presensi" action="{{ route('daftarhadir.submit') }}" method="POST" class="space-y-4">
                 @csrf
                 <input type="hidden" name="id_kegiatan" value="{{ $rapatId }}">
@@ -245,11 +264,17 @@
                             <svg class="w-3.5 h-3.5 text-blue-600 inline" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
                             <span>Akun Peserta (Terverifikasi)</span>
                         </span>
-                        @if(Auth::check() && Auth::user()->isAdmin())
-                        <button type="button" onclick="resetPilihanPegawai()" class="text-[11px] font-bold text-blue-600 hover:text-blue-800 underline">
-                            Ganti Nama (Admin)
-                        </button>
-                        @endif
+                        <div class="flex items-center gap-2">
+                            @if(Auth::check() && Auth::user()->isAdmin())
+                            <button type="button" onclick="resetPilihanPegawai()" class="text-[11px] font-bold text-blue-600 hover:text-blue-800 underline">
+                                Ganti Nama (Admin)
+                            </button>
+                            @endif
+                            <a href="{{ route('actionlogout', ['redirect' => url('daftarhadir/' . $rapatId)]) }}" class="text-[11px] font-semibold text-rose-600 hover:text-rose-800 underline flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                                <span>Ganti Akun</span>
+                            </a>
+                        </div>
                     </div>
                     <div class="flex items-center gap-3">
                         <div id="user-avatar" class="w-10 h-10 rounded-xl bg-blue-600 text-white font-bold text-sm flex items-center justify-center flex-shrink-0 shadow-xs">

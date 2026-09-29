@@ -214,13 +214,16 @@ class RapatController extends Controller
         // 6. Simpan Penugasan untuk seluruh peserta rapat
         $kunciFcm = [];
         foreach ($pegawai as $nip) {
+            $user = User::where('niplama', $nip)->orWhere('nipbaru', $nip)->orWhere('nama_lengkap', $nip)->first();
+
             $tugas = new penugasan();
-            $tugas->id_kegiatan = $taskId;
-            $tugas->niplama     = $nip;
+            $tugas->id_kegiatan      = $taskId;
+            $tugas->niplama          = $user ? $user->niplama : $nip;
+            $tugas->peserta          = $user ? $user->nama_lengkap : (string)$nip;
+            $tugas->status_kehadiran = 'Belum Hadir';
             $tugas->save();
 
             // Cari User penerima notifikasi
-            $user = User::where('niplama', $nip)->first();
             if ($user && $user->id !== Auth::id()) {
                 DB::table('notifications')->insert([
                     'id'              => (string) Str::uuid(),

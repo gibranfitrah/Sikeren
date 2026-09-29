@@ -154,10 +154,31 @@ class KegiatanController extends Controller
         return $scheme . '://' . $host . $portStr . '/' . ltrim($path, '/');
     }
 
+    public function scanQr($id)
+    {
+        // 1. Bersihkan sesi login sebelumnya di HP agar peserta dapat login dengan akunnya sendiri
+        if (Auth::check()) {
+            Auth::logout();
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
+        }
+
+        // 2. Dapatkan record task / rapat
+        $task = is_numeric($id) ? Task::find($id) : (Task::where('id', $id)->orWhere('text', $id)->first() ?? kegiatan::find($id));
+        $realId = $task ? $task->id : $id;
+
+        // 3. Simpan URL tujuan ke session intended agar setelah login langsung diarahkan ke form presensi
+        $targetUrl = url('daftarhadir/' . $realId);
+        session()->put('url.intended', $targetUrl);
+
+        // 4. Arahkan ke halaman login dengan pesan notifikasi
+        return redirect()->route('login')->with('info', 'Silakan masuk ke akun Anda terlebih dahulu untuk mengisi kehadiran rapat.');
+    }
+
     public function generate($id)
     {
         $task = Task::find($id) ?? kegiatan::find($id);
-        $urlHadir = self::getQrUrl('daftarhadir/' . $id);
+        $urlHadir = self::getQrUrl('scan-qr/' . $id);
         $qrcode = QrCode::size(340)->generate($urlHadir);
         return view('qrcode', compact('qrcode', 'task', 'id', 'urlHadir'));
     }
@@ -608,7 +629,16 @@ class KegiatanController extends Controller
             ->orderBy('nama_lengkap', 'ASC')
             ->get();
 
-        return view('daftar_hadir', compact('task', 'user', 'id', 'realId', 'pesertaList', 'assignedParticipants', 'allPegawai'));
+        $isAssigned = false;
+        if ($assignedParticipants->isNotEmpty() && $currentUser) {
+            $isAssigned = $assignedParticipants->contains(function($p) use ($currentUser) {
+                return ($currentUser->niplama && $p->niplama == $currentUser->niplama) ||
+                       ($currentUser->nipbaru && $p->nipbaru == $currentUser->nipbaru) ||
+                       (!empty($currentUser->nama_lengkap) && strcasecmp(trim($p->nama_lengkap), trim($currentUser->nama_lengkap)) === 0);
+            });
+        }
+
+        return view('daftar_hadir', compact('task', 'user', 'id', 'realId', 'pesertaList', 'assignedParticipants', 'allPegawai', 'isAssigned'));
     }
 
     public function submitDaftarHadir(Request $request)

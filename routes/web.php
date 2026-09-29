@@ -72,6 +72,8 @@ Route::post('/setuju_rapat', [LihatKegiatanController::class, 'setuju_rapat']);
 
 Route::get('/', [LoginController::class, 'login'])->name('login');
 Route::post('/actionlogin', [LoginController::class, 'actionlogin'])->name('/actionlogin');
+Route::get('actionlogout', [LoginController::class, 'actionlogout'])->name('actionlogout');
+Route::get('/scan-qr/{id}', [KegiatanController::class, 'scanQr'])->where('id','(.*)')->name('rapat.scanQr');
 
 Route::get('/color6/{id}/edit6/',  [BMNController::class, 'update6'])->name('color.update6');
 Route::post('/color6/{id}/',  [BMNController::class, 'edit6'])->name('color.edit6');
@@ -95,7 +97,6 @@ Route::post('/notifications/mark-all-read', [NotificationController::class, 'mar
 Route::get('kegiatan', [KegiatanController::class, 'index'])->name('kegiatan');
 Route::get('/penugasan', [KegiatanController::class, 'index_penugasan'])->name('penugasan');
 Route::get('autocomplete', [KegiatanController::class, 'search'])->name('autocomplete');
-Route::get('actionlogout', [LoginController::class, 'actionlogout'])->name('actionlogout');
 
 
 Route::get('password', [PresensiController::class, 'showPasswordForm'])->name('password');
