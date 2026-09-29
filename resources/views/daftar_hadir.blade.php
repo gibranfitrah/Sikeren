@@ -63,7 +63,7 @@
         $rapatTempat     = $task->tempat ?? 'Aula / Kantor BPS';
         $rapatStart      = $task->start_date ?? ($task->start ?? date('Y-m-d'));
         $rapatJamMulai   = $task->start_jam ?? '09:00';
-        $rapatJamSelesai = $task->end_jam ?? '12:00';
+        $rapatJamSelesai = $task->end_jam ?? null;
         $rapatPemimpin   = $task->pemimpin ?? '-';
         $rapatId         = $task->id ?? $id;
 
@@ -171,7 +171,7 @@
                         {{ \Carbon\Carbon::parse($rapatStart)->translatedFormat('d M Y') }}
                     </span>
                     <span class="text-slate-500 font-mono text-[10px]">
-                        {{ substr($rapatJamMulai, 0, 5) }} - {{ substr($rapatJamSelesai, 0, 5) }} WITA
+                        {{ substr($rapatJamMulai, 0, 5) }} WITA - {{ !empty($rapatJamSelesai) ? substr($rapatJamSelesai, 0, 5) . ' WITA' : 'Selesai' }}
                     </span>
                 </div>
 
@@ -196,7 +196,7 @@
             <div>
                 <h3 class="font-extrabold text-rose-900 text-sm">Presensi Rapat Telah Ditutup</h3>
                 <p class="text-xs text-rose-700 mt-1 leading-relaxed max-w-xs mx-auto">
-                    Jadwal pelaksanaan rapat ini telah berakhir pada {{ \Carbon\Carbon::parse($rapatEnd)->translatedFormat('d M Y') }} pukul {{ substr($rapatJamSelesai, 0, 5) }} WITA. Pengisian konfirmasi kehadiran tidak dapat dilakukan lagi.
+                    Jadwal pelaksanaan rapat ini telah berakhir pada {{ \Carbon\Carbon::parse($rapatEnd)->translatedFormat('d M Y') }}{{ !empty($rapatJamSelesai) ? ' pukul ' . substr($rapatJamSelesai, 0, 5) . ' WITA' : '' }}. Pengisian konfirmasi kehadiran tidak dapat dilakukan lagi.
                 </p>
             </div>
         </div>

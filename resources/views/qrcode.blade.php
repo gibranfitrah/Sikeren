@@ -41,7 +41,7 @@
                 {{ $task->text ?? ($task->agenda ?? 'Rapat Koordinasi BPS') }}
             </h1>
             <p class="text-sm text-slate-400 mt-2">
-                {{ \Carbon\Carbon::parse($task->start_date ?? date('Y-m-d'))->translatedFormat('l, d F Y') }} • {{ substr($task->start_jam ?? '09:00', 0, 5) }} - {{ substr($task->end_jam ?? '12:00', 0, 5) }} WITA
+                {{ \Carbon\Carbon::parse($task->start_date ?? date('Y-m-d'))->translatedFormat('l, d F Y') }} • {{ substr($task->start_jam ?? '08:30', 0, 5) }} WITA - {{ !empty($task->end_jam) ? substr($task->end_jam, 0, 5) . ' WITA' : 'Selesai' }}
             </p>
         </div>
 

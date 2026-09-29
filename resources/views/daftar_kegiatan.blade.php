@@ -601,7 +601,7 @@
                                             <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             </svg>
-                                            <span>{{ substr($post->start_jam, 0, 5) }} - {{ substr($post->end_jam, 0, 5) }} WITA</span>
+                                            <span>{{ substr($post->start_jam, 0, 5) }} - {{ !empty($post->end_jam) ? substr($post->end_jam, 0, 5) . ' WITA' : 'Selesai' }}</span>
                                         </span>
 
                                         <span class="meta-chip" title="{{ $post->tempat }}">

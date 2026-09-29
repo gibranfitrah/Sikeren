@@ -64,7 +64,7 @@
                             {{ $task->start_date ? \Carbon\Carbon::parse($task->start_date)->translatedFormat('d M Y') : date('d M Y') }}
                         </span>
                         <span class="text-[11px] text-blue-200 block">
-                            {{ substr($task->start_jam ?? '09:00', 0, 5) }} WITA
+                            {{ substr($task->start_jam ?? '08:30', 0, 5) }} WITA - {{ !empty($task->end_jam) ? substr($task->end_jam, 0, 5) . ' WITA' : 'Selesai' }}
                         </span>
                     </div>
                     <div>

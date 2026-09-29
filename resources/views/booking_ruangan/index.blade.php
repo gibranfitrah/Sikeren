@@ -274,7 +274,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                     <p class="text-xs text-gray-600 mt-1">
                         Jadwal Rapat:
                         <strong>{{ \Carbon\Carbon::parse($selectedRapat->start_date)->translatedFormat('l, d F Y') }}</strong>
-                        ({{ $selectedRapat->start_jam ?? '09:00' }} - {{ $selectedRapat->end_jam ?? '11:00' }}) •
+                        ({{ substr($selectedRapat->start_jam ?? '08:30', 0, 5) }} - {{ !empty($selectedRapat->end_jam) ? substr($selectedRapat->end_jam, 0, 5) : 'Selesai' }}) •
                         Penyelenggara: {{ $selectedRapat->penanggung_jawab ?? $selectedRapat->pemimpin }}
                     </p>
                 </div>

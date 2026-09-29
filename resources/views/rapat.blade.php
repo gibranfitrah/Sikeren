@@ -212,8 +212,8 @@
                     </div>
                 </div>
 
-                {{-- Waktu Rapat (Tanggal Tunggal & Jam) --}}
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {{-- Waktu Rapat (Tanggal Tunggal & Jam Mulai) --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label for="start_date" class="block text-xs font-bold text-gray-700 mb-1">
                             Tanggal Pelaksanaan Rapat <span class="text-red-500">*</span>
@@ -224,13 +224,13 @@
                         <label for="start_jam" class="block text-xs font-bold text-gray-700 mb-1">
                             Jam Mulai <span class="text-red-500">*</span>
                         </label>
-                        <input type="time" id="start_jam" name="start_jam" value="{{ old('start_jam', '09:00') }}" required class="w-full text-xs border-gray-300 rounded-lg p-2.5 bg-white text-gray-800 shadow-xs focus:ring-blue-500 focus:border-blue-500 border">
-                    </div>
-                    <div>
-                        <label for="end_jam" class="block text-xs font-bold text-gray-700 mb-1">
-                            Jam Selesai <span class="text-red-500">*</span>
-                        </label>
-                        <input type="time" id="end_jam" name="end_jam" value="{{ old('end_jam', '12:00') }}" required class="w-full text-xs border-gray-300 rounded-lg p-2.5 bg-white text-gray-800 shadow-xs focus:ring-blue-500 focus:border-blue-500 border">
+                        <div class="flex items-center gap-2">
+                            <input type="time" id="start_jam" name="start_jam" value="{{ old('start_jam', '08:30') }}" required class="w-full text-xs border-gray-300 rounded-lg p-2.5 bg-white text-gray-800 shadow-xs focus:ring-blue-500 focus:border-blue-500 border">
+                            <span class="inline-flex items-center px-3 py-2.5 rounded-lg bg-gray-100 text-gray-600 font-semibold text-xs border border-gray-200 whitespace-nowrap shadow-xs">
+                                s.d. Selesai
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-gray-400 mt-1">Rapat dijadwalkan dari jam mulai hingga selesai.</p>
                     </div>
                 </div>
 

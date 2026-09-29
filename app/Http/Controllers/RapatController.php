@@ -125,7 +125,7 @@ class RapatController extends Controller
             'agenda'          => 'required|string',
             'start_date'      => 'required|date',
             'start_jam'       => 'required',
-            'end_jam'         => 'required',
+            'end_jam'         => 'nullable',
             'tipe_tempat'     => 'required|in:online,offline,hybrid',
             'pemimpin'        => 'required|string',
             'notulis'         => 'required|string',
@@ -138,7 +138,6 @@ class RapatController extends Controller
             'agenda.required'      => 'Agenda pembahasan rapat wajib diisi.',
             'start_date.required'  => 'Tanggal pelaksanaan rapat wajib diisi.',
             'start_jam.required'   => 'Jam mulai rapat wajib diisi.',
-            'end_jam.required'     => 'Jam akhir rapat wajib diisi.',
             'pemimpin.required'    => 'Silakan pilih Pemimpin Rapat.',
             'notulis.required'     => 'Silakan pilih Notulis Rapat.',
             'owners.required'      => 'Silakan pilih/centang minimal satu peserta rapat.',
@@ -196,7 +195,7 @@ class RapatController extends Controller
         $task->start_date        = $startDate;
         $task->date_akhir        = $dateAkhir;
         $task->start_jam         = $request->start_jam;
-        $task->end_jam           = $request->end_jam;
+        $task->end_jam           = $request->filled('end_jam') ? $request->end_jam : null;
         $task->duration          = $durasi;
         $task->owners            = $pegawaiStr;
         $task->jenis             = 'Rapat';

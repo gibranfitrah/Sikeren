@@ -12,7 +12,7 @@
     $rapatStart = $firstItem->start_date ?? ($task->start_date ?? date('Y-m-d'));
     $rapatEnd = $firstItem->date_akhir ?? ($task->date_akhir ?? $rapatStart);
     $rapatJamMulai = $firstItem->start_jam ?? ($task->start_jam ?? '09:00');
-    $rapatJamSelesai = $firstItem->end_jam ?? ($task->end_jam ?? '12:00');
+    $rapatJamSelesai = $firstItem->end_jam ?? ($task->end_jam ?? null);
     $rapatPemimpin = $firstItem->pemimpin ?? ($task->pemimpin ?? '-');
     $rapatNotulis = $firstItem->notulis ?? ($task->notulis ?? '-');
     $rapatDokumentasi = $firstItem->tim_dokumentasi ?? ($task->tim_dokumentasi ?? '-');
@@ -422,7 +422,7 @@
                     <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-200/80 text-rose-800 border border-rose-300">Akses Pengeditan Dikunci</span>
                 </div>
                 <p class="text-rose-700 mt-1 leading-relaxed">
-                    Jadwal pelaksanaan rapat ini berakhir pada <strong>{{ \Carbon\Carbon::parse($rapatEnd)->translatedFormat('d F Y') }} pukul {{ substr($rapatJamSelesai, 0, 5) }} WITA</strong>. Karena batas waktu telah terlewati sebelum seluruh tahapan tuntas, status rapat menjadi <strong>Melewati Batas Waktu / Batal</strong>.
+                    Jadwal pelaksanaan rapat ini berakhir pada <strong>{{ \Carbon\Carbon::parse($rapatEnd)->translatedFormat('d F Y') }}{{ !empty($rapatJamSelesai) ? ' pukul ' . substr($rapatJamSelesai, 0, 5) . ' WITA' : ' (Hingga Selesai)' }}</strong>. Karena batas waktu telah terlewati sebelum seluruh tahapan tuntas, status rapat menjadi <strong>Melewati Batas Waktu / Batal</strong>.
                 </p>
                 <p class="text-[11px] text-rose-600 mt-1.5 font-medium flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
@@ -526,7 +526,7 @@
                                 </div>
                                 <p class="font-bold text-rose-900 text-sm">Presensi Telah Ditutup</p>
                                 <p class="text-xs text-rose-700 leading-relaxed max-w-sm mx-auto">
-                                    Waktu pelaksanaan rapat telah berakhir pada pukul {{ substr($rapatJamSelesai, 0, 5) }} WITA. Presensi kehadiran peserta telah ditutup dan tidak dapat lagi dilakukan.
+                                    Waktu pelaksanaan rapat telah berakhir{{ !empty($rapatJamSelesai) ? ' pada pukul ' . substr($rapatJamSelesai, 0, 5) . ' WITA' : '' }}. Presensi kehadiran peserta telah ditutup dan tidak dapat lagi dilakukan.
                                 </p>
                             </div>
                         @elseif($rapatSetuju == 1)
@@ -793,7 +793,7 @@
                         {{ \Carbon\Carbon::parse($rapatStart)->translatedFormat('d F Y') }}
                     </p>
                     <p class="text-gray-500 font-mono text-[11px]">
-                        {{ substr($rapatJamMulai, 0, 5) }} - {{ substr($rapatJamSelesai, 0, 5) }} WITA
+                        {{ substr($rapatJamMulai, 0, 5) }} WITA - {{ !empty($rapatJamSelesai) ? substr($rapatJamSelesai, 0, 5) . ' WITA' : 'Selesai' }}
                     </p>
                 </div>
                 <div>
