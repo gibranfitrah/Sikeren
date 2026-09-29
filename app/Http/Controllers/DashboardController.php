@@ -128,18 +128,27 @@ class DashboardController extends Controller
             $eDate = $task->date_akhir ? Carbon::parse($task->date_akhir)->addDay()->format('Y-m-d') : $sDate;
             $isRapat = ($task->jenis === 'Rapat');
 
+            $diffDays = 1;
+            if ($task->start_date && $task->date_akhir) {
+                try {
+                    $diffDays = Carbon::parse($task->start_date)->diffInDays(Carbon::parse($task->date_akhir)) + 1;
+                } catch (\Exception $e) {}
+            }
+            $isTahunan = (!$isRapat && $diffDays > 35);
+
             $calendarEvents[] = [
                 'id'    => 'task_' . $task->id,
                 'title' => ($isRapat ? '[Rapat] ' : '[Kegiatan] ') . $task->text,
                 'start' => $sDate . ($task->start_jam ? 'T' . $task->start_jam : ''),
                 'end'   => $eDate . ($task->end_jam ? 'T' . $task->end_jam : ''),
                 'url'   => url('/daftarkegiatan/' . $task->id),
-                'backgroundColor' => $isRapat ? '#6366f1' : '#0ea5e9',
-                'borderColor'     => $isRapat ? '#4f46e5' : '#0284c7',
+                'backgroundColor' => $isRapat ? '#6366f1' : ($isTahunan ? '#38bdf8' : '#0284c7'),
+                'borderColor'     => $isRapat ? '#4f46e5' : ($isTahunan ? '#0284c7' : '#0369a1'),
                 'textColor'       => '#ffffff',
                 'extendedProps'   => [
                     'raw_title'       => $task->text,
                     'jenis'           => $isRapat ? 'Rapat' : 'Kegiatan',
+                    'is_tahunan'      => $isTahunan,
                     'agenda'          => $task->agenda ?? $task->perihal ?? $task->text,
                     'start_formatted' => $task->start_date ? Carbon::parse($task->start_date)->translatedFormat('d M Y') : '-',
                     'end_formatted'   => $task->date_akhir ? Carbon::parse($task->date_akhir)->translatedFormat('d M Y') : '-',
@@ -150,6 +159,184 @@ class DashboardController extends Controller
                     'status'          => $task->status ?? 'Terjadwal'
                 ]
             ];
+        }
+
+        // Generate Structured Data for Interactive Gantt Chart Navigation
+        $ganttDays = [];
+        $startDate = Carbon::today()->subDays(7);
+        $endDate = Carbon::today()->addDays(21);
+        $todayStr = Carbon::today()->format('Y-m-d');
+        $todayGanttIndex = 7;
+
+        $curr = $startDate->copy();
+        $gIdx = 0;
+        while ($curr->lte($endDate)) {
+            $dayStr = $curr->format('Y-m-d');
+            $isToday = ($dayStr === $todayStr);
+            if ($isToday) {
+                $todayGanttIndex = $gIdx;
+            }
+            $isWeekend = $curr->isWeekend();
+
+            // Find all tasks touching this day
+            $tasksOnDay = $allTasks->filter(function($t) use ($dayStr) {
+                $tStart = $t->start_date ?: '';
+                $tEnd = $t->date_akhir ?: $tStart;
+                return ($dayStr >= $tStart && $dayStr <= $tEnd);
+            });
+
+            $rapatList = [];
+            $kegiatanList = [];
+            $proyekTahunanList = [];
+
+            foreach ($tasksOnDay as $t) {
+                $isRapat = ($t->jenis === 'Rapat');
+                $diffDays = 1;
+                if ($t->start_date && $t->date_akhir) {
+                    try {
+                        $diffDays = Carbon::parse($t->start_date)->diffInDays(Carbon::parse($t->date_akhir)) + 1;
+                    } catch (\Exception $e) {}
+                }
+                $isTahunan = (!$isRapat && $diffDays > 35);
+
+                $item = [
+                    'id'        => $t->id,
+                    'text'      => $t->text,
+                    'jenis'     => $t->jenis,
+                    'is_rapat'  => $isRapat,
+                    'start_jam' => $t->start_jam ? substr($t->start_jam, 0, 5) : '08:30',
+                    'end_jam'   => $t->end_jam ? substr($t->end_jam, 0, 5) : 'Selesai',
+                    'tim'       => $t->tim ?? '-',
+                    'pj'        => $t->penanggung_jawab ?? $t->pemimpin ?? '-',
+                    'tempat'    => $t->tempat ?? '-',
+                    'status'    => $t->status ?? 'Terjadwal',
+                    'url'       => url('/daftarkegiatan/' . $t->id)
+                ];
+
+                if ($isRapat) {
+                    $rapatList[] = $item;
+                } elseif ($isTahunan) {
+                    $proyekTahunanList[] = $item;
+                } else {
+                    $kegiatanList[] = $item;
+                }
+            }
+
+            // Agendas that take specific daily time
+            $activeAgendas = array_merge($rapatList, $kegiatanList);
+            usort($activeAgendas, function($a, $b) {
+                return strcmp($a['start_jam'], $b['start_jam']);
+            });
+
+            // Calculate busy intervals in working hours (07:30 to 16:30 -> 450 to 990 min)
+            $occupied = [];
+            foreach ($activeAgendas as $ag) {
+                $sM = 450;
+                if (!empty($ag['start_jam'])) {
+                    $parts = explode(':', $ag['start_jam']);
+                    $sM = max(450, ((int)$parts[0] * 60) + (int)($parts[1] ?? 0));
+                }
+                $eM = min(990, $sM + 120);
+                if (!empty($ag['end_jam']) && $ag['end_jam'] !== 'Selesai') {
+                    $parts = explode(':', $ag['end_jam']);
+                    $eM = min(990, max($sM + 30, ((int)$parts[0] * 60) + (int)($parts[1] ?? 0)));
+                }
+                $occupied[] = ['start' => $sM, 'end' => $eM];
+            }
+
+            usort($occupied, fn($a, $b) => $a['start'] <=> $b['start']);
+            $merged = [];
+            foreach ($occupied as $occ) {
+                if (empty($merged)) {
+                    $merged[] = $occ;
+                } else {
+                    $last = &$merged[count($merged) - 1];
+                    if ($occ['start'] <= $last['end']) {
+                        $last['end'] = max($last['end'], $occ['end']);
+                    } else {
+                        $merged[] = $occ;
+                    }
+                }
+            }
+
+            $freeSlots = [];
+            $pointer = 450;
+            foreach ($merged as $m) {
+                if ($m['start'] > $pointer) {
+                    $freeSlots[] = [
+                        'start'     => sprintf('%02d:%02d', floor($pointer / 60), $pointer % 60),
+                        'end'       => sprintf('%02d:%02d', floor($m['start'] / 60), $m['start'] % 60),
+                        'left_pct'  => round((($pointer - 450) / 540) * 100, 1),
+                        'width_pct' => round((($m['start'] - $pointer) / 540) * 100, 1)
+                    ];
+                }
+                $pointer = max($pointer, $m['end']);
+            }
+            if ($pointer < 990) {
+                $freeSlots[] = [
+                    'start'     => sprintf('%02d:%02d', floor($pointer / 60), $pointer % 60),
+                    'end'       => '16:30',
+                    'left_pct'  => round((($pointer - 450) / 540) * 100, 1),
+                    'width_pct' => round(((990 - $pointer) / 540) * 100, 1)
+                ];
+            }
+
+            $busyMin = array_sum(array_map(fn($m) => $m['end'] - $m['start'], $merged));
+            $freeMin = max(0, 540 - $busyMin);
+
+            // Timeline Blocks
+            $timelineBlocks = [];
+            foreach ($freeSlots as $fs) {
+                $timelineBlocks[] = [
+                    'type'      => 'free',
+                    'title'     => 'Waktu Lowong',
+                    'time'      => $fs['start'] . ' - ' . $fs['end'],
+                    'left_pct'  => $fs['left_pct'],
+                    'width_pct' => $fs['width_pct']
+                ];
+            }
+            foreach ($activeAgendas as $ag) {
+                $sM = 450;
+                if (!empty($ag['start_jam'])) {
+                    $parts = explode(':', $ag['start_jam']);
+                    $sM = max(450, ((int)$parts[0] * 60) + (int)($parts[1] ?? 0));
+                }
+                $eM = min(990, $sM + 120);
+                if (!empty($ag['end_jam']) && $ag['end_jam'] !== 'Selesai') {
+                    $parts = explode(':', $ag['end_jam']);
+                    $eM = min(990, max($sM + 30, ((int)$parts[0] * 60) + (int)($parts[1] ?? 0)));
+                }
+                $timelineBlocks[] = [
+                    'type'      => $ag['is_rapat'] ? 'rapat' : 'kegiatan',
+                    'title'     => $ag['text'],
+                    'time'      => $ag['start_jam'] . ' - ' . $ag['end_jam'],
+                    'left_pct'  => round((($sM - 450) / 540) * 100, 1),
+                    'width_pct' => max(4, round((($eM - $sM) / 540) * 100, 1))
+                ];
+            }
+
+            $ganttDays[] = [
+                'index'                => $gIdx,
+                'date'                 => $dayStr,
+                'day_name'             => $curr->translatedFormat('l'),
+                'day_num'              => $curr->format('d'),
+                'month_name'           => $curr->translatedFormat('M'),
+                'full_date'            => $curr->translatedFormat('l, d F Y'),
+                'is_today'             => $isToday,
+                'is_weekend'           => $isWeekend,
+                'active_agendas'       => $activeAgendas,
+                'total_agendas'        => count($activeAgendas),
+                'proyek_tahunan'       => $proyekTahunanList,
+                'total_proyek_tahunan' => count($proyekTahunanList),
+                'free_slots'           => $freeSlots,
+                'timeline_blocks'      => $timelineBlocks,
+                'total_free_hours'     => round($freeMin / 60, 1),
+                'total_busy_hours'     => round($busyMin / 60, 1),
+                'url_buat_rapat'       => url('/rapat?date=' . $dayStr)
+            ];
+
+            $curr->addDay();
+            $gIdx++;
         }
 
         $notifications = Auth::user()->notifications()
@@ -235,7 +422,9 @@ class DashboardController extends Controller
             'calendarEvents',
             'pegawais',
             'dashboardVenuesStatus',
-            'dashboardZoomStatus'
+            'dashboardZoomStatus',
+            'ganttDays',
+            'todayGanttIndex'
         ));
     }   
 }

@@ -700,7 +700,75 @@
         </div>
 
         {{-- SISI KANAN: KALENDER AGENDA & GANTT CHART WAKTU LOWONG --}}
-        <div class="xl:col-span-7 calendar-section-card space-y-4" x-data="{ dashboardTab: 'gantt' }">
+        <div class="xl:col-span-7 calendar-section-card space-y-4" 
+             x-data="{ 
+                 dashboardTab: 'gantt',
+                 calFilter: 'spesifik',
+                 ganttDays: {{ json_encode($ganttDays) }},
+                 activeDayIndex: {{ $todayGanttIndex }},
+                 agendaPage: 0,
+                 itemsPerPage: 4,
+                 showProyekTahunan: false,
+
+                 get currentDay() {
+                     return (this.ganttDays && this.ganttDays.length > 0) 
+                         ? (this.ganttDays[this.activeDayIndex] || this.ganttDays[0]) 
+                         : null;
+                 },
+                 get currentAgendas() {
+                     return this.currentDay ? (this.currentDay.active_agendas || []) : [];
+                 },
+                 get paginatedAgendas() {
+                     var start = this.agendaPage * this.itemsPerPage;
+                     return this.currentAgendas.slice(start, start + this.itemsPerPage);
+                 },
+                 get totalPages() {
+                     return Math.ceil(this.currentAgendas.length / this.itemsPerPage) || 1;
+                 },
+                 nextDay() {
+                     if (this.activeDayIndex < this.ganttDays.length - 1) {
+                         this.activeDayIndex++;
+                         this.agendaPage = 0;
+                         this.scrollActivePill();
+                     }
+                 },
+                 prevDay() {
+                     if (this.activeDayIndex > 0) {
+                         this.activeDayIndex--;
+                         this.agendaPage = 0;
+                         this.scrollActivePill();
+                     }
+                 },
+                 goToToday() {
+                     this.activeDayIndex = {{ $todayGanttIndex }};
+                     this.agendaPage = 0;
+                     this.scrollActivePill();
+                 },
+                 selectDay(idx) {
+                     this.activeDayIndex = idx;
+                     this.agendaPage = 0;
+                     this.scrollActivePill();
+                 },
+                 scrollActivePill() {
+                     $nextTick(() => {
+                         var el = document.getElementById('ganttDayPill_' + this.activeDayIndex);
+                         if (el) el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                     });
+                 },
+                 nextAgendaPage() {
+                     if (this.agendaPage < this.totalPages - 1) this.agendaPage++;
+                 },
+                 prevAgendaPage() {
+                     if (this.agendaPage > 0) this.agendaPage--;
+                 },
+                 setCalFilter(f) {
+                     this.calFilter = f;
+                     if (window.setCalendarFilter) {
+                         window.setCalendarFilter(f);
+                     }
+                 }
+             }">
+
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold">
@@ -733,12 +801,12 @@
                 </div>
             </div>
 
-            {{-- 1. TAB GANTT CHART: VISUALISASI WAKTU LOWONG & AGENDA HARIAN --}}
-            <div x-show="dashboardTab === 'gantt'" class="space-y-4">
-                {{-- Legend & Summary Header --}}
-                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+            {{-- 1. TAB GANTT CHART: NAVIGASI HARI & TIMELINE WAKTU LOWONG --}}
+            <div x-show="dashboardTab === 'gantt'" class="space-y-3.5">
+                {{-- Legend & Info Jam Kerja --}}
+                <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-wrap items-center justify-between gap-2.5 text-xs">
                     <div class="flex items-center gap-3">
-                        <span class="font-bold text-slate-700">Legenda Status:</span>
+                        <span class="font-bold text-slate-700">Legenda:</span>
                         <div class="flex items-center gap-1.5">
                             <span class="w-3 h-3 rounded bg-emerald-500 inline-block shadow-2xs"></span>
                             <span class="text-emerald-800 font-bold">Waktu Lowong (Tersedia)</span>
@@ -752,138 +820,292 @@
                             <span class="text-sky-900 font-semibold">Kegiatan / Proyek</span>
                         </div>
                     </div>
-                    <span class="text-[11px] text-slate-500 font-mono">Jam Kerja BPS: 07:30 - 16:30 WITA</span>
+                    <span class="text-[11px] text-slate-500 font-mono font-medium">Jam Kerja BPS: 07:30 - 16:30 WITA</span>
                 </div>
 
-                @php
-                    $startOfWeekDate = \Carbon\Carbon::now()->startOfWeek();
-                    $daysOfWeek = [];
-                    for ($d = 0; $d < 5; $d++) {
-                        $daysOfWeek[] = $startOfWeekDate->copy()->addDays($d);
-                    }
-                @endphp
+                {{-- NAVIGASI HARI: Previous Day, Active Date, Next Day ("bisa di-next-next-kan") --}}
+                <div class="flex items-center justify-between gap-2 p-2.5 bg-white rounded-2xl border border-slate-200 shadow-xs">
+                    <!-- Tombol Hari Sebelumnya -->
+                    <button type="button" 
+                            @click="prevDay()" 
+                            :disabled="activeDayIndex <= 0"
+                            :class="activeDayIndex <= 0 ? 'opacity-30 cursor-not-allowed text-slate-400' : 'hover:bg-slate-100 text-slate-700 active:scale-95'"
+                            class="px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold transition flex items-center gap-1.5 shrink-0">
+                        <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                        <span class="hidden sm:inline">Hari Sebelumnya</span>
+                        <span class="sm:hidden">Prev</span>
+                    </button>
 
-                {{-- Timeline Grid Hari Kerja Minggu Ini (Senin s.d. Jumat) --}}
-                <div class="space-y-3 max-h-[600px] overflow-y-auto pr-1">
-                    @foreach($daysOfWeek as $day)
-                    @php
-                        $dayStr = $day->format('Y-m-d');
-                        $isToday = $day->isToday();
-                        
-                        // Cari event/task pada tanggal ini
-                        $tasksOnDay = $allTasks->filter(function($t) use ($dayStr) {
-                            $tStart = $t->start_date ?: '';
-                            $tEnd = $t->date_akhir ?: $tStart;
-                            return ($dayStr >= $tStart && $dayStr <= $tEnd);
-                        })->sortBy('start_jam');
-
-                        $totalAgenda = $tasksOnDay->count();
-                        $hasMeeting = $tasksOnDay->contains('jenis', 'Rapat');
-                    @endphp
-                    <div class="rounded-2xl border {{ $isToday ? 'border-blue-400 bg-blue-50/20 shadow-xs' : 'border-slate-200 bg-white' }} p-4 space-y-3 transition">
-                        {{-- Day Header --}}
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2.5">
-                                <div class="px-2.5 py-1 rounded-xl {{ $isToday ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700' }} text-xs font-black">
-                                    {{ $day->translatedFormat('l') }}
-                                </div>
-                                <span class="font-bold text-slate-800 text-xs">
-                                    {{ $day->translatedFormat('d F Y') }}
-                                </span>
-                                @if($isToday)
+                    <!-- Judul Hari Terpilih & Indikator -->
+                    <div class="flex items-center gap-2 text-center" x-show="currentDay">
+                        <div>
+                            <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                                <span class="text-sm sm:text-base font-extrabold text-slate-900" x-text="currentDay.full_date"></span>
+                                <template x-if="currentDay.is_today">
                                     <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-extrabold text-[10px] uppercase">
                                         Hari Ini
                                     </span>
-                                @endif
+                                </template>
+                                <template x-if="currentDay.is_weekend">
+                                    <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold text-[10px]">
+                                        Akhir Pekan
+                                    </span>
+                                </template>
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-0.5">
+                                <span class="font-bold text-slate-700" x-text="currentDay.total_agendas + ' Agenda'"></span>
+                                <span> • Sisa Lowong: </span>
+                                <span class="font-bold text-emerald-600" x-text="currentDay.total_free_hours + ' Jam'"></span>
+                            </p>
+                        </div>
+
+                        <template x-if="!currentDay.is_today">
+                            <button type="button" 
+                                    @click="goToToday()" 
+                                    class="ml-1 px-2 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[10px] border border-blue-200 transition shrink-0">
+                                Hari Ini
+                            </button>
+                        </template>
+                    </div>
+
+                    <!-- Tombol Hari Berikutnya -->
+                    <button type="button" 
+                            @click="nextDay()" 
+                            :disabled="activeDayIndex >= ganttDays.length - 1"
+                            :class="activeDayIndex >= ganttDays.length - 1 ? 'opacity-30 cursor-not-allowed text-slate-400' : 'hover:bg-slate-100 text-slate-700 active:scale-95'"
+                            class="px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold transition flex items-center gap-1.5 shrink-0">
+                        <span class="hidden sm:inline">Hari Berikutnya</span>
+                        <span class="sm:hidden">Next</span>
+                        <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                </div>
+
+                {{-- Horizontal Day Selector Strip (Daftar Hari Geser Horizontal) --}}
+                <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+                    <template x-for="(day, idx) in ganttDays" :key="day.date">
+                        <button type="button" 
+                                :id="'ganttDayPill_' + idx"
+                                @click="selectDay(idx)"
+                                :class="activeDayIndex === idx 
+                                    ? 'bg-blue-600 text-white shadow-xs font-black ring-2 ring-blue-400/40' 
+                                    : (day.is_today ? 'bg-blue-50 text-blue-800 border-blue-300 font-bold' : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200')"
+                                class="px-2.5 py-1.5 rounded-xl border text-xs shrink-0 transition flex flex-col items-center min-w-[62px]">
+                            <span class="text-[9px] uppercase font-bold opacity-80" x-text="day.day_name.substr(0, 3)"></span>
+                            <span class="text-sm font-extrabold leading-tight" x-text="day.day_num"></span>
+                            <div class="flex items-center gap-0.5 mt-0.5">
+                                <template x-if="day.total_agendas > 0">
+                                    <span class="w-1.5 h-1.5 rounded-full" :class="activeDayIndex === idx ? 'bg-white' : 'bg-blue-500'"></span>
+                                </template>
+                                <template x-if="day.total_agendas === 0 && !day.is_weekend">
+                                    <span class="w-1.5 h-1.5 rounded-full" :class="activeDayIndex === idx ? 'bg-emerald-200' : 'bg-emerald-500'"></span>
+                                </template>
+                            </div>
+                        </button>
+                    </template>
+                </div>
+
+                {{-- TAMPILAN GANTT CHART HARI TERPILIH (TIDAK MEMANJANG KE BAWAH) --}}
+                <template x-if="currentDay">
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4 space-y-4 shadow-2xs">
+                        
+                        {{-- 1. Visual Track Gantt Horizontal (07:30 - 16:30) --}}
+                        <div class="space-y-1.5">
+                            <div class="flex items-center justify-between text-[11px] font-bold text-slate-600">
+                                <span>Visualisasi Waktu Kerja BPS (07:30 - 16:30 WITA)</span>
+                                <span class="text-emerald-700 font-extrabold" x-text="'Lowong: ' + currentDay.total_free_hours + ' Jam'"></span>
                             </div>
 
-                            <div class="flex items-center gap-2">
-                                @if($totalAgenda === 0)
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                        <span>Full Lowong (Bebas Agenda)</span>
-                                    </span>
-                                @else
-                                    <span class="text-[11px] text-slate-500">
-                                        {{ $totalAgenda }} Agenda Terjadwal
-                                    </span>
-                                @endif
+                            {{-- Gantt Timeline Bar --}}
+                            <div class="relative h-10 w-full bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-stretch p-0.5 shadow-inner">
+                                <template x-for="(block, bIdx) in currentDay.timeline_blocks" :key="bIdx">
+                                    <div :style="'left: ' + block.left_pct + '%; width: ' + block.width_pct + '%;'"
+                                         :title="block.title + ' (' + block.time + ' WITA)'"
+                                         :class="block.type === 'free' 
+                                            ? 'bg-emerald-500/80 hover:bg-emerald-600 text-white' 
+                                            : (block.type === 'rapat' ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-sky-500 hover:bg-sky-600 text-white')"
+                                         class="absolute top-0.5 bottom-0.5 rounded-lg flex items-center justify-center px-1 text-[9px] font-bold overflow-hidden transition cursor-pointer select-none">
+                                        <span class="truncate" x-text="block.width_pct > 10 ? block.title : (block.width_pct > 5 ? block.time : '')"></span>
+                                    </div>
+                                </template>
+                            </div>
+
+                            {{-- Time Ticks --}}
+                            <div class="flex justify-between text-[9px] font-mono text-slate-400 px-1 pt-0.5">
+                                <span>07:30</span>
+                                <span>09:00</span>
+                                <span>10:30</span>
+                                <span>12:00</span>
+                                <span>13:30</span>
+                                <span>15:00</span>
+                                <span>16:30</span>
                             </div>
                         </div>
 
-                        {{-- Gantt Timeline Bars --}}
-                        <div class="space-y-2">
-                            @if($totalAgenda === 0)
-                                {{-- Free Slot Banner --}}
-                                <div class="p-3 rounded-xl bg-emerald-50/70 border border-dashed border-emerald-300 text-emerald-800 flex items-center justify-between gap-3 text-xs">
-                                    <div class="flex items-center gap-2">
-                                        <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                        <span><strong>Waktu Lowong Penuh (07:30 - 16:30 WITA):</strong> Tidak ada jadwal kegiatan atau rapat. Waktu ini ideal untuk membuat agenda baru.</span>
+                        {{-- 2. Ketersediaan Waktu Lowong & Tombol Aksi --}}
+                        <template x-if="currentDay.total_agendas === 0">
+                            <div class="p-3 rounded-xl bg-emerald-50/80 border border-dashed border-emerald-300 text-emerald-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <div>
+                                        <p class="font-bold">Full Lowong (07:30 - 16:30 WITA)</p>
+                                        <p class="text-[11px] text-emerald-700">Tidak ada jadwal agenda pada hari ini. Anda dapat membuat rapat baru di waktu ini.</p>
                                     </div>
-                                    <a href="{{ url('/rapat?date=' . $dayStr) }}" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] shrink-0 transition shadow-2xs">
-                                        + Buat Rapat
-                                    </a>
                                 </div>
-                            @else
-                                {{-- Render Task Bars & Free Intervals --}}
-                                <div class="space-y-1.5">
-                                    @foreach($tasksOnDay as $item)
-                                    @php
-                                        $isRapat = ($item->jenis === 'Rapat');
-                                        $jamMulai = $item->start_jam ? substr($item->start_jam, 0, 5) : '08:30';
-                                        $jamSelesai = $item->end_jam ? substr($item->end_jam, 0, 5) : 'Selesai';
-                                    @endphp
-                                    <div class="p-2.5 rounded-xl border {{ $isRapat ? 'bg-indigo-50/80 border-indigo-200 text-indigo-950' : 'bg-sky-50/80 border-sky-200 text-sky-950' }} flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs hover:shadow-2xs transition">
+                                <a :href="currentDay.url_buat_rapat" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shrink-0 transition shadow-2xs">
+                                    + Buat Rapat Hari Ini
+                                </a>
+                            </div>
+                        </template>
+
+                        <template x-if="currentDay.total_agendas > 0 && currentDay.free_slots.length > 0">
+                            <div class="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 text-emerald-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                                    <div class="text-[11px]">
+                                        <span class="font-bold">Slot Waktu Lowong: </span>
+                                        <template x-for="(fs, fIdx) in currentDay.free_slots" :key="fIdx">
+                                            <span class="inline-block bg-white px-1.5 py-0.5 rounded border border-emerald-300 font-mono font-bold text-[10px] text-emerald-800 mr-1 mt-0.5">
+                                                <span x-text="fs.start + ' - ' + fs.end"></span>
+                                            </span>
+                                        </template>
+                                    </div>
+                                </div>
+                                <a :href="currentDay.url_buat_rapat" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shrink-0 transition">
+                                    + Jadwalkan di Jam Lowong
+                                </a>
+                            </div>
+                        </template>
+
+                        {{-- 3. Daftar Agenda Hari Terpilih (Kompak & Paginated agar tidak memanjang) --}}
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="font-bold text-slate-800">
+                                    Agenda Terjadwal (<span x-text="currentAgendas.length"></span>)
+                                </span>
+
+                                {{-- Pager tombol next-prev jika agenda lebih dari 4 --}}
+                                <template x-if="totalPages > 1">
+                                    <div class="flex items-center gap-1.5 text-[11px]">
+                                        <span class="text-slate-500 font-medium" x-text="'Hal ' + (agendaPage + 1) + ' dari ' + totalPages"></span>
+                                        <button type="button" 
+                                                @click="prevAgendaPage()" 
+                                                :disabled="agendaPage === 0"
+                                                :class="agendaPage === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-slate-100 text-slate-700'"
+                                                class="px-2 py-0.5 rounded border border-slate-200 font-bold transition">
+                                            &larr;
+                                        </button>
+                                        <button type="button" 
+                                                @click="nextAgendaPage()" 
+                                                :disabled="agendaPage >= totalPages - 1"
+                                                :class="agendaPage >= totalPages - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-slate-100 text-slate-700'"
+                                                class="px-2 py-0.5 rounded border border-slate-200 font-bold transition">
+                                            &rarr;
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <template x-if="currentAgendas.length === 0">
+                                <p class="text-xs text-slate-400 italic py-2 text-center">Tidak ada agenda spesifik pada tanggal ini.</p>
+                            </template>
+
+                            {{-- Render Kartu Agenda --}}
+                            <div class="space-y-2">
+                                <template x-for="item in paginatedAgendas" :key="item.id">
+                                    <div :class="item.is_rapat ? 'bg-indigo-50/80 border-indigo-200 text-indigo-950' : 'bg-sky-50/80 border-sky-200 text-sky-950'"
+                                         class="p-2.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs hover:shadow-2xs transition">
                                         <div class="flex items-center gap-2 min-w-0">
-                                            <span class="w-2.5 h-2.5 rounded-full {{ $isRapat ? 'bg-indigo-600' : 'bg-sky-500' }} shrink-0"></span>
-                                            <span class="font-extrabold truncate">{{ $item->text }}</span>
-                                            <span class="text-[10px] text-slate-400 font-semibold">• {{ $item->tim ?? '-' }}</span>
+                                            <span :class="item.is_rapat ? 'bg-indigo-600' : 'bg-sky-500'" class="w-2.5 h-2.5 rounded-full shrink-0"></span>
+                                            <span class="font-extrabold truncate" x-text="item.text"></span>
+                                            <span class="text-[10px] text-slate-400 font-semibold" x-text="'• ' + (item.tim || '-')"></span>
                                         </div>
                                         <div class="flex items-center gap-3 shrink-0">
-                                            <span class="font-mono font-bold text-[11px] {{ $isRapat ? 'text-indigo-700' : 'text-sky-700' }} bg-white/80 px-2 py-0.5 rounded-md border border-slate-200">
-                                                {{ $jamMulai }} - {{ $jamSelesai }} WITA
+                                            <span :class="item.is_rapat ? 'text-indigo-700' : 'text-sky-700'" 
+                                                  class="font-mono font-bold text-[11px] bg-white/80 px-2 py-0.5 rounded-md border border-slate-200">
+                                                <span x-text="item.start_jam + ' - ' + item.end_jam + ' WITA'"></span>
                                             </span>
-                                            <a href="{{ url('/daftarkegiatan/' . $item->id) }}" class="text-[11px] font-bold text-blue-600 hover:text-blue-800 underline">
+                                            <a :href="item.url" class="text-[11px] font-bold text-blue-600 hover:text-blue-800 underline">
                                                 Detail &rarr;
                                             </a>
                                         </div>
                                     </div>
-                                    @endforeach
-
-                                    {{-- Free time indicator for remaining hours --}}
-                                    <div class="p-2 rounded-xl bg-emerald-50/50 border border-emerald-200/60 text-emerald-800 flex items-center justify-between text-[11px]">
-                                        <div class="flex items-center gap-1.5">
-                                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                            <span>Sisa slot di luar jam agenda di atas merupakan <strong>Waktu Lowong</strong> yang dapat digunakan.</span>
-                                        </div>
-                                        <a href="{{ url('/rapat?date=' . $dayStr) }}" class="font-bold text-emerald-700 hover:text-emerald-900 underline text-[10px]">
-                                            + Jadwalkan di Waktu Lowong
-                                        </a>
-                                    </div>
-                                </div>
-                            @endif
+                                </template>
+                            </div>
                         </div>
+
+                        {{-- 4. Collapsible Proyek Tahunan (Sedang Berjalan Tahun 2026) --}}
+                        <template x-if="currentDay.total_proyek_tahunan > 0">
+                            <div class="pt-2 border-t border-slate-100">
+                                <button type="button" 
+                                        @click="showProyekTahunan = !showProyekTahunan" 
+                                        class="text-[11px] font-bold text-slate-500 hover:text-slate-800 flex items-center justify-between w-full p-1.5 rounded-lg hover:bg-slate-50 transition">
+                                    <span class="flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                                        <span>Proyek Tim Berjalan Tahun 2026 (<span x-text="currentDay.total_proyek_tahunan"></span> Proyek)</span>
+                                    </span>
+                                    <span class="text-[10px] text-blue-600 underline font-semibold" x-text="showProyekTahunan ? 'Tutup Proyek ▲' : 'Lihat Proyek ▼'"></span>
+                                </button>
+
+                                <div x-show="showProyekTahunan" class="mt-2 space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                                    <template x-for="p in currentDay.proyek_tahunan" :key="p.id">
+                                        <div class="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 flex items-center justify-between text-[11px]">
+                                            <div class="flex items-center gap-2 truncate">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+                                                <span class="truncate font-medium" x-text="p.text"></span>
+                                            </div>
+                                            <a :href="p.url" class="text-blue-600 hover:text-blue-800 font-semibold text-[10px] shrink-0 ml-2">Detail</a>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
                     </div>
-                    @endforeach
-                </div>
+                </template>
             </div>
 
-            {{-- 2. TAB KALENDER: FULLCALENDAR BULANAN --}}
-            <div x-show="dashboardTab === 'calendar'" class="space-y-4">
-                <div class="flex items-center justify-between text-xs text-slate-500 pb-1">
-                    <span>Klik item agenda pada kalender untuk melihat pop-up informasi lengkap & tiket QR.</span>
-                    <div class="flex items-center gap-3 font-semibold">
+            {{-- 2. TAB KALENDER: FULLCALENDAR BULANAN (TIDAK PENUH SESAK) --}}
+            <div x-show="dashboardTab === 'calendar'" class="space-y-3">
+                {{-- Filter Toolbar untuk Kalender Bulanan --}}
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-2 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-slate-700 text-[11px]">Filter:</span>
+                        <div class="flex items-center gap-1 bg-white p-0.5 rounded-lg border border-slate-200">
+                            <button type="button" 
+                                    @click="setCalFilter('spesifik')"
+                                    :class="calFilter === 'spesifik' ? 'bg-blue-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                                    class="px-2.5 py-1 rounded-md text-[11px] transition">
+                                Agenda Terjadwal
+                            </button>
+                            <button type="button" 
+                                    @click="setCalFilter('rapat')"
+                                    :class="calFilter === 'rapat' ? 'bg-indigo-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                                    class="px-2.5 py-1 rounded-md text-[11px] transition">
+                                Hanya Rapat
+                            </button>
+                            <button type="button" 
+                                    @click="setCalFilter('all')"
+                                    :class="calFilter === 'all' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                                    class="px-2.5 py-1 rounded-md text-[11px] transition">
+                                Termasuk Proyek 2026
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 text-[11px] font-semibold text-slate-500">
                         <div class="flex items-center gap-1.5">
                             <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 inline-block"></span>
-                            <span class="text-gray-700 text-[11px]">Rapat</span>
+                            <span>Rapat</span>
                         </div>
                         <div class="flex items-center gap-1.5">
                             <span class="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span>
-                            <span class="text-gray-700 text-[11px]">Kegiatan</span>
+                            <span>Kegiatan</span>
                         </div>
                     </div>
                 </div>
-                <div id="dashboardCalendar" class="min-h-[540px]"></div>
+
+                {{-- FullCalendar Element --}}
+                <div id="dashboardCalendar" class="min-h-[580px] bg-white rounded-xl p-1"></div>
             </div>
         </div>
 
@@ -1021,6 +1243,9 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeCalendarModal();
 });
 
+window.calendarRawEvents = {!! json_encode($calendarEvents) !!};
+window.currentCalendarFilter = 'spesifik';
+
 document.addEventListener("DOMContentLoaded", function() {
     var calendarEl = document.getElementById('dashboardCalendar');
     if (!calendarEl) return;
@@ -1039,7 +1264,31 @@ document.addEventListener("DOMContentLoaded", function() {
             week: 'Minggu',
             list: 'Daftar'
         },
-        events: {!! json_encode($calendarEvents) !!},
+        dayMaxEvents: 2,
+        dayMaxEventRows: 2,
+        moreLinkClick: 'popover',
+        moreLinkText: function(num) {
+            return '+' + num + ' lainnya';
+        },
+        height: 680,
+        aspectRatio: 1.6,
+        events: function(fetchInfo, successCallback, failureCallback) {
+            var all = window.calendarRawEvents || [];
+            var filter = window.currentCalendarFilter || 'spesifik';
+            var filtered = all.filter(function(ev) {
+                var props = ev.extendedProps || {};
+                if (filter === 'rapat') {
+                    return props.jenis === 'Rapat';
+                } else if (filter === 'spesifik') {
+                    // Sembunyikan proyek tahunan 2026 agar kalender tidak penuh/meluber
+                    return !props.is_tahunan;
+                } else {
+                    // Tampilkan semua termasuk proyek tahunan
+                    return true;
+                }
+            });
+            successCallback(filtered);
+        },
         eventClick: function(info) {
             info.jsEvent.preventDefault();
             openCalendarModal(info.event);
@@ -1051,7 +1300,16 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
+    window.calendar = calendar;
     calendar.render();
+
+    window.setCalendarFilter = function(filter) {
+        window.currentCalendarFilter = filter;
+        if (window.calendar) {
+            window.calendar.refetchEvents();
+        }
+    };
+
     setTimeout(function() {
         calendar.updateSize();
     }, 150);
