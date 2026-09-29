@@ -567,11 +567,8 @@
 
     </div>
 
-    {{-- 3. KETERSEDIAAN RUANGAN & ZOOM (KIRI) DAN KALENDER AGENDA (KANAN) --}}
-    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        
-        {{-- SISI KIRI: STATUS KETERSEDIAAN RUANGAN & ZOOM HARI INI --}}
-        <div class="xl:col-span-5 bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-xs space-y-5">
+    {{-- 3. KETERSEDIAAN RUANGAN & ZOOM (DIBAWAH DARI TUGAS SAYA & SUB KEGIATAN) --}}
+    <div class="w-full bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-xs space-y-5">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
@@ -601,7 +598,7 @@
                     <span class="text-[10px] font-bold text-gray-400">Offline</span>
                 </div>
 
-                <div class="space-y-2.5">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                     @foreach($dashboardVenuesStatus as $vId => $vStat)
                         @php
                             $ven = $vStat['venue'];
@@ -697,10 +694,10 @@
                 </div>
             </div>
 
-        </div>
+    </div>
 
-        {{-- SISI KANAN: KALENDER AGENDA & GANTT CHART WAKTU LOWONG --}}
-        <div class="xl:col-span-7 calendar-section-card space-y-4" 
+    {{-- 4. JADWAL & KETERSEDIAAN WAKTU BPS (DIBAWAH DARI KETERSEDIAAN RUANGAN & ZOOM) --}}
+    <div class="w-full calendar-section-card bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-xs space-y-4" 
              x-data="{ 
                  dashboardTab: 'gantt',
                  calFilter: 'spesifik',
@@ -1110,8 +1107,6 @@
         </div>
 
     </div>
-
-</div>
 
 {{-- POP-UP MODAL DETAIL EVENT KALENDER --}}
 <div id="calendarEventModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
