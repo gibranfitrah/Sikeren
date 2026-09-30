@@ -847,22 +847,23 @@
                 <div class="overflow-x-auto p-4 space-y-3">
                     <div class="min-w-[780px] space-y-3">
                         
-                        {{-- Skala Waktu (Ruler 07:30 s.d 16:30) --}}
-                        <div class="flex items-center text-[10px] font-mono font-bold text-slate-500">
-                            <div class="w-32 sm:w-36 shrink-0 text-slate-400 font-sans text-[11px] font-semibold text-right pr-4">
-                                Skala Jam:
+                        {{-- Skala Waktu (Ruler 07:30 s.d 16:30 WITA) - Jelas & Kontras Tinggi --}}
+                        <div class="flex items-center bg-slate-100/90 rounded-xl border border-slate-200/80 py-1.5 px-2 shadow-2xs">
+                            <div class="w-32 sm:w-36 shrink-0 text-slate-700 font-bold text-xs flex items-center justify-end gap-1.5 pr-4">
+                                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Skala Jam:</span>
                             </div>
-                            <div class="flex-1 relative h-5 select-none">
-                                <span class="absolute left-0 top-0">07:30</span>
-                                <span class="absolute left-[11.11%] -translate-x-1/2 top-0">08:30</span>
-                                <span class="absolute left-[22.22%] -translate-x-1/2 top-0">09:30</span>
-                                <span class="absolute left-[33.33%] -translate-x-1/2 top-0">10:30</span>
-                                <span class="absolute left-[44.44%] -translate-x-1/2 top-0">11:30</span>
-                                <span class="absolute left-[55.56%] -translate-x-1/2 top-0">12:30</span>
-                                <span class="absolute left-[66.67%] -translate-x-1/2 top-0">13:30</span>
-                                <span class="absolute left-[77.78%] -translate-x-1/2 top-0">14:30</span>
-                                <span class="absolute left-[88.89%] -translate-x-1/2 top-0">15:30</span>
-                                <span class="absolute right-0 top-0">16:30</span>
+                            <div class="flex-1 relative h-6 select-none font-sans">
+                                <span class="absolute left-0 top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs">07:30</span>
+                                <span class="absolute left-[11.11%] -translate-x-1/2 top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs">08:30</span>
+                                <span class="absolute left-[22.22%] -translate-x-1/2 top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs">09:30</span>
+                                <span class="absolute left-[33.33%] -translate-x-1/2 top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs">10:30</span>
+                                <span class="absolute left-[44.44%] -translate-x-1/2 top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs">11:30</span>
+                                <span class="absolute left-[55.56%] -translate-x-1/2 top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs">12:30</span>
+                                <span class="absolute left-[66.67%] -translate-x-1/2 top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs">13:30</span>
+                                <span class="absolute left-[77.78%] -translate-x-1/2 top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs">14:30</span>
+                                <span class="absolute left-[88.89%] -translate-x-1/2 top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs">15:30</span>
+                                <span class="absolute right-0 top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs">16:30</span>
                             </div>
                         </div>
 
