@@ -228,22 +228,62 @@ class DashboardController extends Controller
                 return strcmp($a['start_jam'], $b['start_jam']);
             });
 
-            // Calculate busy intervals in working hours (07:30 to 16:30 -> 450 to 990 min)
+            // Aturan Jam Kerja BPS:
+            // Senin - Kamis: 07:30 - 16:00 WITA (510 menit / 8.5 jam)
+            // Khusus Jumat: 07:30 - 16:30 WITA (540 menit / 9.0 jam)
+            $isFriday = ($curr->dayOfWeek === Carbon::FRIDAY);
+            $workStartM = 450; // 07:30
+            if ($isFriday) {
+                $workEndM = 990; // 16:30
+                $workEndStr = '16:30';
+                $workDurationM = 540; // 9 jam
+                $workHoursLabel = '07:30 - 16:30 WITA';
+                $rulerTicks = [
+                    ['time' => '07:30', 'pct' => 0],
+                    ['time' => '08:30', 'pct' => 11.11],
+                    ['time' => '09:30', 'pct' => 22.22],
+                    ['time' => '10:30', 'pct' => 33.33],
+                    ['time' => '11:30', 'pct' => 44.44],
+                    ['time' => '12:30', 'pct' => 55.56],
+                    ['time' => '13:30', 'pct' => 66.67],
+                    ['time' => '14:30', 'pct' => 77.78],
+                    ['time' => '15:30', 'pct' => 88.89],
+                    ['time' => '16:30', 'pct' => 100]
+                ];
+            } else {
+                $workEndM = 960; // 16:00
+                $workEndStr = '16:00';
+                $workDurationM = 510; // 8.5 jam
+                $workHoursLabel = '07:30 - 16:00 WITA';
+                $rulerTicks = [
+                    ['time' => '07:30', 'pct' => 0],
+                    ['time' => '08:30', 'pct' => round((60 / 510) * 100, 2)],
+                    ['time' => '09:30', 'pct' => round((120 / 510) * 100, 2)],
+                    ['time' => '10:30', 'pct' => round((180 / 510) * 100, 2)],
+                    ['time' => '11:30', 'pct' => round((240 / 510) * 100, 2)],
+                    ['time' => '12:30', 'pct' => round((300 / 510) * 100, 2)],
+                    ['time' => '13:30', 'pct' => round((360 / 510) * 100, 2)],
+                    ['time' => '14:30', 'pct' => round((420 / 510) * 100, 2)],
+                    ['time' => '16:00', 'pct' => 100]
+                ];
+            }
+
+            // Calculate busy intervals in working hours
             $occupied = [];
             foreach ($activeAgendas as &$ag) {
-                $sM = 450;
+                $sM = $workStartM;
                 if (!empty($ag['start_jam'])) {
                     $parts = explode(':', $ag['start_jam']);
-                    $sM = max(450, ((int)$parts[0] * 60) + (int)($parts[1] ?? 0));
+                    $sM = max($workStartM, ((int)$parts[0] * 60) + (int)($parts[1] ?? 0));
                 }
-                $eM = min(990, $sM + 120);
+                $eM = min($workEndM, $sM + 120);
                 if (!empty($ag['end_jam']) && $ag['end_jam'] !== 'Selesai') {
                     $parts = explode(':', $ag['end_jam']);
-                    $eM = min(990, max($sM + 30, ((int)$parts[0] * 60) + (int)($parts[1] ?? 0)));
+                    $eM = min($workEndM, max($sM + 30, ((int)$parts[0] * 60) + (int)($parts[1] ?? 0)));
                 }
                 $occupied[] = ['start' => $sM, 'end' => $eM];
-                $leftPct = round((($sM - 450) / 540) * 100, 1);
-                $widthPct = max(6, round((($eM - $sM) / 540) * 100, 1));
+                $leftPct = round((($sM - $workStartM) / $workDurationM) * 100, 1);
+                $widthPct = max(6, round((($eM - $sM) / $workDurationM) * 100, 1));
                 if ($leftPct + $widthPct > 100) {
                     $widthPct = max(4, 100 - $leftPct);
                 }
@@ -268,29 +308,29 @@ class DashboardController extends Controller
             }
 
             $freeSlots = [];
-            $pointer = 450;
+            $pointer = $workStartM;
             foreach ($merged as $m) {
                 if ($m['start'] > $pointer) {
                     $freeSlots[] = [
                         'start'     => sprintf('%02d:%02d', floor($pointer / 60), $pointer % 60),
                         'end'       => sprintf('%02d:%02d', floor($m['start'] / 60), $m['start'] % 60),
-                        'left_pct'  => round((($pointer - 450) / 540) * 100, 1),
-                        'width_pct' => round((($m['start'] - $pointer) / 540) * 100, 1)
+                        'left_pct'  => round((($pointer - $workStartM) / $workDurationM) * 100, 1),
+                        'width_pct' => round((($m['start'] - $pointer) / $workDurationM) * 100, 1)
                     ];
                 }
                 $pointer = max($pointer, $m['end']);
             }
-            if ($pointer < 990) {
+            if ($pointer < $workEndM) {
                 $freeSlots[] = [
                     'start'     => sprintf('%02d:%02d', floor($pointer / 60), $pointer % 60),
-                    'end'       => '16:30',
-                    'left_pct'  => round((($pointer - 450) / 540) * 100, 1),
-                    'width_pct' => round(((990 - $pointer) / 540) * 100, 1)
+                    'end'       => $workEndStr,
+                    'left_pct'  => round((($pointer - $workStartM) / $workDurationM) * 100, 1),
+                    'width_pct' => round((($workEndM - $pointer) / $workDurationM) * 100, 1)
                 ];
             }
 
             $busyMin = array_sum(array_map(fn($m) => $m['end'] - $m['start'], $merged));
-            $freeMin = max(0, 540 - $busyMin);
+            $freeMin = max(0, $workDurationM - $busyMin);
 
             // Timeline Blocks
             $timelineBlocks = [];
@@ -304,22 +344,22 @@ class DashboardController extends Controller
                 ];
             }
             foreach ($activeAgendas as $ag) {
-                $sM = 450;
+                $sM = $workStartM;
                 if (!empty($ag['start_jam'])) {
                     $parts = explode(':', $ag['start_jam']);
-                    $sM = max(450, ((int)$parts[0] * 60) + (int)($parts[1] ?? 0));
+                    $sM = max($workStartM, ((int)$parts[0] * 60) + (int)($parts[1] ?? 0));
                 }
-                $eM = min(990, $sM + 120);
+                $eM = min($workEndM, $sM + 120);
                 if (!empty($ag['end_jam']) && $ag['end_jam'] !== 'Selesai') {
                     $parts = explode(':', $ag['end_jam']);
-                    $eM = min(990, max($sM + 30, ((int)$parts[0] * 60) + (int)($parts[1] ?? 0)));
+                    $eM = min($workEndM, max($sM + 30, ((int)$parts[0] * 60) + (int)($parts[1] ?? 0)));
                 }
                 $timelineBlocks[] = [
                     'type'      => $ag['is_rapat'] ? 'rapat' : 'kegiatan',
                     'title'     => $ag['text'],
                     'time'      => $ag['start_jam'] . ' - ' . $ag['end_jam'],
-                    'left_pct'  => round((($sM - 450) / 540) * 100, 1),
-                    'width_pct' => max(4, round((($eM - $sM) / 540) * 100, 1))
+                    'left_pct'  => round((($sM - $workStartM) / $workDurationM) * 100, 1),
+                    'width_pct' => max(4, round((($eM - $sM) / $workDurationM) * 100, 1))
                 ];
             }
 
@@ -332,6 +372,10 @@ class DashboardController extends Controller
                 'full_date'            => $curr->translatedFormat('l, d F Y'),
                 'is_today'             => $isToday,
                 'is_weekend'           => $isWeekend,
+                'is_friday'            => $isFriday,
+                'work_end_str'         => $workEndStr,
+                'work_hours_label'     => $workHoursLabel,
+                'ruler_ticks'          => $rulerTicks,
                 'active_agendas'       => $activeAgendas,
                 'total_agendas'        => count($activeAgendas),
                 'proyek_tahunan'       => $proyekTahunanList,
@@ -340,6 +384,7 @@ class DashboardController extends Controller
                 'timeline_blocks'      => $timelineBlocks,
                 'total_free_hours'     => round($freeMin / 60, 1),
                 'total_busy_hours'     => round($busyMin / 60, 1),
+                'total_work_hours'     => round($workDurationM / 60, 1),
                 'url_buat_rapat'       => url('/rapat?date=' . $dayStr)
             ];
 

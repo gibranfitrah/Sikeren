@@ -753,7 +753,7 @@
                         <h3 class="text-sm sm:text-base font-bold text-gray-900 leading-tight">Gantt Chart: Ketersediaan Waktu Lowong BPS</h3>
                         <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider">Jam Lowong</span>
                     </div>
-                    <p class="text-[11px] text-gray-500">Bagan alokasi waktu kerja & deteksi jam bebas (07:30 - 16:30 WITA)</p>
+                    <p class="text-[11px] text-gray-500">Bagan alokasi waktu kerja & deteksi jam bebas (Senin - Kamis: 07:30 - 16:00 | Jumat: 07:30 - 16:30 WITA)</p>
                 </div>
             </div>
 
@@ -825,7 +825,7 @@
                 <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-[11px]">
                     <span class="font-bold text-slate-700 flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-                        <span>Timeline Alokasi Waktu Kerja (07:30 - 16:30 WITA)</span>
+                        <span>Timeline Alokasi Waktu Kerja (<span x-text="currentDay.work_hours_label"></span>)</span>
                     </span>
                     <div class="flex items-center gap-3">
                         <span class="flex items-center gap-1 text-emerald-800 font-bold">
@@ -847,23 +847,19 @@
                 <div class="overflow-x-auto p-4 space-y-3">
                     <div class="min-w-[780px] space-y-3">
                         
-                        {{-- Skala Waktu (Ruler 07:30 s.d 16:30 WITA) - Jelas & Kontras Tinggi --}}
+                        {{-- Skala Waktu (Ruler Dinamis: 07:30 - 16:00 / 16:30 WITA) - Jelas & Kontras Tinggi --}}
                         <div class="flex items-center bg-slate-100/90 rounded-xl border border-slate-200/80 py-1.5 px-2 shadow-2xs">
                             <div class="w-32 sm:w-36 shrink-0 text-slate-700 font-bold text-xs flex items-center justify-end gap-1.5 pr-4">
                                 <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                 <span>Skala Jam:</span>
                             </div>
                             <div class="flex-1 relative h-6 select-none font-sans">
-                                <span class="absolute left-0 top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs">07:30</span>
-                                <span class="absolute left-[11.11%] -translate-x-1/2 top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs">08:30</span>
-                                <span class="absolute left-[22.22%] -translate-x-1/2 top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs">09:30</span>
-                                <span class="absolute left-[33.33%] -translate-x-1/2 top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs">10:30</span>
-                                <span class="absolute left-[44.44%] -translate-x-1/2 top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs">11:30</span>
-                                <span class="absolute left-[55.56%] -translate-x-1/2 top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs">12:30</span>
-                                <span class="absolute left-[66.67%] -translate-x-1/2 top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs">13:30</span>
-                                <span class="absolute left-[77.78%] -translate-x-1/2 top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs">14:30</span>
-                                <span class="absolute left-[88.89%] -translate-x-1/2 top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs">15:30</span>
-                                <span class="absolute right-0 top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs">16:30</span>
+                                <template x-for="(tick, tIdx) in currentDay.ruler_ticks" :key="tIdx">
+                                    <span class="absolute top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs whitespace-nowrap"
+                                          :class="tIdx === 0 ? 'left-0' : (tIdx === currentDay.ruler_ticks.length - 1 ? 'right-0' : '-translate-x-1/2')"
+                                          :style="tIdx > 0 && tIdx < currentDay.ruler_ticks.length - 1 ? 'left: ' + tick.pct + '%;' : ''"
+                                          x-text="tick.time"></span>
+                                </template>
                             </div>
                         </div>
 
@@ -876,9 +872,14 @@
                                 </span>
                             </div>
                             <div class="flex-1 relative h-10 bg-slate-50 rounded-xl border border-slate-200 p-0.5 flex items-center overflow-hidden">
-                                <!-- 9 Kolom Grid Background -->
-                                <div class="absolute inset-0 grid grid-cols-9 divide-x divide-slate-200/80 pointer-events-none">
-                                    <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+                                <!-- Garis Grid Background Vertikal Dinamis Sinkron Ticks -->
+                                <div class="absolute inset-0 pointer-events-none overflow-hidden">
+                                    <template x-for="(tick, tIdx) in currentDay.ruler_ticks" :key="tIdx">
+                                        <template x-if="tIdx > 0 && tIdx < currentDay.ruler_ticks.length - 1">
+                                            <div class="absolute top-0 bottom-0 border-r border-slate-200/80"
+                                                 :style="'left: ' + tick.pct + '%;'"></div>
+                                        </template>
+                                    </template>
                                 </div>
 
                                 <!-- Balok Full Lowong jika 0 agenda -->
@@ -887,7 +888,7 @@
                                        class="absolute inset-x-1 h-8 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs shadow-xs flex items-center justify-between gap-4 px-3 transition cursor-pointer border border-emerald-400 z-10 overflow-hidden">
                                         <div class="truncate min-w-0 flex items-center gap-2">
                                             <span class="w-2 h-2 rounded-full bg-white animate-ping shrink-0"></span>
-                                            <span class="truncate">FULL LOWONG (07:30 - 16:30 WITA) • Bebas Agenda</span>
+                                            <span class="truncate">FULL LOWONG (<span x-text="currentDay.work_hours_label"></span>) • Bebas Agenda</span>
                                         </div>
                                         <div class="shrink-0 pl-3">
                                             <span class="bg-white text-emerald-800 text-[11px] px-3 py-1 rounded-md font-black shadow-2xs whitespace-nowrap inline-flex items-center gap-1 hover:bg-emerald-50 transition">
@@ -939,9 +940,14 @@
 
                                     <!-- Balok di Kanvas Timeline -->
                                     <div class="flex-1 relative h-9 bg-slate-50/50 rounded-xl border border-slate-200/60 p-0.5 flex items-center overflow-hidden">
-                                        <!-- 9 Kolom Grid Background -->
-                                        <div class="absolute inset-0 grid grid-cols-9 divide-x divide-slate-200/60 pointer-events-none">
-                                            <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+                                        <!-- Garis Grid Background Vertikal Dinamis Sinkron Ticks -->
+                                        <div class="absolute inset-0 pointer-events-none overflow-hidden">
+                                            <template x-for="(tick, tIdx) in currentDay.ruler_ticks" :key="tIdx">
+                                                <template x-if="tIdx > 0 && tIdx < currentDay.ruler_ticks.length - 1">
+                                                    <div class="absolute top-0 bottom-0 border-r border-slate-200/60"
+                                                         :style="'left: ' + tick.pct + '%;'"></div>
+                                                </template>
+                                            </template>
                                         </div>
 
                                         <!-- BALOK AGENDA -->
@@ -976,7 +982,7 @@
                         </span>
 
                         <template x-if="currentDay.total_agendas === 0">
-                            <span class="text-emerald-800 font-bold text-[11px]">Full 07:30 - 16:30 (9 Jam Bebas)</span>
+                            <span class="text-emerald-800 font-bold text-[11px]" x-text="'Full ' + currentDay.work_hours_label.replace(' WITA', '') + ' (' + currentDay.total_work_hours + ' Jam Bebas)'"></span>
                         </template>
 
                         <template x-if="currentDay.total_agendas > 0 && currentDay.free_slots.length > 0">
