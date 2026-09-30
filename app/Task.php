@@ -92,7 +92,16 @@ class Task extends Model
             $todayStr = $now->format('Y-m-d');
             $nowTimeStr = $now->format('H:i:s');
 
-            // 1. Seluruh kegiatan (bukan Rapat) yang tanggal akhirnya sudah sebelum hari ini (< today)
+            // 1. Seluruh kegiatan dari bulan Januari 2026 sampai akhir September 2026 statusnya selesai semua
+            self::where('jenis', 'Kegiatan')
+                ->where(function($q) {
+                    $q->where('start_date', '<=', '2026-09-30')
+                      ->orWhere('date_akhir', '<=', '2026-09-30');
+                })
+                ->where('status', '!=', 'Selesai')
+                ->update(['status' => 'Selesai', 'progress' => 100]);
+
+            // 2. Seluruh kegiatan (bukan Rapat) yang tanggal akhirnya sudah sebelum hari ini (< today)
             self::where('jenis', 'Kegiatan')
                 ->where(function($q) use ($todayStr) {
                     $q->where(function($q1) use ($todayStr) {

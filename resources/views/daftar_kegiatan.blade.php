@@ -313,8 +313,9 @@
                                 $isExpiredRapat = $isPastDateTime;
                             }
 
-                            // Untuk kegiatan (baik PST maupun kegiatan umum/tim): jika sudah melewati tanggal/waktu, status otomatis Selesai
-                            if (!$isRapat && $isPastDateTime && $item->setuju_rapat != 3 && $st !== 'ditolak') {
+                            // Untuk kegiatan (baik PST maupun kegiatan umum/tim): jika kegiatan periode Januari s.d September 2026 atau sudah melewati tanggal/waktu, status otomatis Selesai
+                            $isJanSep2026 = (!empty($item->start_date) && $item->start_date <= '2026-09-30');
+                            if (!$isRapat && ($isPastDateTime || $isJanSep2026) && $item->setuju_rapat != 3 && $st !== 'ditolak') {
                                 $isDone = true;
                                 $isDelayed = false;
                                 $isInactive = false;
