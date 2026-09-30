@@ -696,438 +696,443 @@
 
     </div>
 
-    {{-- 4. JADWAL & KETERSEDIAAN WAKTU BPS (DIBAWAH DARI KETERSEDIAAN RUANGAN & ZOOM) --}}
-    <div class="w-full calendar-section-card bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-xs space-y-4" 
-             x-data="{ 
-                 dashboardTab: 'gantt',
-                 calFilter: 'spesifik',
-                 ganttDays: {{ json_encode($ganttDays) }},
-                 activeDayIndex: {{ $todayGanttIndex }},
-                 agendaPage: 0,
-                 itemsPerPage: 4,
-                 showProyekTahunan: false,
+    {{-- ========================================================
+        4. GANTT CHART: KETERSEDIAAN WAKTU LOWONG & JADWAL BPS (TERPISAH)
+    ========================================================= --}}
+    <div class="w-full bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-xs space-y-4" 
+         x-data="{ 
+             ganttDays: {{ json_encode($ganttDays) }},
+             activeDayIndex: {{ $todayGanttIndex }},
+             showDetailAgenda: false,
+             showProyekTahunan: false,
 
-                 get currentDay() {
-                     return (this.ganttDays && this.ganttDays.length > 0) 
-                         ? (this.ganttDays[this.activeDayIndex] || this.ganttDays[0]) 
-                         : null;
-                 },
-                 get currentAgendas() {
-                     return this.currentDay ? (this.currentDay.active_agendas || []) : [];
-                 },
-                 get paginatedAgendas() {
-                     var start = this.agendaPage * this.itemsPerPage;
-                     return this.currentAgendas.slice(start, start + this.itemsPerPage);
-                 },
-                 get totalPages() {
-                     return Math.ceil(this.currentAgendas.length / this.itemsPerPage) || 1;
-                 },
-                 nextDay() {
-                     if (this.activeDayIndex < this.ganttDays.length - 1) {
-                         this.activeDayIndex++;
-                         this.agendaPage = 0;
-                         this.scrollActivePill();
-                     }
-                 },
-                 prevDay() {
-                     if (this.activeDayIndex > 0) {
-                         this.activeDayIndex--;
-                         this.agendaPage = 0;
-                         this.scrollActivePill();
-                     }
-                 },
-                 goToToday() {
-                     this.activeDayIndex = {{ $todayGanttIndex }};
-                     this.agendaPage = 0;
+             get currentDay() {
+                 return (this.ganttDays && this.ganttDays.length > 0) 
+                     ? (this.ganttDays[this.activeDayIndex] || this.ganttDays[0]) 
+                     : null;
+             },
+             nextDay() {
+                 if (this.activeDayIndex < this.ganttDays.length - 1) {
+                     this.activeDayIndex++;
                      this.scrollActivePill();
-                 },
-                 selectDay(idx) {
-                     this.activeDayIndex = idx;
-                     this.agendaPage = 0;
-                     this.scrollActivePill();
-                 },
-                 scrollActivePill() {
-                     $nextTick(() => {
-                         var el = document.getElementById('ganttDayPill_' + this.activeDayIndex);
-                         if (el) el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                     });
-                 },
-                 nextAgendaPage() {
-                     if (this.agendaPage < this.totalPages - 1) this.agendaPage++;
-                 },
-                 prevAgendaPage() {
-                     if (this.agendaPage > 0) this.agendaPage--;
-                 },
-                 setCalFilter(f) {
-                     this.calFilter = f;
-                     if (window.setCalendarFilter) {
-                         window.setCalendarFilter(f);
-                     }
                  }
-             }">
+             },
+             prevDay() {
+                 if (this.activeDayIndex > 0) {
+                     this.activeDayIndex--;
+                     this.scrollActivePill();
+                 }
+             },
+             goToToday() {
+                 this.activeDayIndex = {{ $todayGanttIndex }};
+                 this.scrollActivePill();
+             },
+             selectDay(idx) {
+                 this.activeDayIndex = idx;
+                 this.scrollActivePill();
+             },
+             scrollActivePill() {
+                 $nextTick(() => {
+                     var el = document.getElementById('ganttDayPill_' + this.activeDayIndex);
+                     if (el) el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                 });
+             }
+         }">
 
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold">
-                        <svg class="w-4.5 h-4.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="text-sm sm:text-base font-bold text-gray-900 leading-tight">Jadwal & Ketersediaan Waktu BPS</h3>
-                        <p class="text-[11px] text-gray-400">Pantau jadwal agenda dan deteksi waktu lowong pegawai & ruangan</p>
-                    </div>
+        {{-- 1. HEADER CARD TERPADU: Judul, Navigasi Tanggal, & Stat Lowong --}}
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+            <!-- Judul & Info Jam Kerja -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 font-bold shadow-2xs">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
                 </div>
-
-                {{-- Tab Switcher: Gantt Chart vs Kalender --}}
-                <div class="flex items-center p-1 bg-gray-100 rounded-xl shrink-0">
-                    <button type="button" 
-                            @click="dashboardTab = 'gantt'"
-                            :class="dashboardTab === 'gantt' ? 'bg-white text-emerald-700 shadow-xs' : 'text-gray-600 hover:text-gray-900'"
-                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
-                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                        <span>Gantt Chart (Waktu Lowong)</span>
-                    </button>
-                    <button type="button" 
-                            @click="dashboardTab = 'calendar'; $nextTick(() => { if (window.calendar) window.calendar.updateSize(); })"
-                            :class="dashboardTab === 'calendar' ? 'bg-white text-blue-700 shadow-xs' : 'text-gray-600 hover:text-gray-900'"
-                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
-                        <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                        <span>Kalender Bulanan</span>
-                    </button>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-sm sm:text-base font-bold text-gray-900 leading-tight">Gantt Chart: Ketersediaan Waktu Lowong BPS</h3>
+                        <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider">Jam Lowong</span>
+                    </div>
+                    <p class="text-[11px] text-gray-500">Bagan alokasi waktu kerja & deteksi jam bebas (07:30 - 16:30 WITA)</p>
                 </div>
             </div>
 
-            {{-- 1. TAB GANTT CHART: NAVIGASI HARI & TIMELINE WAKTU LOWONG --}}
-            <div x-show="dashboardTab === 'gantt'" class="space-y-3.5">
-                {{-- Legend & Info Jam Kerja --}}
-                <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-wrap items-center justify-between gap-2.5 text-xs">
-                    <div class="flex items-center gap-3">
-                        <span class="font-bold text-slate-700">Legenda:</span>
-                        <div class="flex items-center gap-1.5">
-                            <span class="w-3 h-3 rounded bg-emerald-500 inline-block shadow-2xs"></span>
-                            <span class="text-emerald-800 font-bold">Waktu Lowong (Tersedia)</span>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <span class="w-3 h-3 rounded bg-indigo-600 inline-block"></span>
-                            <span class="text-indigo-900 font-semibold">Rapat Kedinasan</span>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <span class="w-3 h-3 rounded bg-sky-500 inline-block"></span>
-                            <span class="text-sky-900 font-semibold">Kegiatan / Proyek</span>
-                        </div>
-                    </div>
-                    <span class="text-[11px] text-slate-500 font-mono font-medium">Jam Kerja BPS: 07:30 - 16:30 WITA</span>
-                </div>
-
-                {{-- NAVIGASI HARI: Previous Day, Active Date, Next Day ("bisa di-next-next-kan") --}}
-                <div class="flex items-center justify-between gap-2 p-2.5 bg-white rounded-2xl border border-slate-200 shadow-xs">
-                    <!-- Tombol Hari Sebelumnya -->
+            <!-- Kontrol Navigasi Tanggal & Status Cepat -->
+            <div class="flex items-center gap-2 flex-wrap" x-show="currentDay">
+                <!-- Navigasi Hari (< Tanggal >) -->
+                <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1 text-xs shadow-2xs">
                     <button type="button" 
                             @click="prevDay()" 
                             :disabled="activeDayIndex <= 0"
-                            :class="activeDayIndex <= 0 ? 'opacity-30 cursor-not-allowed text-slate-400' : 'hover:bg-slate-100 text-slate-700 active:scale-95'"
-                            class="px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold transition flex items-center gap-1.5 shrink-0">
-                        <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                        <span class="hidden sm:inline">Hari Sebelumnya</span>
-                        <span class="sm:hidden">Prev</span>
+                            class="p-1 rounded-lg hover:bg-white text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+                            title="Hari Sebelumnya">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                     </button>
-
-                    <!-- Judul Hari Terpilih & Indikator -->
-                    <div class="flex items-center gap-2 text-center" x-show="currentDay">
-                        <div>
-                            <div class="flex items-center justify-center gap-1.5 flex-wrap">
-                                <span class="text-sm sm:text-base font-extrabold text-slate-900" x-text="currentDay.full_date"></span>
-                                <template x-if="currentDay.is_today">
-                                    <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-extrabold text-[10px] uppercase">
-                                        Hari Ini
-                                    </span>
-                                </template>
-                                <template x-if="currentDay.is_weekend">
-                                    <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold text-[10px]">
-                                        Akhir Pekan
-                                    </span>
-                                </template>
-                            </div>
-                            <p class="text-[11px] text-slate-500 mt-0.5">
-                                <span class="font-bold text-slate-700" x-text="currentDay.total_agendas + ' Agenda'"></span>
-                                <span> • Sisa Lowong: </span>
-                                <span class="font-bold text-emerald-600" x-text="currentDay.total_free_hours + ' Jam'"></span>
-                            </p>
-                        </div>
-
-                        <template x-if="!currentDay.is_today">
-                            <button type="button" 
-                                    @click="goToToday()" 
-                                    class="ml-1 px-2 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[10px] border border-blue-200 transition shrink-0">
-                                Hari Ini
-                            </button>
+                    <div class="px-2.5 font-bold text-slate-800 flex items-center gap-1.5 whitespace-nowrap">
+                        <span x-text="currentDay.full_date"></span>
+                        <template x-if="currentDay.is_today">
+                            <span class="px-1.5 py-0.2 rounded bg-blue-600 text-white text-[9px] font-extrabold uppercase">Hari Ini</span>
                         </template>
                     </div>
-
-                    <!-- Tombol Hari Berikutnya -->
                     <button type="button" 
                             @click="nextDay()" 
                             :disabled="activeDayIndex >= ganttDays.length - 1"
-                            :class="activeDayIndex >= ganttDays.length - 1 ? 'opacity-30 cursor-not-allowed text-slate-400' : 'hover:bg-slate-100 text-slate-700 active:scale-95'"
-                            class="px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold transition flex items-center gap-1.5 shrink-0">
-                        <span class="hidden sm:inline">Hari Berikutnya</span>
-                        <span class="sm:hidden">Next</span>
-                        <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            class="p-1 rounded-lg hover:bg-white text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+                            title="Hari Berikutnya">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </button>
                 </div>
 
-                {{-- Horizontal Day Selector Strip (Daftar Hari Geser Horizontal) --}}
-                <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
-                    <template x-for="(day, idx) in ganttDays" :key="day.date">
-                        <button type="button" 
-                                :id="'ganttDayPill_' + idx"
-                                @click="selectDay(idx)"
-                                :class="activeDayIndex === idx 
-                                    ? 'bg-blue-600 text-white shadow-xs font-black ring-2 ring-blue-400/40' 
-                                    : (day.is_today ? 'bg-blue-50 text-blue-800 border-blue-300 font-bold' : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200')"
-                                class="px-2.5 py-1.5 rounded-xl border text-xs shrink-0 transition flex flex-col items-center min-w-[62px]">
-                            <span class="text-[9px] uppercase font-bold opacity-80" x-text="day.day_name.substr(0, 3)"></span>
-                            <span class="text-sm font-extrabold leading-tight" x-text="day.day_num"></span>
-                            <div class="flex items-center gap-0.5 mt-0.5">
-                                <template x-if="day.total_agendas > 0">
-                                    <span class="w-1.5 h-1.5 rounded-full" :class="activeDayIndex === idx ? 'bg-white' : 'bg-blue-500'"></span>
-                                </template>
-                                <template x-if="day.total_agendas === 0 && !day.is_weekend">
-                                    <span class="w-1.5 h-1.5 rounded-full" :class="activeDayIndex === idx ? 'bg-emerald-200' : 'bg-emerald-500'"></span>
-                                </template>
-                            </div>
-                        </button>
-                    </template>
+                <!-- Badge Lowong & Terisi -->
+                <div class="flex items-center gap-1.5 text-xs">
+                    <span class="px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-extrabold flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span x-text="currentDay.total_free_hours + ' Jam Lowong'"></span>
+                    </span>
+                    <span class="px-2.5 py-1 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 font-extrabold" x-text="currentDay.total_agendas + ' Agenda'"></span>
+                </div>
+            </div>
+        </div>
+
+        {{-- 2. STRIP TANGGAL HORIZONTAL (Pills Cepat Pilih Hari) --}}
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+            <template x-for="(day, idx) in ganttDays" :key="day.date">
+                <button type="button" 
+                        :id="'ganttDayPill_' + idx"
+                        @click="selectDay(idx)"
+                        :class="activeDayIndex === idx 
+                            ? 'bg-blue-600 text-white shadow-xs font-black ring-2 ring-blue-400/40' 
+                            : (day.is_today ? 'bg-blue-50 text-blue-800 border-blue-300 font-bold' : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200')"
+                        class="px-2.5 py-1.5 rounded-xl border text-xs shrink-0 transition flex flex-col items-center min-w-[62px] cursor-pointer">
+                    <span class="text-[9px] uppercase font-bold opacity-80" x-text="day.day_name.substr(0, 3)"></span>
+                    <span class="text-sm font-extrabold leading-tight" x-text="day.day_num"></span>
+                    <div class="flex items-center gap-0.5 mt-0.5">
+                        <template x-if="day.total_agendas > 0">
+                            <span class="w-1.5 h-1.5 rounded-full" :class="activeDayIndex === idx ? 'bg-white' : 'bg-blue-500'"></span>
+                        </template>
+                        <template x-if="day.total_agendas === 0 && !day.is_weekend">
+                            <span class="w-1.5 h-1.5 rounded-full" :class="activeDayIndex === idx ? 'bg-emerald-200' : 'bg-emerald-500'"></span>
+                        </template>
+                    </div>
+                </button>
+            </template>
+        </div>
+
+        {{-- 3. BAGAN BALOK GANTT TERPADU (TIDAK BERHAMBURAN) --}}
+        <template x-if="currentDay">
+            <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
+                {{-- Toolbar Kecil Bagan: Legenda Warna --}}
+                <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-[11px]">
+                    <span class="font-bold text-slate-700 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                        <span>Timeline Alokasi Waktu Kerja (07:30 - 16:30 WITA)</span>
+                    </span>
+                    <div class="flex items-center gap-3">
+                        <span class="flex items-center gap-1 text-emerald-800 font-bold">
+                            <span class="w-2.5 h-2.5 rounded bg-emerald-500 inline-block shadow-2xs"></span>
+                            <span>Waktu Lowong</span>
+                        </span>
+                        <span class="flex items-center gap-1 text-indigo-900 font-bold">
+                            <span class="w-2.5 h-2.5 rounded bg-indigo-600 inline-block"></span>
+                            <span>Rapat</span>
+                        </span>
+                        <span class="flex items-center gap-1 text-sky-900 font-bold">
+                            <span class="w-2.5 h-2.5 rounded bg-sky-500 inline-block"></span>
+                            <span>Kegiatan</span>
+                        </span>
+                    </div>
                 </div>
 
-                {{-- TAMPILAN GANTT CHART HARI TERPILIH (TIDAK MEMANJANG KE BAWAH) --}}
-                <template x-if="currentDay">
-                    <div class="rounded-2xl border border-slate-200 bg-white p-4 space-y-4 shadow-2xs">
+                {{-- Canvas Timeline --}}
+                <div class="overflow-x-auto p-4 space-y-3">
+                    <div class="min-w-[700px] space-y-2.5">
                         
-                        {{-- 1. Visual Gantt Chart Bentuk Balok (07:30 - 16:30 WITA) --}}
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between text-xs font-bold text-slate-700">
-                                <span class="flex items-center gap-1.5">
-                                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                                    <span>Bagan Balok Jadwal & Waktu Lowong (07:30 - 16:30 WITA)</span>
-                                </span>
-                                <span class="text-emerald-700 font-extrabold text-[11px]" x-text="'Lowong Tersedia: ' + currentDay.total_free_hours + ' Jam'"></span>
-                            </div>
-
-                            {{-- Tabel Gantt Chart Balok --}}
-                            <div class="border border-slate-200 rounded-2xl overflow-x-auto bg-white shadow-2xs">
-                                <div class="min-w-[680px]">
-                                    {{-- Header Skala Jam --}}
-                                    <div class="flex items-center border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700">
-                                        <div class="w-56 sm:w-64 p-3 border-r border-slate-200 shrink-0 flex items-center justify-between">
-                                            <span>Agenda / Rapat</span>
-                                            <span class="text-[10px] text-slate-400 font-medium">Jam BPS</span>
-                                        </div>
-                                        <div class="flex-1 grid grid-cols-6 sm:grid-cols-9 text-center divide-x divide-slate-200/80 text-[10px] font-mono py-2 bg-slate-100/60">
-                                            <span>07:30</span>
-                                            <span>08:30</span>
-                                            <span>09:30</span>
-                                            <span>10:30</span>
-                                            <span>11:30</span>
-                                            <span>12:30</span>
-                                            <span class="hidden sm:block">13:30</span>
-                                            <span class="hidden sm:block">14:30</span>
-                                            <span class="hidden sm:block">15:30</span>
-                                        </div>
-                                    </div>
-
-                                    {{-- Baris 1: Balok Waktu Lowong (Tersedia) --}}
-                                    <div class="flex items-center border-b border-slate-100 bg-emerald-50/20 hover:bg-emerald-50/40 transition">
-                                        <div class="w-56 sm:w-64 p-3 border-r border-slate-200/80 shrink-0 flex items-center gap-2">
-                                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                                            <div class="min-w-0">
-                                                <p class="font-bold text-xs text-emerald-950 truncate">Waktu Lowong (Tersedia)</p>
-                                                <p class="text-[10px] text-emerald-700 font-semibold" x-text="currentDay.total_free_hours + ' Jam Bebas Agenda'"></p>
-                                            </div>
-                                        </div>
-                                        <div class="flex-1 relative h-12 p-1.5 flex items-center">
-                                            <!-- Vertical Grid Lines Background -->
-                                            <div class="absolute inset-0 grid grid-cols-6 sm:grid-cols-9 divide-x divide-slate-200/40 pointer-events-none">
-                                                <div></div><div></div><div></div><div></div><div></div><div></div>
-                                                <div class="hidden sm:block"></div><div class="hidden sm:block"></div><div class="hidden sm:block"></div>
-                                            </div>
-                                            <!-- Balok-Balok Hijau Waktu Lowong -->
-                                            <template x-for="(fs, fIdx) in currentDay.free_slots" :key="fIdx">
-                                                <a :href="currentDay.url_buat_rapat"
-                                                   :style="'left: ' + fs.left_pct + '%; width: ' + fs.width_pct + '%;'"
-                                                   :title="'Waktu Lowong: ' + fs.start + ' - ' + fs.end + ' WITA (Klik untuk jadwalkan rapat)'"
-                                                   class="absolute h-8.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-extrabold text-[10px] shadow-xs flex items-center justify-between px-2.5 transition-all group z-10 cursor-pointer overflow-hidden border border-emerald-400">
-                                                    <span class="truncate flex items-center gap-1">
-                                                        <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping shrink-0"></span>
-                                                        <span class="truncate" x-text="'Lowong ' + fs.start + ' - ' + fs.end"></span>
-                                                    </span>
-                                                    <span class="hidden group-hover:inline text-[9px] bg-white text-emerald-800 px-1 rounded font-black shrink-0">+ Jadwalkan</span>
-                                                </a>
-                                            </template>
-                                        </div>
-                                    </div>
-
-                                    {{-- Baris-baris Tiap Balok Agenda Terjadwal --}}
-                                    <template x-if="currentDay.active_agendas.length === 0">
-                                        <div class="p-8 text-center text-xs text-slate-400 italic">
-                                            Tidak ada rapat atau kegiatan terjadwal pada hari ini. Seluruh jam kerja (07:30 - 16:30 WITA) full tersedia sebagai waktu lowong.
-                                        </div>
-                                    </template>
-
-                                    <template x-for="item in currentDay.active_agendas" :key="item.id">
-                                        <div class="flex items-center border-b border-slate-100 hover:bg-slate-50/70 transition">
-                                            <!-- Kolom Kiri: Detail Agenda -->
-                                            <div class="w-56 sm:w-64 p-3 border-r border-slate-200/80 shrink-0 flex items-center justify-between gap-2">
-                                                <div class="min-w-0">
-                                                    <div class="flex items-center gap-1.5 mb-0.5">
-                                                        <span :class="item.is_rapat ? 'bg-indigo-600 text-white' : 'bg-sky-500 text-white'" 
-                                                              class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase shrink-0" 
-                                                              x-text="item.jenis"></span>
-                                                        <span class="font-extrabold text-xs text-slate-900 truncate block" x-text="item.text" :title="item.text"></span>
-                                                    </div>
-                                                    <p class="text-[10px] text-slate-400 font-medium truncate" x-text="(item.tim || '-') + ' • PJ: ' + (item.pj || '-')"></p>
-                                                </div>
-                                                <a :href="item.url" class="text-blue-600 hover:text-blue-800 font-bold text-[11px] shrink-0">Detail &rarr;</a>
-                                            </div>
-
-                                            <!-- Kolom Kanan: Balok Agenda di Jalur Timeline -->
-                                            <div class="flex-1 relative h-12 p-1.5 flex items-center">
-                                                <!-- Vertical Grid Lines Background -->
-                                                <div class="absolute inset-0 grid grid-cols-6 sm:grid-cols-9 divide-x divide-slate-200/50 pointer-events-none">
-                                                    <div></div><div></div><div></div><div></div><div></div><div></div>
-                                                    <div class="hidden sm:block"></div><div class="hidden sm:block"></div><div class="hidden sm:block"></div>
-                                                </div>
-
-                                                <!-- BALOK AGENDA -->
-                                                <a :href="item.url"
-                                                   :style="'left: ' + item.left_pct + '%; width: ' + item.width_pct + '%;'"
-                                                   :title="item.text + ' (' + item.start_jam + ' - ' + item.end_jam + ' WITA)'"
-                                                   :class="item.is_rapat ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-indigo-400 shadow-indigo-100' : 'bg-gradient-to-r from-sky-500 to-blue-600 text-white border-sky-400 shadow-sky-100'"
-                                                   class="absolute h-8.5 rounded-xl text-white font-bold text-[10px] shadow-xs flex items-center justify-between px-2.5 transition-all hover:scale-[1.01] hover:shadow-md z-10 cursor-pointer overflow-hidden border">
-                                                    <span class="truncate font-extrabold flex items-center gap-1.5">
-                                                        <span class="w-1.5 h-1.5 rounded-full bg-white shrink-0"></span>
-                                                        <span class="truncate" x-text="item.text"></span>
-                                                    </span>
-                                                    <span class="ml-2 font-mono font-bold text-[9px] bg-black/25 px-1.5 py-0.5 rounded shrink-0" x-text="item.start_jam + ' - ' + item.end_jam"></span>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </template>
+                        {{-- Skala Waktu (Ruler 07:30 s.d 16:30) --}}
+                        <div class="flex items-center text-[10px] font-mono font-bold text-slate-500">
+                            <div class="w-28 sm:w-32 shrink-0 text-slate-400 font-sans text-[11px] font-semibold">Skala Jam:</div>
+                            <div class="flex-1 relative h-5">
+                                <div class="absolute inset-0 flex justify-between">
+                                    <span>07:30</span>
+                                    <span>08:30</span>
+                                    <span>09:30</span>
+                                    <span>10:30</span>
+                                    <span>11:30</span>
+                                    <span>12:30</span>
+                                    <span>13:30</span>
+                                    <span>14:30</span>
+                                    <span>15:30</span>
+                                    <span>16:30</span>
                                 </div>
                             </div>
                         </div>
 
-                        {{-- 2. Ketersediaan Waktu Lowong & Tombol Aksi --}}
-                        <template x-if="currentDay.total_agendas === 0">
-                            <div class="p-3 rounded-xl bg-emerald-50/80 border border-dashed border-emerald-300 text-emerald-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                                <div class="flex items-center gap-2">
-                                    <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    <div>
-                                        <p class="font-bold">Full Lowong (07:30 - 16:30 WITA)</p>
-                                        <p class="text-[11px] text-emerald-700">Tidak ada jadwal agenda pada hari ini. Anda dapat membuat rapat baru di waktu ini.</p>
+                        {{-- JALUR 1: BALOK WAKTU LOWONG --}}
+                        <div class="flex items-center">
+                            <div class="w-28 sm:w-32 shrink-0 pr-2">
+                                <span class="inline-flex items-center gap-1 text-xs font-black text-emerald-900">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <span>Waktu Lowong</span>
+                                </span>
+                            </div>
+                            <div class="flex-1 relative h-10 bg-slate-50 rounded-xl border border-slate-200 p-0.5 flex items-center overflow-hidden">
+                                <!-- 9 Kolom Grid Background -->
+                                <div class="absolute inset-0 grid grid-cols-9 divide-x divide-slate-200/80 pointer-events-none">
+                                    <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+                                </div>
+
+                                <!-- Balok Full Lowong jika 0 agenda -->
+                                <template x-if="currentDay.total_agendas === 0">
+                                    <a :href="currentDay.url_buat_rapat"
+                                       class="absolute inset-x-1 h-8 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs shadow-xs flex items-center justify-between px-3 transition cursor-pointer border border-emerald-400 z-10">
+                                        <span class="flex items-center gap-2">
+                                            <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
+                                            <span>FULL LOWONG (07:30 - 16:30 WITA) • Bebas Agenda</span>
+                                        </span>
+                                        <span class="bg-white text-emerald-800 text-[10px] px-2 py-0.5 rounded font-black">
+                                            + Jadwalkan Rapat
+                                        </span>
+                                    </a>
+                                </template>
+
+                                <!-- Balok-Balok Hijau Slot Lowong -->
+                                <template x-if="currentDay.total_agendas > 0">
+                                    <template x-for="(fs, fIdx) in currentDay.free_slots" :key="fIdx">
+                                        <a :href="currentDay.url_buat_rapat"
+                                           :style="'left: ' + fs.left_pct + '%; width: ' + fs.width_pct + '%;'"
+                                           :title="'Slot Lowong: ' + fs.start + ' - ' + fs.end + ' WITA (Klik untuk jadwalkan rapat)'"
+                                           class="absolute h-8 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-[10px] shadow-xs flex items-center justify-between px-2 transition z-10 cursor-pointer overflow-hidden border border-emerald-400 group">
+                                            <span class="truncate flex items-center gap-1 font-mono">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-white shrink-0"></span>
+                                                <span x-text="fs.start + ' - ' + fs.end"></span>
+                                            </span>
+                                            <span class="hidden group-hover:inline text-[9px] bg-white text-emerald-800 px-1 rounded font-black shrink-0 ml-1">
+                                                + Buat
+                                            </span>
+                                        </a>
+                                    </template>
+                                </template>
+                            </div>
+                        </div>
+
+                        {{-- JALUR 2+: BALOK AGENDA TERJADWAL --}}
+                        <div class="space-y-1.5 pt-1 border-t border-slate-100">
+                            <template x-if="currentDay.active_agendas.length === 0">
+                                <div class="py-2.5 text-center text-xs text-slate-400 italic bg-slate-50/50 rounded-xl">
+                                    Tidak ada agenda terjadwal pada hari ini. Seluruh waktu kerja dapat digunakan untuk menjadwalkan rapat baru.
+                                </div>
+                            </template>
+
+                            <template x-for="item in currentDay.active_agendas" :key="item.id">
+                                <div class="flex items-center">
+                                    <!-- Label Kiri Ringkas -->
+                                    <div class="w-28 sm:w-32 shrink-0 pr-2">
+                                        <div class="flex items-center gap-1">
+                                            <span :class="item.is_rapat ? 'bg-indigo-100 text-indigo-700' : 'bg-sky-100 text-sky-700'" 
+                                                  class="px-1.5 py-0.2 rounded text-[9px] font-black uppercase shrink-0" 
+                                                  x-text="item.jenis"></span>
+                                            <span class="text-xs font-bold text-slate-800 truncate" x-text="item.text" :title="item.text"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Balok di Kanvas Timeline -->
+                                    <div class="flex-1 relative h-9 bg-slate-50/50 rounded-xl border border-slate-200/60 p-0.5 flex items-center overflow-hidden">
+                                        <!-- 9 Kolom Grid Background -->
+                                        <div class="absolute inset-0 grid grid-cols-9 divide-x divide-slate-200/60 pointer-events-none">
+                                            <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+                                        </div>
+
+                                        <!-- BALOK AGENDA -->
+                                        <a :href="item.url"
+                                           :style="'left: ' + item.left_pct + '%; width: ' + item.width_pct + '%;'"
+                                           :title="item.text + ' (' + item.start_jam + ' - ' + item.end_jam + ' WITA)\nTempat: ' + item.tempat + '\nPJ: ' + item.pj"
+                                           :class="item.is_rapat 
+                                               ? 'bg-indigo-600 hover:bg-indigo-700 border-indigo-400 text-white shadow-xs' 
+                                               : 'bg-sky-600 hover:bg-sky-700 border-sky-400 text-white shadow-xs'"
+                                           class="absolute h-7.5 rounded-lg text-white font-bold text-[10px] shadow-xs flex items-center justify-between px-2 transition hover:scale-[1.01] hover:shadow-md z-10 cursor-pointer overflow-hidden border">
+                                            <span class="truncate font-extrabold flex items-center gap-1.5">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-white shrink-0"></span>
+                                                <span class="truncate" x-text="item.text"></span>
+                                            </span>
+                                            <span class="ml-2 font-mono font-bold text-[9px] bg-black/25 px-1 rounded shrink-0" x-text="item.start_jam + ' - ' + item.end_jam"></span>
+                                        </a>
                                     </div>
                                 </div>
-                                <a :href="currentDay.url_buat_rapat" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shrink-0 transition shadow-2xs">
-                                    + Buat Rapat Hari Ini
-                                </a>
-                            </div>
+                            </template>
+                        </div>
+
+                    </div>
+                </div>
+
+                {{-- 4. FOOTER TERPADU: Slot Lowong & Tombol Aksi (TIDAK BERHAMBURAN) --}}
+                <div class="px-4 py-3 bg-slate-50/90 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                    <!-- Slot Lowong Tersedia -->
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="font-bold text-slate-700 text-[11px] flex items-center gap-1 shrink-0">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span>Jam Lowong Tersedia:</span>
+                        </span>
+
+                        <template x-if="currentDay.total_agendas === 0">
+                            <span class="text-emerald-800 font-bold text-[11px]">Full 07:30 - 16:30 (9 Jam Bebas)</span>
                         </template>
 
                         <template x-if="currentDay.total_agendas > 0 && currentDay.free_slots.length > 0">
-                            <div class="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 text-emerald-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs">
-                                <div class="flex items-center gap-2 min-w-0">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
-                                    <div class="text-[11px]">
-                                        <span class="font-bold">Slot Waktu Lowong: </span>
-                                        <template x-for="(fs, fIdx) in currentDay.free_slots" :key="fIdx">
-                                            <span class="inline-block bg-white px-1.5 py-0.5 rounded border border-emerald-300 font-mono font-bold text-[10px] text-emerald-800 mr-1 mt-0.5">
-                                                <span x-text="fs.start + ' - ' + fs.end"></span>
-                                            </span>
-                                        </template>
-                                    </div>
-                                </div>
-                                <a :href="currentDay.url_buat_rapat" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shrink-0 transition">
-                                    + Jadwalkan di Jam Lowong
-                                </a>
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <template x-for="(fs, fIdx) in currentDay.free_slots" :key="fIdx">
+                                    <a :href="currentDay.url_buat_rapat" 
+                                       class="px-2 py-0.5 rounded-lg bg-white border border-emerald-300 hover:border-emerald-500 text-emerald-900 font-mono font-bold text-[11px] flex items-center gap-1 shadow-2xs transition">
+                                        <span x-text="fs.start + ' - ' + fs.end"></span>
+                                        <span class="text-[9px] text-emerald-600 font-sans font-extrabold">+ Jadwalkan</span>
+                                    </a>
+                                </template>
                             </div>
                         </template>
 
-                        {{-- 4. Collapsible Proyek Tahunan (Sedang Berjalan Tahun 2026) --}}
-                        <template x-if="currentDay.total_proyek_tahunan > 0">
-                            <div class="pt-2 border-t border-slate-100">
-                                <button type="button" 
-                                        @click="showProyekTahunan = !showProyekTahunan" 
-                                        class="text-[11px] font-bold text-slate-500 hover:text-slate-800 flex items-center justify-between w-full p-1.5 rounded-lg hover:bg-slate-50 transition">
-                                    <span class="flex items-center gap-1.5">
-                                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
-                                        <span>Proyek Tim Berjalan Tahun 2026 (<span x-text="currentDay.total_proyek_tahunan"></span> Proyek)</span>
-                                    </span>
-                                    <span class="text-[10px] text-blue-600 underline font-semibold" x-text="showProyekTahunan ? 'Tutup Proyek ▲' : 'Lihat Proyek ▼'"></span>
-                                </button>
+                        <template x-if="currentDay.total_agendas > 0 && currentDay.free_slots.length === 0">
+                            <span class="text-slate-400 italic text-[11px]">Seluruh jam kerja telah terisi agenda.</span>
+                        </template>
+                    </div>
 
-                                <div x-show="showProyekTahunan" class="mt-2 space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                                    <template x-for="p in currentDay.proyek_tahunan" :key="p.id">
-                                        <div class="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 flex items-center justify-between text-[11px]">
-                                            <div class="flex items-center gap-2 truncate">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
-                                                <span class="truncate font-medium" x-text="p.text"></span>
-                                            </div>
-                                            <a :href="p.url" class="text-blue-600 hover:text-blue-800 font-semibold text-[10px] shrink-0 ml-2">Detail</a>
-                                        </div>
-                                    </template>
-                                </div>
-                            </div>
+                    <!-- Tombol Buat Rapat & Toggle Rincian Agenda -->
+                    <div class="flex items-center gap-2 shrink-0">
+                        <template x-if="currentDay.total_agendas > 0">
+                            <button type="button" 
+                                    @click="showDetailAgenda = !showDetailAgenda"
+                                    class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs transition cursor-pointer">
+                                <span x-text="showDetailAgenda ? 'Tutup Daftar Agenda ▲' : 'Lihat ' + currentDay.total_agendas + ' Agenda ▼'"></span>
+                            </button>
                         </template>
 
-                    </div>
-                </template>
-            </div>
-
-            {{-- 2. TAB KALENDER: FULLCALENDAR BULANAN (TIDAK PENUH SESAK) --}}
-            <div x-show="dashboardTab === 'calendar'" class="space-y-3">
-                {{-- Filter Toolbar untuk Kalender Bulanan --}}
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-2 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                    <div class="flex items-center gap-1.5">
-                        <span class="font-bold text-slate-700 text-[11px]">Filter:</span>
-                        <div class="flex items-center gap-1 bg-white p-0.5 rounded-lg border border-slate-200">
-                            <button type="button" 
-                                    @click="setCalFilter('spesifik')"
-                                    :class="calFilter === 'spesifik' ? 'bg-blue-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
-                                    class="px-2.5 py-1 rounded-md text-[11px] transition">
-                                Agenda Terjadwal
-                            </button>
-                            <button type="button" 
-                                    @click="setCalFilter('rapat')"
-                                    :class="calFilter === 'rapat' ? 'bg-indigo-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
-                                    class="px-2.5 py-1 rounded-md text-[11px] transition">
-                                Hanya Rapat
-                            </button>
-                            <button type="button" 
-                                    @click="setCalFilter('all')"
-                                    :class="calFilter === 'all' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
-                                    class="px-2.5 py-1 rounded-md text-[11px] transition">
-                                Termasuk Proyek 2026
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-3 text-[11px] font-semibold text-slate-500">
-                        <div class="flex items-center gap-1.5">
-                            <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 inline-block"></span>
-                            <span>Rapat</span>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <span class="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span>
-                            <span>Kegiatan</span>
-                        </div>
+                        <a :href="currentDay.url_buat_rapat" 
+                           class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1 shadow-2xs transition cursor-pointer">
+                            <span>+ Buat Rapat</span>
+                        </a>
                     </div>
                 </div>
 
-                {{-- FullCalendar Element --}}
-                <div id="dashboardCalendar" class="min-h-[580px] bg-white rounded-xl p-1"></div>
+                {{-- 5. PANEL DETAIL AGENDA TERJADWAL (Collapsible Rapi, tidak berhamburan) --}}
+                <div x-show="showDetailAgenda" x-cloak class="p-4 bg-white border-t border-slate-200 space-y-2">
+                    <h4 class="font-extrabold text-xs text-slate-800 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                        <span>Daftar Agenda Hari <span x-text="currentDay.full_date"></span></span>
+                    </h4>
+                    <div class="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden text-xs">
+                        <template x-for="ag in currentDay.active_agendas" :key="ag.id">
+                            <div class="p-2.5 bg-slate-50/50 hover:bg-slate-50 flex items-center justify-between gap-3">
+                                <div class="min-w-0 space-y-0.5">
+                                    <div class="flex items-center gap-2">
+                                        <span :class="ag.is_rapat ? 'bg-indigo-100 text-indigo-700' : 'bg-sky-100 text-sky-700'" class="px-1.5 py-0.2 rounded text-[9px] font-black uppercase" x-text="ag.jenis"></span>
+                                        <span class="font-bold text-slate-900 truncate" x-text="ag.text"></span>
+                                    </div>
+                                    <p class="text-[11px] text-slate-500">
+                                        <span class="font-mono font-bold text-slate-700" x-text="ag.start_jam + ' - ' + ag.end_jam + ' WITA'"></span>
+                                        <span> • Tempat: </span><span x-text="ag.tempat"></span>
+                                        <span> • PJ: </span><span x-text="ag.pj"></span>
+                                    </p>
+                                </div>
+                                <a :href="ag.url" class="text-blue-600 hover:underline font-bold text-xs shrink-0">Detail &rarr;</a>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+            </div>
+        </template>
+
+        {{-- Accordion Proyek Tim Berjalan Tahun 2026 (Ringkas di bagian bawah) --}}
+        <template x-if="currentDay && currentDay.total_proyek_tahunan > 0">
+            <div class="pt-1">
+                <button type="button" 
+                        @click="showProyekTahunan = !showProyekTahunan" 
+                        class="text-[11px] font-bold text-slate-500 hover:text-slate-800 flex items-center justify-between w-full p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition cursor-pointer">
+                    <span class="flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                        <span>Proyek Tim Berjalan Tahun 2026 (<span x-text="currentDay.total_proyek_tahunan"></span> Proyek)</span>
+                    </span>
+                    <span class="text-[10px] text-blue-600 underline font-semibold" x-text="showProyekTahunan ? 'Tutup Proyek ▲' : 'Lihat Proyek ▼'"></span>
+                </button>
+
+                <div x-show="showProyekTahunan" class="mt-2 space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                    <template x-for="p in currentDay.proyek_tahunan" :key="p.id">
+                        <div class="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 flex items-center justify-between text-[11px]">
+                            <div class="flex items-center gap-2 truncate">
+                                <span class="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+                                <span class="truncate font-medium" x-text="p.text"></span>
+                            </div>
+                            <a :href="p.url" class="text-blue-600 hover:text-blue-800 font-semibold text-[10px] shrink-0 ml-2">Detail</a>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    {{-- ========================================================
+        5. KALENDER BULANAN AGENDA BPS (TERPISAH SEBAGAI CARD SENDIRI)
+    ========================================================= --}}
+    <div class="w-full calendar-section-card bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-xs space-y-4"
+         x-data="{ 
+             calFilter: 'spesifik',
+             setCalFilter(f) {
+                 this.calFilter = f;
+                 if (window.setCalendarFilter) {
+                     window.setCalendarFilter(f);
+                 }
+             }
+         }">
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold shadow-2xs">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-bold text-gray-900 leading-tight">Kalender Bulanan Agenda BPS</h3>
+                    <p class="text-[11px] text-gray-400">Pantau seluruh agenda rapat dan kegiatan bulanan BPS Provinsi Sulawesi Tenggara</p>
+                </div>
+            </div>
+
+            {{-- Filter Toolbar untuk Kalender Bulanan --}}
+            <div class="flex flex-wrap items-center gap-2">
+                <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-xl border border-gray-200 text-xs">
+                    <button type="button" 
+                            @click="setCalFilter('spesifik')"
+                            :class="calFilter === 'spesifik' ? 'bg-white text-blue-700 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+                            class="px-2.5 py-1 rounded-lg text-xs transition cursor-pointer">
+                        Agenda Terjadwal
+                    </button>
+                    <button type="button" 
+                            @click="setCalFilter('rapat')"
+                            :class="calFilter === 'rapat' ? 'bg-white text-indigo-700 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+                            class="px-2.5 py-1 rounded-lg text-xs transition cursor-pointer">
+                        Hanya Rapat
+                    </button>
+                    <button type="button" 
+                            @click="setCalFilter('all')"
+                            :class="calFilter === 'all' ? 'bg-white text-emerald-700 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+                            class="px-2.5 py-1 rounded-lg text-xs transition cursor-pointer">
+                        Termasuk Proyek 2026
+                    </button>
+                </div>
+
+                <div class="hidden sm:flex items-center gap-3 text-[11px] font-semibold text-slate-500 pl-2">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 inline-block"></span>
+                        <span>Rapat</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span>
+                        <span>Kegiatan</span>
+                    </div>
+                </div>
             </div>
         </div>
+
+        {{-- FullCalendar Element --}}
+        <div id="dashboardCalendar" class="min-h-[600px] bg-white rounded-xl p-1"></div>
+    </div>
 
     </div>
 

@@ -242,8 +242,13 @@ class DashboardController extends Controller
                     $eM = min(990, max($sM + 30, ((int)$parts[0] * 60) + (int)($parts[1] ?? 0)));
                 }
                 $occupied[] = ['start' => $sM, 'end' => $eM];
-                $ag['left_pct'] = round((($sM - 450) / 540) * 100, 1);
-                $ag['width_pct'] = max(7, round((($eM - $sM) / 540) * 100, 1));
+                $leftPct = round((($sM - 450) / 540) * 100, 1);
+                $widthPct = max(6, round((($eM - $sM) / 540) * 100, 1));
+                if ($leftPct + $widthPct > 100) {
+                    $widthPct = max(4, 100 - $leftPct);
+                }
+                $ag['left_pct'] = $leftPct;
+                $ag['width_pct'] = $widthPct;
             }
             unset($ag);
 
