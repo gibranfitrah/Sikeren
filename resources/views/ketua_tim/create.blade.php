@@ -38,28 +38,36 @@
     @endif
 
     {{-- BANNER UPLOAD TEMPLATE PST STARLA (OPSIONAL CEPAT) --}}
-    <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 rounded-2xl p-5 text-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div class="flex items-start sm:items-center gap-3.5">
-            <div class="w-12 h-12 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
+    <div class="rounded-2xl p-5 text-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+         style="background: linear-gradient(135deg, #059669 0%, #0d9488 50%, #0891b2 100%);">
+        <div class="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                 style="background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.35);">
                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
             </div>
-            <div>
-                <div class="flex items-center gap-2">
-                    <span class="px-2 py-0.5 rounded bg-white/20 text-[10px] font-extrabold uppercase tracking-wider text-emerald-100">Fitur Otomatis Starla</span>
-                    <span class="text-xs text-emerald-100 font-semibold">• Senin s.d. Jumat (2 Sesi/Hari)</span>
+            <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-2.5 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider"
+                          style="background: rgba(255, 255, 255, 0.25); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.35);">
+                        Fitur Otomatis Starla
+                    </span>
+                    <span class="text-xs font-semibold" style="color: #ecfdf5;">• Senin s.d. Jumat (2 Sesi/Hari)</span>
                 </div>
-                <h3 class="text-base font-extrabold text-white mt-0.5">Upload Jadwal Petugas PST (Template Starla)</h3>
-                <p class="text-xs text-emerald-100/90 leading-relaxed mt-0.5 max-w-2xl">
+                <h3 class="text-base sm:text-lg font-black mt-1" style="color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+                    Upload Jadwal Petugas PST (Template Starla)
+                </h3>
+                <p class="text-xs leading-relaxed mt-1 max-w-2xl font-medium" style="color: #f0fdf4;">
                     Import otomatis jadwal petugas Pelayanan Statistik Terpadu (PST) dari template Excel Starla. Jadwal otomatis berulang per hari kerja dan dapat diklik di kalender dashboard untuk melihat petugas yang bertugas.
                 </p>
             </div>
         </div>
         <button type="button" 
                 onclick="document.getElementById('modalUploadPst').classList.remove('hidden')"
-                class="px-4 py-2.5 rounded-xl bg-white hover:bg-emerald-50 text-emerald-800 font-extrabold text-xs shadow-md transition flex items-center justify-center gap-2 shrink-0 active:scale-95">
-            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                class="px-5 py-2.5 rounded-xl font-extrabold text-xs shadow-md transition flex items-center justify-center gap-2 shrink-0 cursor-pointer active:scale-95 hover:opacity-95"
+                style="background-color: #ffffff; color: #065f46; border: 1px solid #d1fae5;">
+            <svg class="w-4 h-4" style="color: #059669;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
             <span>Upload Template PST</span>
         </button>
     </div>
@@ -416,19 +424,23 @@
 {{-- MODAL UPLOAD TEMPLATE PST STARLA --}}
 <div id="modalUploadPst" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs hidden transition-opacity">
     <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
-        <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 p-5 text-white flex items-center justify-between">
+        <div class="p-5 text-white flex items-center justify-between"
+             style="background: linear-gradient(135deg, #059669 0%, #0d9488 50%, #0891b2 100%);">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-white">
+                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white"
+                     style="background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.35);">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                     </svg>
                 </div>
                 <div>
                     <h3 class="font-black text-sm text-white">Upload Jadwal Petugas PST (Starla)</h3>
-                    <p class="text-[11px] text-emerald-100">Jadwal Harian Senin - Jumat & Penugasan Petugas</p>
+                    <p class="text-[11px]" style="color: #ecfdf5;">Jadwal Harian Senin - Jumat & Penugasan Petugas</p>
                 </div>
             </div>
-            <button type="button" onclick="document.getElementById('modalUploadPst').classList.add('hidden')" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/25 flex items-center justify-center text-white transition">
+            <button type="button" onclick="document.getElementById('modalUploadPst').classList.add('hidden')" 
+                    class="w-8 h-8 rounded-xl flex items-center justify-center text-white transition hover:bg-white/25 cursor-pointer"
+                    style="background: rgba(255, 255, 255, 0.15);">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
