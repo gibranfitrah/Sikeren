@@ -48,7 +48,7 @@
     $isWaiting  = ($setujuVal === 0 && !$isApproved && !$isRejected && in_array($stLower, ['menunggu', 'menunggu persetujuan', 'belum']));
 @endphp
 
-<div class="space-y-6 pb-12" x-data="{ modalTambahSub: false, modalEditSub: false, activeSub: null, modalUpdateStatus: false, newStatus: '{{ $task->status ?? 'Sedang Berjalan' }}', alasanStatus: '{{ addslashes($task->alasan_status ?? '') }}' }">
+<div class="space-y-6 pb-12 w-full max-w-full" x-data="{ modalTambahSub: false, modalEditSub: false, activeSub: null, modalUpdateStatus: false, newStatus: '{{ $task->status ?? 'Sedang Berjalan' }}', alasanStatus: '{{ addslashes($task->alasan_status ?? '') }}' }">
 
     {{-- =========================================================================
         1. TOP HEADER & ACTIONS
@@ -63,10 +63,10 @@
         <x-slot name="action"> 
 
             @if(!empty($task->id))
-                <div class="relative" x-data="{ unduhOpen: false }">
+                <div class="relative shrink-0" x-data="{ unduhOpen: false }">
                     <button type="button" 
                             @click="unduhOpen = !unduhOpen"
-                            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition shadow-2xs cursor-pointer">
+                            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition shadow-2xs cursor-pointer shrink-0">
                         <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                         <span>Unduh Dokumen</span>
                         <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="unduhOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -95,13 +95,15 @@
                 </div>
             @endif
 
-            <x-button 
-                variant="primary" 
-                size="sm"
-                @click="modalTambahSub = true"
-                icon='<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>'>
-                Tambah Sub Kegiatan
-            </x-button>
+            @if(!$task->is_pst)
+                <x-button 
+                    variant="primary" 
+                    size="sm"
+                    @click="modalTambahSub = true"
+                    icon='<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>'>
+                    Tambah Sub Kegiatan
+                </x-button>
+            @endif
         </x-slot>
     </x-heading>
 
@@ -120,7 +122,7 @@
     ========================================================================== --}}
     <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-            <div class="flex items-center gap-3.5">
+            <div class="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
                 <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 {{ $isDone ? 'bg-emerald-100 text-emerald-700' : ($isDelayed ? 'bg-amber-100 text-amber-700' : ($isInactive || $isRejected ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700')) }}">
                     @if($isDone)
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
@@ -132,12 +134,12 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     @endif
                 </div>
-                <div>
-                    <div class="flex items-center gap-2">
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2 flex-wrap">
                         <span class="text-xs font-semibold text-slate-500">Status:</span>
                         <x-badge :variant="$statusVariant" size="xs" :dot="true">{{ $statusText }}</x-badge>
                     </div>
-                    <p class="text-xs text-slate-600 mt-0.5">
+                    <p class="text-xs text-slate-600 mt-0.5 break-words">
                         @if($isDone)
                             Kegiatan telah selesai dan seluruh target tuntas 100%.
                         @elseif($isDelayed)
@@ -238,6 +240,7 @@
                 subtitle="Tahapan pengerjaan kegiatan yang terbagi ke anggota tim"
                 tag="Milestone">
                 
+                @if(!$task->is_pst)
                 <x-slot name="action">
                     <x-button 
                         variant="primary" 
@@ -247,6 +250,7 @@
                         Sub Baru
                     </x-button>
                 </x-slot>
+                @endif
 
                 @if($subKegiatans->count() > 0)
                     <div class="space-y-4">
