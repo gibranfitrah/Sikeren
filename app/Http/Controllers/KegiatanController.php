@@ -218,12 +218,12 @@ class KegiatanController extends Controller
 
         // Query all rapat & kegiatan
         // Ketua tim can see all, or user filter if not ketua tim
-        $kegiatans = Task::with('subKegiatans')
+        $kegiatans = Task::with(['subKegiatans', 'penugasans'])
             ->where('tasks.jenis', 'Rapat')
             ->orderBy('tasks.id', 'desc')
             ->get();
 
-        $kegiatans2 = Task::with('subKegiatans')
+        $kegiatans2 = Task::with(['subKegiatans', 'penugasans'])
             ->where('tasks.jenis', 'Kegiatan')
             ->orderBy('tasks.id', 'desc')
             ->get();

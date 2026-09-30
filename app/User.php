@@ -300,6 +300,33 @@ class User extends Authenticatable
         return $slug ?: 'user';
     }
 
+    public function isPetugasPst()
+    {
+        $nip = trim($this->niplama ?? '');
+        $nipbaru = trim($this->nipbaru ?? '');
+        $cleanName = trim(explode(',', $this->nama_lengkap ?? '')[0]);
+
+        return \DB::table('penugasans')
+            ->join('tasks', 'tasks.id', '=', 'penugasans.id_kegiatan')
+            ->where(function ($q) {
+                $q->where('tasks.jenis_kegiatan', 'Pelayanan Statistik Terpadu (PST)')
+                  ->orWhere('tasks.text', 'like', '%PST%')
+                  ->orWhere('penugasans.keterangan', 'like', '%PST%');
+            })
+            ->where(function ($q) use ($nip, $nipbaru, $cleanName) {
+                if (!empty($nip) && $nip !== '-') {
+                    $q->where('penugasans.niplama', $nip);
+                }
+                if (!empty($nipbaru) && $nipbaru !== '-') {
+                    $q->orWhere('penugasans.niplama', $nipbaru);
+                }
+                if (!empty($cleanName)) {
+                    $q->orWhere('penugasans.peserta', 'LIKE', '%' . $cleanName . '%');
+                }
+            })
+            ->exists();
+    }
+
     public function canAccessDetailKegiatan($task = null)
     {
         // 1. Super Administrator memiliki akses penuh ke seluruh kegiatan & rapat
@@ -312,9 +339,55 @@ class User extends Authenticatable
         }
 
         $nama      = strtolower(trim($this->nama_lengkap ?? ''));
+        $cleanName = trim(explode(',', $this->nama_lengkap ?? '')[0]);
+        $cleanNameLower = strtolower($cleanName);
         $username  = strtolower(trim($this->username ?? ''));
         $nip       = trim($this->niplama ?? '');
         $nipbaru   = trim($this->nipbaru ?? '');
+
+        // 1.B. Khusus Kegiatan PST (Pelayanan Statistik Terpadu):
+        // Setiap Petugas PST berhak login dan mengakses detail kegiatan PST
+        $isPst = ($task->jenis_kegiatan === 'Pelayanan Statistik Terpadu (PST)' || 
+                  stripos($task->text ?? '', 'PST') !== false || 
+                  stripos($task->agenda ?? '', 'PST') !== false);
+
+        if ($isPst) {
+            // A. Cek apakah user adalah salah satu petugas di sesi PST ini (di tabel penugasans)
+            $isPetugasThisTask = \DB::table('penugasans')
+                ->where('id_kegiatan', $task->id)
+                ->where(function ($q) use ($nip, $nipbaru, $cleanName, $nama) {
+                    if (!empty($nip) && $nip !== '-') $q->where('niplama', $nip);
+                    if (!empty($nipbaru) && $nipbaru !== '-') $q->orWhere('niplama', $nipbaru);
+                    if (!empty($cleanName)) $q->orWhere('peserta', 'LIKE', '%' . $cleanName . '%');
+                    if (!empty($nama)) $q->orWhere('peserta', 'LIKE', '%' . $nama . '%');
+                })
+                ->exists();
+
+            if ($isPetugasThisTask) {
+                return true;
+            }
+
+            // B. Cek apakah nama/NIP user ada di penanggung_jawab atau agenda task
+            if (!empty($task->penanggung_jawab)) {
+                $pjLower = strtolower($task->penanggung_jawab);
+                if ((!empty($cleanNameLower) && str_contains($pjLower, $cleanNameLower)) ||
+                    (!empty($nip) && $nip !== '-' && str_contains($pjLower, $nip))) {
+                    return true;
+                }
+            }
+
+            if (!empty($task->agenda)) {
+                $agendaLower = strtolower($task->agenda);
+                if (!empty($cleanNameLower) && str_contains($agendaLower, $cleanNameLower)) {
+                    return true;
+                }
+            }
+
+            // C. Petugas PST BPS (terdaftar di penugasan sesi PST manapun) atau Ketua Tim / PJ berhak melihat jadwal & detail PST
+            if ($this->isPetugasPst() || $this->isKetuaTimOrPj()) {
+                return true;
+            }
+        }
 
         // 2. Cek apakah user secara spesifik DITUNJUK pada kegiatan / rapat ini:
         // A. Ditunjuk sebagai Penanggung Jawab (PJ)
@@ -322,6 +395,7 @@ class User extends Authenticatable
         if (!empty($pj)) {
             if (
                 (!empty($nama) && (str_contains($pj, $nama) || str_contains($nama, $pj))) ||
+                (!empty($cleanNameLower) && str_contains($pj, $cleanNameLower)) ||
                 (!empty($username) && str_contains($pj, $username)) ||
                 (!empty($nip) && $nip !== '-' && str_contains($pj, $nip)) ||
                 (!empty($nipbaru) && $nipbaru !== '-' && str_contains($pj, $nipbaru))
@@ -386,7 +460,7 @@ class User extends Authenticatable
         // E. Ditunjuk sebagai Peserta / Anggota (di tabel penugasans)
         $isPesertaPenugasan = \DB::table('penugasans')
             ->where('id_kegiatan', $task->id)
-            ->where(function ($q) use ($nip, $nipbaru, $nama) {
+            ->where(function ($q) use ($nip, $nipbaru, $nama, $cleanName) {
                 if (!empty($nip) && $nip !== '-') {
                     $q->where('niplama', $nip);
                 }
@@ -396,6 +470,9 @@ class User extends Authenticatable
                 if (!empty($nama)) {
                     $q->orWhere('peserta', $this->nama_lengkap);
                     $q->orWhere('peserta', 'LIKE', '%' . $nama . '%');
+                }
+                if (!empty($cleanName)) {
+                    $q->orWhere('peserta', 'LIKE', '%' . $cleanName . '%');
                 }
             })
             ->exists();

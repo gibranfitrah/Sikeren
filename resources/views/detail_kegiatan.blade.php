@@ -56,7 +56,7 @@
     <x-heading 
         :title="$task->text"
         :subtitle="'Agenda: ' . ($task->agenda ?? 'Tidak ada catatan agenda khusus')"
-        tag="Kegiatan Tim"
+        :tag="$task->is_pst ? 'Petugas PST' : 'Kegiatan Tim'"
         :subtag="$task->tim ?? 'BPS Provinsi Sulawesi Tenggara'"
         :backUrl="url('/daftar_kegiatan')">
         
@@ -145,11 +145,11 @@
                         @elseif($isInactive)
                             Kegiatan tidak berjalan / dibatalkan.
                         @elseif($isRejected)
-                            Kegiatan ini ditolak oleh Penanggung Jawab.
+                            {{ $task->is_pst ? 'Jadwal penugasan PST ini ditolak.' : 'Kegiatan ini ditolak oleh Penanggung Jawab.' }}
                         @elseif($isApproved)
-                            Kegiatan disetujui oleh Penanggung Jawab dan sedang berjalan.
+                            {{ $task->is_pst ? 'Jadwal Petugas PST terkonfirmasi dan sedang berjalan.' : 'Kegiatan disetujui oleh Penanggung Jawab dan sedang berjalan.' }}
                         @else
-                            Menunggu persetujuan Penanggung Jawab ({{ $pjNama }}).
+                            {{ $task->is_pst ? 'Menunggu konfirmasi Petugas.' : 'Menunggu persetujuan Penanggung Jawab (' . $pjNama . ').' }}
                         @endif
                     </p>
                 </div>
@@ -215,7 +215,7 @@
                 <p class="text-[11px] text-slate-500 mt-1.5">{{ $completedSub }} dari {{ $totalSub }} sub kegiatan selesai</p>
             </div>
             <div class="bg-slate-50/70 rounded-xl p-3.5 border border-slate-100">
-                <span class="text-[11px] font-semibold text-slate-500 block mb-1">Penanggung Jawab</span>
+                <span class="text-[11px] font-semibold text-slate-500 block mb-1">{{ $task->is_pst ? 'Petugas Utama' : 'Penanggung Jawab' }}</span>
                 <p class="text-sm font-bold text-slate-900 truncate">{{ $pjNama }}</p>
                 <p class="text-[11px] text-slate-500 mt-0.5">{{ $task->tim ?? 'Tim BPS' }}</p>
             </div>
@@ -480,53 +480,104 @@
                 </div>
             </x-card>
 
-            {{-- 2. PENANGGUNG JAWAB (PJ) --}}
-            <x-card 
-                title="Penanggung Jawab Kegiatan" 
-                subtitle="Koordinator utama pelaksanaan kegiatan"
-                tag="PJ">
-                
-                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
-                    <div class="flex items-center gap-3.5">
-                        <div class="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-base shadow-xs">
-                            {{ strtoupper(substr($pjNama, 0, 1)) }}
-                        </div>
-                        <div class="space-y-0.5 min-w-0">
-                            <h4 class="font-bold text-slate-900 text-sm truncate">{{ $pjNama }}</h4>
-                            <p class="text-xs text-slate-500 font-medium truncate">{{ $task->tim ?? 'Penanggung Jawab' }}</p>
+            {{-- 2. PETUGAS PST ATAU PENANGGUNG JAWAB (PJ) --}}
+            @if($task->is_pst)
+                @php
+                    $petugasPstList = $task->penugasans;
+                @endphp
+                <x-card 
+                    title="Petugas Pelayanan Statistik Terpadu (PST)" 
+                    subtitle="Daftar petugas yang bertugas pada sesi ini"
+                    tag="Petugas">
+                    
+                    <x-slot name="action">
+                        <x-badge variant="primary" size="xs">{{ $petugasPstList->count() ?: 1 }} Petugas</x-badge>
+                    </x-slot>
+
+                    <div class="space-y-2 max-h-96 overflow-y-auto pr-1">
+                        @forelse($petugasPstList as $p)
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-xs shrink-0">
+                                        {{ strtoupper(substr($p->peserta ?? 'P', 0, 1)) }}
+                                    </div>
+                                    <div class="space-y-0.5 min-w-0">
+                                        <h4 class="font-bold text-slate-900 text-xs truncate">{{ $p->peserta }}</h4>
+                                        <p class="text-[11px] text-slate-500 font-medium truncate">
+                                            @if(!empty($p->niplama) && $p->niplama !== '-')
+                                                NIP: {{ $p->niplama }}
+                                            @endif
+                                            {{ $p->keterangan ? ' • ' . $p->keterangan : '' }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <span class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 shrink-0">
+                                    Petugas
+                                </span>
+                            </div>
+                        @empty
+                            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                                <div class="flex items-center gap-3.5">
+                                    <div class="w-11 h-11 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-base shadow-xs">
+                                        {{ strtoupper(substr($pjNama, 0, 1)) }}
+                                    </div>
+                                    <div class="space-y-0.5 min-w-0">
+                                        <h4 class="font-bold text-slate-900 text-sm truncate">{{ $pjNama }}</h4>
+                                        <p class="text-xs text-slate-500 font-medium truncate">Petugas PST</p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforelse
+                    </div>
+                </x-card>
+            @else
+                <x-card 
+                    title="Penanggung Jawab Kegiatan" 
+                    subtitle="Koordinator utama pelaksanaan kegiatan"
+                    tag="PJ">
+                    
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-base shadow-xs">
+                                {{ strtoupper(substr($pjNama, 0, 1)) }}
+                            </div>
+                            <div class="space-y-0.5 min-w-0">
+                                <h4 class="font-bold text-slate-900 text-sm truncate">{{ $pjNama }}</h4>
+                                <p class="text-xs text-slate-500 font-medium truncate">{{ $task->tim ?? 'Penanggung Jawab' }}</p>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </x-card>
+                </x-card>
 
-            {{-- 3. ANGGOTA TIM PELAKSANA --}}
-            <x-card 
-                title="Anggota Tim yang Ditugaskan" 
-                subtitle="Daftar pegawai yang terlibat dalam kegiatan ini"
-                tag="Tim">
-                
-                <x-slot name="action">
-                    <x-badge variant="neutral" size="xs">{{ $assignedUsers->count() }} Anggota</x-badge>
-                </x-slot>
+                {{-- 3. ANGGOTA TIM PELAKSANA --}}
+                <x-card 
+                    title="Anggota Tim yang Ditugaskan" 
+                    subtitle="Daftar pegawai yang terlibat dalam kegiatan ini"
+                    tag="Tim">
+                    
+                    <x-slot name="action">
+                        <x-badge variant="neutral" size="xs">{{ $assignedUsers->count() }} Anggota</x-badge>
+                    </x-slot>
 
-                <div class="space-y-2 max-h-80 overflow-y-auto pr-1">
-                    @forelse($assignedUsers as $usr)
-                        <div class="p-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-100 transition flex items-center justify-between gap-3">
-                            <div class="flex items-center gap-2.5 min-w-0">
-                                <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0">
-                                    {{ strtoupper(substr($usr->nama_lengkap ?? ($usr->username ?? 'U'), 0, 1)) }}
+                    <div class="space-y-2 max-h-80 overflow-y-auto pr-1">
+                        @forelse($assignedUsers as $usr)
+                            <div class="p-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-100 transition flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0">
+                                        {{ strtoupper(substr($usr->nama_lengkap ?? ($usr->username ?? 'U'), 0, 1)) }}
+                                    </div>
+                                    <p class="text-xs font-semibold text-slate-800 truncate">{{ $usr->nama_lengkap ?? $usr->username }}</p>
                                 </div>
-                                <p class="text-xs font-semibold text-slate-800 truncate">{{ $usr->nama_lengkap ?? $usr->username }}</p>
+                                <x-badge variant="success" size="xs">Ditugaskan</x-badge>
                             </div>
-                            <x-badge variant="success" size="xs">Ditugaskan</x-badge>
-                        </div>
-                    @empty
-                        <div class="p-6 text-center text-slate-400 text-xs">
-                            <p>Tidak ada anggota tambahan yang tercatat di penugasan.</p>
-                        </div>
-                    @endforelse
-                </div>
-            </x-card>
+                        @empty
+                            <div class="p-6 text-center text-slate-400 text-xs">
+                                <p>Tidak ada anggota tambahan yang tercatat di penugasan.</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </x-card>
+            @endif
 
         </div>
 
@@ -594,7 +645,7 @@
                     <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    <span><strong>Penanggung Jawab (PJ):</strong> {{ $task->penanggung_jawab ?? ($task->pemimpin ?? 'Ketua Tim / PJ') }} (Otomatis dari Kegiatan Utama)</span>
+                    <span><strong>{{ $task->is_pst ? 'Petugas Utama' : 'Penanggung Jawab (PJ)' }}:</strong> {{ $task->penanggung_jawab ?? ($task->pemimpin ?? ($task->is_pst ? 'Petugas PST' : 'Ketua Tim / PJ')) }} (Otomatis dari Kegiatan Utama)</span>
                 </div>
 
                 {{-- Keterangan --}}

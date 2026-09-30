@@ -26,6 +26,27 @@ class Task extends Model
         return $this->hasOne(RoomBooking::class, 'task_id');
     }
 
+    public function penugasans()
+    {
+        return $this->hasMany(\App\penugasan::class, 'id_kegiatan');
+    }
+
+    public function getIsPstAttribute()
+    {
+        return ($this->jenis_kegiatan === 'Pelayanan Statistik Terpadu (PST)' || 
+                stripos($this->text ?? '', 'PST') !== false || 
+                stripos($this->agenda ?? '', 'PST') !== false);
+    }
+
+    public function getPetugasListAttribute()
+    {
+        $names = $this->penugasans->pluck('peserta')->filter()->unique()->values()->all();
+        if (empty($names) && !empty($this->penanggung_jawab)) {
+            $names = [$this->penanggung_jawab];
+        }
+        return $names;
+    }
+
     public function getWilayahListAttribute()
     {
         if (empty($this->wilayah)) {
