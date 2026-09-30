@@ -56,7 +56,7 @@
     expandedSub: null, 
     approvalModal: { open: false, id: null, text: '', pj: '', jenis: 'Kegiatan' },
     statusModal: { open: false, id: null, text: '', currentStatus: 'Sedang Berjalan', newStatus: 'Sedang Berjalan', alasan: '' }
-}">
+}" @close-sub.window="expandedSub = null">
 
     {{-- HEADER SECTION & ACTION BUTTONS --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-200/80 shadow-xs">
@@ -917,6 +917,7 @@ const paginationState = {
 let currentTab = 'tab-kegiatan';
 
 function switchTab(tabId) {
+    window.dispatchEvent(new CustomEvent('close-sub'));
     currentTab = tabId;
 
     document.querySelectorAll('.tab-panel').forEach(function(el) {
@@ -948,6 +949,7 @@ function switchTab(tabId) {
 }
 
 function filterTable() {
+    window.dispatchEvent(new CustomEvent('close-sub'));
     // When searching, reset to page 1 for both
     paginationState.kegiatan.currentPage = 1;
     paginationState.rapat.currentPage = 1;
@@ -956,12 +958,14 @@ function filterTable() {
 }
 
 function changePerPage(type, val) {
+    window.dispatchEvent(new CustomEvent('close-sub'));
     paginationState[type].perPage = parseInt(val, 10) || 5;
     paginationState[type].currentPage = 1;
     renderPagination(type);
 }
 
 function goToPage(type, page) {
+    window.dispatchEvent(new CustomEvent('close-sub'));
     paginationState[type].currentPage = page;
     renderPagination(type);
 }
@@ -1009,8 +1013,6 @@ function renderPagination(type) {
             if (nextRow && nextRow.classList.contains('sub-kegiatan-row')) {
                 if (!isVisible) {
                     nextRow.style.display = 'none';
-                } else if (nextRow.style.display === 'none') {
-                    nextRow.style.display = '';
                 }
             }
         }
