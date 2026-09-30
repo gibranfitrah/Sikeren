@@ -55,7 +55,8 @@
 <div class="space-y-6 pb-12 max-w-7xl mx-auto" x-data="{ 
     expandedSub: null, 
     approvalModal: { open: false, id: null, text: '', pj: '', jenis: 'Kegiatan' },
-    statusModal: { open: false, id: null, text: '', currentStatus: 'Sedang Berjalan', newStatus: 'Sedang Berjalan', alasan: '' }
+    statusModal: { open: false, id: null, text: '', currentStatus: 'Sedang Berjalan', newStatus: 'Sedang Berjalan', alasan: '' },
+    petugasModal: { open: false, kegiatan: '', tanggal: '', jam: '', tempat: '', petugas: [] }
 }" @close-sub.window="expandedSub = null">
 
     {{-- HEADER SECTION & ACTION BUTTONS --}}
@@ -257,6 +258,27 @@
                         @php
                             $isPst = $item->is_pst;
                             $petugasList = $isPst ? $item->petugas_list : [];
+                            $petugasDetailList = [];
+                            if ($isPst) {
+                                foreach ($item->penugasans as $p) {
+                                    $petugasDetailList[] = [
+                                        'nama' => $p->peserta,
+                                        'nip' => (!empty($p->niplama) && $p->niplama !== '-') ? $p->niplama : null,
+                                        'keterangan' => $p->keterangan ?: 'Petugas PST',
+                                        'status' => $p->status_kehadiran ?: 'Bertugas'
+                                    ];
+                                }
+                                if (empty($petugasDetailList)) {
+                                    foreach ($petugasList as $pName) {
+                                        $petugasDetailList[] = [
+                                            'nama' => $pName,
+                                            'nip' => null,
+                                            'keterangan' => 'Petugas PST',
+                                            'status' => 'Bertugas'
+                                        ];
+                                    }
+                                }
+                            }
                             $subs = $item->subKegiatans;
                             $subCount = count($subs);
                             $wilayahList = $item->wilayah_list;
@@ -342,11 +364,35 @@
                                         @if($isPst)
                                             <span class="text-indigo-900 font-bold">Petugas:</span>
                                             @if(!empty($petugasList))
-                                                <span class="font-bold text-gray-900">{{ $petugasList[0] }}</span>
+                                                <button type="button" 
+                                                        @click="petugasModal = { 
+                                                            open: true, 
+                                                            kegiatan: '{{ addslashes($item->text) }}', 
+                                                            tanggal: '{{ $item->start_date ? \Carbon\Carbon::parse($item->start_date)->translatedFormat('d F Y') : '-' }}',
+                                                            jam: '{{ $item->start_jam ? substr($item->start_jam, 0, 5) . ' - ' . substr($item->end_jam, 0, 5) . ' WITA' : '' }}',
+                                                            tempat: '{{ addslashes($item->tempat ?: 'Ruang PST BPS Provinsi Sulawesi Tenggara') }}',
+                                                            petugas: {{ json_encode($petugasDetailList) }}
+                                                        }"
+                                                        class="font-bold text-gray-900 hover:text-indigo-600 transition text-left cursor-pointer inline-flex items-center gap-1">
+                                                    <span>{{ $petugasList[0] }}</span>
+                                                </button>
                                                 @if(count($petugasList) > 1)
-                                                    <span class="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded-md font-extrabold cursor-help inline-block ml-1" title="Seluruh Petugas: {{ implode(', ', $petugasList) }}">
-                                                        +{{ count($petugasList) - 1 }} Petugas
-                                                    </span>
+                                                    <button type="button" 
+                                                            @click="petugasModal = { 
+                                                                open: true, 
+                                                                kegiatan: '{{ addslashes($item->text) }}', 
+                                                                tanggal: '{{ $item->start_date ? \Carbon\Carbon::parse($item->start_date)->translatedFormat('d F Y') : '-' }}',
+                                                                jam: '{{ $item->start_jam ? substr($item->start_jam, 0, 5) . ' - ' . substr($item->end_jam, 0, 5) . ' WITA' : '' }}',
+                                                                tempat: '{{ addslashes($item->tempat ?: 'Ruang PST BPS Provinsi Sulawesi Tenggara') }}',
+                                                                petugas: {{ json_encode($petugasDetailList) }}
+                                                            }"
+                                                            class="text-[10px] text-indigo-700 bg-indigo-50 hover:bg-indigo-100 hover:text-indigo-900 border border-indigo-200 hover:border-indigo-300 px-2 py-0.5 rounded-lg font-extrabold cursor-pointer inline-flex items-center gap-1 ml-1 transition shadow-2xs active:scale-95" 
+                                                            title="Klik untuk melihat seluruh petugas PST">
+                                                        <svg class="w-3 h-3 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                                        </svg>
+                                                        <span>+{{ count($petugasList) - 1 }} Petugas</span>
+                                                    </button>
                                                 @endif
                                             @else
                                                 <span class="font-bold text-gray-900">{{ $item->penanggung_jawab ?: '-' }}</span>
@@ -919,6 +965,107 @@
 
         </div>
     </div>
+
+    {{-- =========================================================================
+        MODAL POPUP DAFTAR PETUGAS PST
+    ========================================================================== --}}
+    <div x-show="petugasModal.open" 
+         x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-lg p-6 space-y-4 my-8 transition-all transform"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             @click.away="petugasModal.open = false">
+            
+            {{-- Modal Header --}}
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0 shadow-2xs border border-indigo-100">
+                        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-black text-slate-900 text-base">Daftar Petugas PST</h3>
+                            <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200" x-text="(petugasModal.petugas ? petugasModal.petugas.length : 0) + ' Petugas'"></span>
+                        </div>
+                        <p class="text-xs text-slate-500 font-medium truncate max-w-xs sm:max-w-sm" x-text="petugasModal.kegiatan"></p>
+                    </div>
+                </div>
+                <button type="button" @click="petugasModal.open = false" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-xl transition cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            {{-- Info Waktu & Tempat --}}
+            <div class="p-3.5 bg-indigo-50/50 rounded-2xl border border-indigo-100 space-y-1.5 text-xs">
+                <div class="flex items-center gap-2 text-indigo-900 font-semibold">
+                    <svg class="w-4 h-4 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <span x-text="petugasModal.tanggal"></span>
+                    <template x-if="petugasModal.jam">
+                        <span class="text-indigo-400">•</span>
+                    </template>
+                    <span x-show="petugasModal.jam" x-text="petugasModal.jam" class="font-bold"></span>
+                </div>
+                <div class="flex items-center gap-2 text-slate-600 text-[11px]">
+                    <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span x-text="petugasModal.tempat"></span>
+                </div>
+            </div>
+
+            {{-- List Petugas --}}
+            <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
+                <template x-for="(p, index) in petugasModal.petugas" :key="index">
+                    <div class="p-3 rounded-2xl bg-slate-50 hover:bg-indigo-50/30 border border-slate-200/70 hover:border-indigo-200 transition flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-xs shadow-xs shrink-0"
+                                 x-text="p.nama ? p.nama.substring(0, 1).toUpperCase() : 'P'">
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="font-bold text-slate-900 text-xs truncate" x-text="p.nama"></h4>
+                                <p class="text-[11px] text-slate-500 font-medium truncate">
+                                    <template x-if="p.nip">
+                                        <span x-text="'NIP: ' + p.nip"></span>
+                                    </template>
+                                    <template x-if="p.nip && p.keterangan">
+                                        <span> • </span>
+                                    </template>
+                                    <span x-text="p.keterangan"></span>
+                                </p>
+                            </div>
+                        </div>
+                        <span class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0 flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            <span x-text="p.status || 'Petugas'"></span>
+                        </span>
+                    </div>
+                </template>
+            </div>
+
+            {{-- Modal Footer --}}
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <span class="text-xs text-slate-400 font-medium" x-text="'Total ' + (petugasModal.petugas ? petugasModal.petugas.length : 0) + ' petugas'"></span>
+                <button type="button" 
+                        @click="petugasModal.open = false" 
+                        class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer">
+                    Tutup
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
 
 <script>
 const paginationState = {
