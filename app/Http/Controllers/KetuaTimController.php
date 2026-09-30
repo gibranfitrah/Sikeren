@@ -20,6 +20,8 @@ class KetuaTimController extends Controller
      */
     public function index()
     {
+        Task::updateExpiredKegiatanStatus();
+
         $totalAgenda     = Task::where('jenis', 'Kegiatan')->count();
         $agendaTerjadwal = Task::where('jenis', 'Kegiatan')->where(function($q) {
             $q->where('status', '!=', 'Selesai')->orWhereNull('status');

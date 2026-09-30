@@ -303,11 +303,23 @@
                             if (strlen($itemJamClean) === 5) {
                                 $itemJamClean .= ':00';
                             }
+                            $isPastDateTime = false;
+                            try {
+                                $isPastDateTime = \Carbon\Carbon::now()->greaterThan(\Carbon\Carbon::parse($itemEnd . ' ' . $itemJamClean));
+                            } catch (\Exception $e) {}
+
                             $isExpiredRapat = false;
                             if ($isRapat && !$isDone && $item->setuju_rapat != 3 && $st !== 'ditolak') {
-                                try {
-                                    $isExpiredRapat = \Carbon\Carbon::now()->greaterThan(\Carbon\Carbon::parse($itemEnd . ' ' . $itemJamClean));
-                                } catch (\Exception $e) {}
+                                $isExpiredRapat = $isPastDateTime;
+                            }
+
+                            // Untuk kegiatan (baik PST maupun kegiatan umum/tim): jika sudah melewati tanggal/waktu, status otomatis Selesai
+                            if (!$isRapat && $isPastDateTime && $item->setuju_rapat != 3 && $st !== 'ditolak') {
+                                $isDone = true;
+                                $isDelayed = false;
+                                $isInactive = false;
+                                $isPending = false;
+                                $isApproved = true;
                             }
                         @endphp
                         <tr class="hover:bg-slate-50/60 transition-colors kegiatan-row">

@@ -17,6 +17,8 @@ class LihatKegiatanController extends Controller
 
 
     public function lihatKegiatan(Request $request, $id) {
+        Task::updateExpiredKegiatanStatus();
+
         $task = is_numeric($id) ? Task::find($id) : null;
         if (!$task) {
             $task = Task::where('id', $id)

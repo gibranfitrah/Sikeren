@@ -52,6 +52,9 @@ class DashboardController extends Controller
             });
         };
 
+        // Sinkronisasi status kegiatan yang sudah lewat tanggal menjadi Selesai
+        Task::updateExpiredKegiatanStatus();
+
         // All activities (Rapat + Kegiatan)
         $allTasks = Task::with('subKegiatans')->orderBy('start_date', 'desc')->get();
         $kegiatansSaya = $userTaskQuery()->orderBy('start_date', 'desc')->get();

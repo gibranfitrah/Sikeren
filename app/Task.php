@@ -80,4 +80,65 @@ class Task extends Model
     public function getOpenAttribute(){
         return true;
     }
+
+    /**
+     * Otomatis sinkronisasi seluruh kegiatan yang sudah melewati tanggal atau jam pelaksanaannya
+     * menjadi status 'Selesai' (progress 100%), baik itu kegiatan PST maupun kegiatan tim lainnya.
+     */
+    public static function updateExpiredKegiatanStatus()
+    {
+        try {
+            $now = \Carbon\Carbon::now();
+            $todayStr = $now->format('Y-m-d');
+            $nowTimeStr = $now->format('H:i:s');
+
+            // 1. Seluruh kegiatan (bukan Rapat) yang tanggal akhirnya sudah sebelum hari ini (< today)
+            self::where('jenis', 'Kegiatan')
+                ->where(function($q) use ($todayStr) {
+                    $q->where(function($q1) use ($todayStr) {
+                        $q1->whereNotNull('date_akhir')->where('date_akhir', '<', $todayStr);
+                    })->orWhere(function($q2) use ($todayStr) {
+                        $q2->whereNull('date_akhir')->where('start_date', '<', $todayStr);
+                    });
+                })
+                ->where('status', '!=', 'Selesai')
+                ->update(['status' => 'Selesai', 'progress' => 100]);
+
+            // 2. Seluruh kegiatan (bukan Rapat) yang berakhir hari ini (= today) dan jam selesainya sudah lewat
+            self::where('jenis', 'Kegiatan')
+                ->where(function($q) use ($todayStr) {
+                    $q->where('date_akhir', $todayStr)
+                      ->orWhere(function($q2) use ($todayStr) {
+                          $q2->whereNull('date_akhir')->where('start_date', $todayStr);
+                      });
+                })
+                ->whereNotNull('end_jam')
+                ->where('end_jam', '<=', $nowTimeStr)
+                ->where('status', '!=', 'Selesai')
+                ->update(['status' => 'Selesai', 'progress' => 100]);
+
+            // 3. Kegiatan yang berakhir hari ini tanpa end_jam setelah jam kerja kantor (>= 17:00 WITA)
+            if ($now->hour >= 17) {
+                self::where('jenis', 'Kegiatan')
+                    ->where(function($q) use ($todayStr) {
+                        $q->where('date_akhir', $todayStr)
+                          ->orWhere(function($q2) use ($todayStr) {
+                              $q2->whereNull('date_akhir')->where('start_date', $todayStr);
+                          });
+                    })
+                    ->whereNull('end_jam')
+                    ->where('status', '!=', 'Selesai')
+                    ->update(['status' => 'Selesai', 'progress' => 100]);
+            }
+
+            // 4. Sub-kegiatan yang sudah melewati batas waktu (end_date < today)
+            \App\SubKegiatan::whereNotNull('end_date')
+                ->where('end_date', '<', $todayStr)
+                ->where('status', '!=', 'Selesai')
+                ->update(['status' => 'Selesai', 'progress' => 100]);
+
+        } catch (\Exception $e) {
+            \Log::error('Gagal update status kegiatan lewat tanggal: ' . $e->getMessage());
+        }
+    }
 }
