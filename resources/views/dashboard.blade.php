@@ -845,32 +845,32 @@
 
                 {{-- Canvas Timeline --}}
                 <div class="overflow-x-auto p-4 space-y-3">
-                    <div class="min-w-[700px] space-y-2.5">
+                    <div class="min-w-[780px] space-y-3">
                         
                         {{-- Skala Waktu (Ruler 07:30 s.d 16:30) --}}
                         <div class="flex items-center text-[10px] font-mono font-bold text-slate-500">
-                            <div class="w-28 sm:w-32 shrink-0 text-slate-400 font-sans text-[11px] font-semibold">Skala Jam:</div>
-                            <div class="flex-1 relative h-5">
-                                <div class="absolute inset-0 flex justify-between">
-                                    <span>07:30</span>
-                                    <span>08:30</span>
-                                    <span>09:30</span>
-                                    <span>10:30</span>
-                                    <span>11:30</span>
-                                    <span>12:30</span>
-                                    <span>13:30</span>
-                                    <span>14:30</span>
-                                    <span>15:30</span>
-                                    <span>16:30</span>
-                                </div>
+                            <div class="w-32 sm:w-36 shrink-0 text-slate-400 font-sans text-[11px] font-semibold text-right pr-4">
+                                Skala Jam:
+                            </div>
+                            <div class="flex-1 relative h-5 select-none">
+                                <span class="absolute left-0 top-0">07:30</span>
+                                <span class="absolute left-[11.11%] -translate-x-1/2 top-0">08:30</span>
+                                <span class="absolute left-[22.22%] -translate-x-1/2 top-0">09:30</span>
+                                <span class="absolute left-[33.33%] -translate-x-1/2 top-0">10:30</span>
+                                <span class="absolute left-[44.44%] -translate-x-1/2 top-0">11:30</span>
+                                <span class="absolute left-[55.56%] -translate-x-1/2 top-0">12:30</span>
+                                <span class="absolute left-[66.67%] -translate-x-1/2 top-0">13:30</span>
+                                <span class="absolute left-[77.78%] -translate-x-1/2 top-0">14:30</span>
+                                <span class="absolute left-[88.89%] -translate-x-1/2 top-0">15:30</span>
+                                <span class="absolute right-0 top-0">16:30</span>
                             </div>
                         </div>
 
                         {{-- JALUR 1: BALOK WAKTU LOWONG --}}
                         <div class="flex items-center">
-                            <div class="w-28 sm:w-32 shrink-0 pr-2">
-                                <span class="inline-flex items-center gap-1 text-xs font-black text-emerald-900">
-                                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <div class="w-32 sm:w-36 shrink-0 text-right pr-4">
+                                <span class="inline-flex items-center gap-1 text-xs font-black text-emerald-900 justify-end">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
                                     <span>Waktu Lowong</span>
                                 </span>
                             </div>
@@ -883,14 +883,16 @@
                                 <!-- Balok Full Lowong jika 0 agenda -->
                                 <template x-if="currentDay.total_agendas === 0">
                                     <a :href="currentDay.url_buat_rapat"
-                                       class="absolute inset-x-1 h-8 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs shadow-xs flex items-center justify-between px-3 transition cursor-pointer border border-emerald-400 z-10">
-                                        <span class="flex items-center gap-2">
-                                            <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
-                                            <span>FULL LOWONG (07:30 - 16:30 WITA) • Bebas Agenda</span>
-                                        </span>
-                                        <span class="bg-white text-emerald-800 text-[10px] px-2 py-0.5 rounded font-black">
-                                            + Jadwalkan Rapat
-                                        </span>
+                                       class="absolute inset-x-1 h-8 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs shadow-xs flex items-center justify-between gap-4 px-3 transition cursor-pointer border border-emerald-400 z-10 overflow-hidden">
+                                        <div class="truncate min-w-0 flex items-center gap-2">
+                                            <span class="w-2 h-2 rounded-full bg-white animate-ping shrink-0"></span>
+                                            <span class="truncate">FULL LOWONG (07:30 - 16:30 WITA) • Bebas Agenda</span>
+                                        </div>
+                                        <div class="shrink-0 pl-3">
+                                            <span class="bg-white text-emerald-800 text-[11px] px-3 py-1 rounded-md font-black shadow-2xs whitespace-nowrap inline-flex items-center gap-1 hover:bg-emerald-50 transition">
+                                                + Jadwalkan Rapat
+                                            </span>
+                                        </div>
                                     </a>
                                 </template>
 
@@ -900,12 +902,12 @@
                                         <a :href="currentDay.url_buat_rapat"
                                            :style="'left: ' + fs.left_pct + '%; width: ' + fs.width_pct + '%;'"
                                            :title="'Slot Lowong: ' + fs.start + ' - ' + fs.end + ' WITA (Klik untuk jadwalkan rapat)'"
-                                           class="absolute h-8 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-[10px] shadow-xs flex items-center justify-between px-2 transition z-10 cursor-pointer overflow-hidden border border-emerald-400 group">
-                                            <span class="truncate flex items-center gap-1 font-mono">
+                                           class="absolute h-8 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-[10px] shadow-xs flex items-center justify-between gap-1.5 px-2 transition z-10 cursor-pointer overflow-hidden border border-emerald-400 group">
+                                            <span class="truncate min-w-0 flex items-center gap-1 font-mono">
                                                 <span class="w-1.5 h-1.5 rounded-full bg-white shrink-0"></span>
-                                                <span x-text="fs.start + ' - ' + fs.end"></span>
+                                                <span class="truncate" x-text="fs.start + ' - ' + fs.end"></span>
                                             </span>
-                                            <span class="hidden group-hover:inline text-[9px] bg-white text-emerald-800 px-1 rounded font-black shrink-0 ml-1">
+                                            <span class="hidden sm:group-hover:inline text-[9px] bg-white text-emerald-800 px-1.5 py-0.5 rounded font-black shrink-0 whitespace-nowrap ml-1 shadow-2xs">
                                                 + Buat
                                             </span>
                                         </a>
@@ -925,8 +927,8 @@
                             <template x-for="item in currentDay.active_agendas" :key="item.id">
                                 <div class="flex items-center">
                                     <!-- Label Kiri Ringkas -->
-                                    <div class="w-28 sm:w-32 shrink-0 pr-2">
-                                        <div class="flex items-center gap-1">
+                                    <div class="w-32 sm:w-36 shrink-0 text-right pr-4">
+                                        <div class="flex items-center gap-1 justify-end">
                                             <span :class="item.is_rapat ? 'bg-indigo-100 text-indigo-700' : 'bg-sky-100 text-sky-700'" 
                                                   class="px-1.5 py-0.2 rounded text-[9px] font-black uppercase shrink-0" 
                                                   x-text="item.jenis"></span>
@@ -948,12 +950,12 @@
                                            :class="item.is_rapat 
                                                ? 'bg-indigo-600 hover:bg-indigo-700 border-indigo-400 text-white shadow-xs' 
                                                : 'bg-sky-600 hover:bg-sky-700 border-sky-400 text-white shadow-xs'"
-                                           class="absolute h-7.5 rounded-lg text-white font-bold text-[10px] shadow-xs flex items-center justify-between px-2 transition hover:scale-[1.01] hover:shadow-md z-10 cursor-pointer overflow-hidden border">
-                                            <span class="truncate font-extrabold flex items-center gap-1.5">
+                                           class="absolute h-7.5 rounded-lg text-white font-bold text-[10px] shadow-xs flex items-center justify-between gap-2 px-2 transition hover:scale-[1.01] hover:shadow-md z-10 cursor-pointer overflow-hidden border">
+                                            <span class="truncate min-w-0 font-extrabold flex items-center gap-1.5">
                                                 <span class="w-1.5 h-1.5 rounded-full bg-white shrink-0"></span>
                                                 <span class="truncate" x-text="item.text"></span>
                                             </span>
-                                            <span class="ml-2 font-mono font-bold text-[9px] bg-black/25 px-1 rounded shrink-0" x-text="item.start_jam + ' - ' + item.end_jam"></span>
+                                            <span class="ml-2 font-mono font-bold text-[9px] bg-black/25 px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap" x-text="item.start_jam + ' - ' + item.end_jam"></span>
                                         </a>
                                     </div>
                                 </div>
