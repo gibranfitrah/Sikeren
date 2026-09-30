@@ -169,6 +169,9 @@
                             <p class="text-[11px] text-slate-500 leading-relaxed pt-1">
                                 Tunjukkan kode QR ini kepada <strong>Petugas / Penanggung Jawab (PJ)</strong> di ruangan rapat untuk memverifikasi kehadiran fisik Anda.
                             </p>
+                            <p class="text-[10px] text-amber-700 bg-amber-50 border border-amber-200/80 rounded-xl px-2.5 py-1.5 mt-2 font-medium">
+                                💡 <strong>Tips:</strong> Tingkatkan kecerahan layar HP Anda agar kode QR lebih cepat terbaca oleh kamera.
+                            </p>
                         @endif
                     </div>
                 </div>

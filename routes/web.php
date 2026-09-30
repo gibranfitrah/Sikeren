@@ -202,6 +202,7 @@ Route::post('/kegiatan/{id}/status', [\App\Http\Controllers\KegiatanController::
 
     // Presensi & Tiket QR Rapat
     Route::get('/rapat/tiket-qr/{id}', [\App\Http\Controllers\KegiatanController::class, 'tiketQr'])->name('rapat.tiketQr');
+    Route::get('/rapat/cetak-qr/{id}', [\App\Http\Controllers\KegiatanController::class, 'cetakQr'])->name('rapat.cetakQr');
     Route::get('/rapat/verifikasi-kehadiran/{id}', [\App\Http\Controllers\KegiatanController::class, 'verifikasiKehadiran'])->name('rapat.verifikasiKehadiran');
 
     // SIMPATI API Integration

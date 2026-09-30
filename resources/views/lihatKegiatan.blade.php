@@ -588,14 +588,15 @@
                                                 Disediakan pula opsi mandiri jika peserta ingin memindai lembar presensi yang dipajang di layar atau ruangan rapat.
                                             </p>
                                             <div class="flex items-center gap-2 pt-1 flex-wrap">
-                                                <a target="_blank" href="{{ url('/qrcode/' . $rapatId) }}" class="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 hover:text-slate-900 bg-white border border-slate-200 px-2.5 py-1 rounded-lg transition shadow-2xs">
-                                                    <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                                                <a target="_blank" href="{{ route('rapat.cetakQr', $rapatId) }}" class="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-800 hover:text-emerald-950 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-lg transition shadow-2xs">
+                                                    <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                                    <span>Cetak Lembar QR (A4)</span>
+                                                </a>
+                                                <a target="_blank" href="{{ url('/qrcode/' . $rapatId) }}" class="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg transition shadow-2xs">
+                                                    <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
                                                     <span>Layar Penuh</span>
                                                 </a>
-                                                <a target="_blank" href="{{ $qrUrlHadir ?? url('/daftarhadir/' . $rapatId) }}" class="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-lg transition">
-                                                    <span>Buka Tautan</span>
-                                                </a>
-                                                <button type="button" onclick="navigator.clipboard.writeText('{{ $qrUrlHadir ?? url('/daftarhadir/' . $rapatId) }}'); alert('Tautan lembar presensi ruangan disalin!');" class="text-[11px] font-bold text-slate-600 hover:text-slate-800 bg-white border border-slate-200 px-2 py-1 rounded-lg transition">
+                                                <button type="button" onclick="navigator.clipboard.writeText('{{ $qrUrlHadir ?? url('/daftarhadir/' . $rapatId) }}'); alert('Tautan lembar presensi ruangan disalin!');" class="text-[11px] font-bold text-slate-600 hover:text-slate-800 bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg transition shadow-2xs">
                                                     Salin Link
                                                 </button>
                                             </div>
@@ -1315,12 +1316,17 @@ setInterval(refreshPresensi, 5000);
                 Arahkan kamera ke <strong>Tiket QR Presensi</strong> yang ada di HP peserta rapat untuk memverifikasi kehadiran.
             </p>
 
+            <div class="p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-[11px] leading-relaxed flex items-center gap-2">
+                <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span><strong>Tips:</strong> Tingkatkan kecerahan layar HP peserta dan posisikan kode QR di dalam bingkai kamera. Saat berhasil terpindai, sistem akan berbunyi <em>beep</em>.</span>
+            </div>
+
             {{-- Fallback Manual NIP Input --}}
             <div class="pt-3 border-t border-slate-100">
                 <label class="block text-[11px] font-bold text-slate-700 mb-1">Verifikasi Manual via NIP / Nama:</label>
                 <div class="flex items-center gap-2">
                     <input type="text" id="manual-nip-input" placeholder="Masukkan NIP peserta..." class="flex-1 text-xs border border-slate-300 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white text-slate-800">
-                    <button type="button" onclick="submitManualVerification()" class="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs shrink-0">
+                    <button type="button" onclick="submitManualVerification()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs shrink-0 cursor-pointer">
                         Verifikasi
                     </button>
                 </div>
@@ -1330,17 +1336,140 @@ setInterval(refreshPresensi, 5000);
         {{-- Modal Footer --}}
         <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs">
             <span class="text-[11px] text-slate-400">SIKEREN &bull; BPS Sultra</span>
-            <button type="button" onclick="closeScannerPetugas()" class="px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-100 transition shadow-2xs">
+            <button type="button" onclick="closeScannerPetugas()" class="px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-100 transition shadow-2xs cursor-pointer">
                 Tutup
             </button>
         </div>
     </div>
 </div>
 
+<style>
+/* Modern styling for Html5QrcodeScanner inside modal */
+#reader-scanner-petugas {
+    border: none !important;
+}
+#reader-scanner-petugas img[alt="Info icon"] {
+    display: none !important;
+}
+#reader-scanner-petugas__scan_region {
+    background: #0f172a !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+#reader-scanner-petugas__scan_region video {
+    border-radius: 12px !important;
+    max-height: 52vh !important;
+    object-fit: cover !important;
+}
+#reader-scanner-petugas__dashboard {
+    padding: 12px 16px !important;
+    background: #1e293b !important;
+    border-top: 1px solid #334155 !important;
+    text-align: center !important;
+}
+#reader-scanner-petugas__dashboard_section_csr {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+}
+/* Style all buttons in scanner so they look prominently clickable */
+#reader-scanner-petugas button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    background: #2563eb !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 12px !important;
+    padding: 8px 18px !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25) !important;
+    transition: all 0.15s ease-in-out !important;
+    text-decoration: none !important;
+}
+#reader-scanner-petugas button:hover {
+    background: #1d4ed8 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.35) !important;
+}
+#reader-scanner-petugas button:active {
+    transform: translateY(0) !important;
+}
+/* Stop scanning button (Red Button) */
+#reader-scanner-petugas #html5-qrcode-button-camera-stop {
+    background: #dc2626 !important;
+    border-color: #ef4444 !important;
+}
+#reader-scanner-petugas #html5-qrcode-button-camera-stop:hover {
+    background: #b91c1c !important;
+}
+/* Start scanning button (Green Button) */
+#reader-scanner-petugas #html5-qrcode-button-camera-start {
+    background: #16a34a !important;
+    border-color: #22c55e !important;
+}
+#reader-scanner-petugas #html5-qrcode-button-camera-start:hover {
+    background: #15803d !important;
+}
+/* Camera permission button */
+#reader-scanner-petugas #html5-qrcode-button-camera-permission {
+    background: #0284c7 !important;
+}
+/* File selection button */
+#reader-scanner-petugas #html5-qrcode-button-file-selection {
+    background: #475569 !important;
+}
+/* Camera select dropdown */
+#reader-scanner-petugas select {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    padding: 7px 12px !important;
+    border-radius: 10px !important;
+    border: 1px solid #cbd5e1 !important;
+    cursor: pointer !important;
+    outline: none !important;
+    margin: 4px !important;
+}
+#reader-scanner-petugas a {
+    color: #60a5fa !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    text-decoration: underline !important;
+}
+#reader-scanner-petugas span {
+    color: #cbd5e1 !important;
+    font-size: 11px !important;
+}
+</style>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <script>
 let petugasQrScanner = null;
 let isScanningActive = false;
+
+function playSuccessBeep() {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime); // 880Hz note
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.2);
+    } catch (e) {}
+}
 
 function openScannerPetugas() {
     const modal = document.getElementById('modal-scanner-petugas');
@@ -1353,14 +1482,25 @@ function openScannerPetugas() {
         resultBanner.innerText = '';
     }
 
-    // Mulai kamera dengan Html5QrcodeScanner
+    // Mulai kamera dengan Html5QrcodeScanner dengan BarcodeDetector & optimal settings
     setTimeout(() => {
         if (!petugasQrScanner) {
             petugasQrScanner = new Html5QrcodeScanner("reader-scanner-petugas", {
-                fps: 10,
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0
-            });
+                fps: 20,
+                qrbox: function(viewfinderWidth, viewfinderHeight) {
+                    const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                    const size = Math.floor(minEdge * 0.85);
+                    return { width: size, height: size };
+                },
+                aspectRatio: 1.0,
+                showTorchButtonIfSupported: true,
+                showZoomSliderIfSupported: true,
+                formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ],
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: true
+                }
+            }, /* verbose= */ false);
+
             petugasQrScanner.render(onParticipantScanSuccess, onParticipantScanFailure);
             isScanningActive = true;
         }
@@ -1388,6 +1528,7 @@ function onParticipantScanSuccess(decodedText, decodedResult) {
     if (!isScanningActive) return;
     isScanningActive = false;
 
+    playSuccessBeep();
     processVerificationUrl(decodedText);
 }
 
@@ -1400,9 +1541,17 @@ function processVerificationUrl(rawUrl) {
     }
 
     let fetchUrl = rawUrl;
-    // Jika format scan adalah teks NIP bukan URL lengkap
-    if (!rawUrl.includes('/rapat/verifikasi-kehadiran/')) {
-        fetchUrl = `{{ url('/rapat/verifikasi-kehadiran/' . $rapatId) }}?nip=${encodeURIComponent(rawUrl.trim())}`;
+    try {
+        const parsed = new URL(rawUrl, window.location.origin);
+        if (parsed.pathname.includes('/rapat/verifikasi-kehadiran/')) {
+            fetchUrl = parsed.pathname + parsed.search;
+        } else {
+            fetchUrl = `{{ url('/rapat/verifikasi-kehadiran/' . $rapatId) }}?nip=${encodeURIComponent(rawUrl.trim())}`;
+        }
+    } catch (e) {
+        if (!rawUrl.includes('/rapat/verifikasi-kehadiran/')) {
+            fetchUrl = `{{ url('/rapat/verifikasi-kehadiran/' . $rapatId) }}?nip=${encodeURIComponent(rawUrl.trim())}`;
+        }
     }
 
     fetch(fetchUrl, {

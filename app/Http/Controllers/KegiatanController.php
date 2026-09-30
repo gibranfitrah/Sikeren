@@ -177,10 +177,23 @@ class KegiatanController extends Controller
 
     public function generate($id)
     {
-        $task = Task::find($id) ?? kegiatan::find($id);
-        $urlHadir = self::getQrUrl('scan-qr/' . $id);
-        $qrcode = QrCode::size(340)->generate($urlHadir);
+        $task = is_numeric($id) ? Task::find($id) : (Task::where('id', $id)->orWhere('text', $id)->first() ?? kegiatan::find($id));
+        $urlHadir = self::getQrUrl('scan-qr/' . ($task ? $task->id : $id));
+        $qrcode = QrCode::size(340)->margin(2)->errorCorrection('M')->generate($urlHadir);
         return view('qrcode', compact('qrcode', 'task', 'id', 'urlHadir'));
+    }
+
+    public function cetakQr($id)
+    {
+        $task = is_numeric($id) ? Task::find($id) : (Task::where('id', $id)->orWhere('text', $id)->first() ?? kegiatan::find($id));
+        if (!$task) {
+            abort(404, 'Rapat / Kegiatan tidak ditemukan.');
+        }
+
+        $urlHadir = self::getQrUrl('scan-qr/' . $task->id);
+        $qrcode = QrCode::size(360)->margin(2)->errorCorrection('M')->generate($urlHadir);
+
+        return view('rapat.cetak_qr', compact('task', 'urlHadir', 'qrcode'));
     }
 
         public function index2() 
@@ -1386,8 +1399,8 @@ class KegiatanController extends Controller
         $verifyToken = md5($user->id . '_' . $task->id . '_sikeren_salt');
         $verifyUrl = self::getQrUrl('rapat/verifikasi-kehadiran/' . $task->id . '?nip=' . urlencode($identifier) . '&token=' . $verifyToken);
 
-        // QR SVG
-        $qrSvg = QrCode::size(260)->generate($verifyUrl);
+        // QR SVG dengan margin dan error correction standar ISO agar mudah dipindai kamera
+        $qrSvg = QrCode::size(280)->margin(2)->errorCorrection('M')->generate($verifyUrl);
         $urlPresensiRuangan = self::getQrUrl('daftarhadir/' . $task->id);
 
         return view('rapat.tiket_qr', compact(
