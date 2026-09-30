@@ -539,10 +539,11 @@
             {{-- Footer Pagination untuk Kegiatan Penugasan --}}
             <div id="pagination-kegiatan" class="px-6 py-3.5 border-t border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                 <div class="flex items-center gap-3 text-gray-500">
-                    <span id="kegiatan-page-info" class="font-medium text-slate-700">Menampilkan 1 - 10 dari {{ count($kegiatans2) }} kegiatan</span>
+                    <span id="kegiatan-page-info" class="font-medium text-slate-700">Menampilkan 1 - 5 dari {{ count($kegiatans2) }} kegiatan</span>
                     <div class="flex items-center gap-1.5">
                         <span class="text-[11px] text-gray-400">Tampilkan:</span>
                         <select id="kegiatan-per-page" onchange="changePerPage('kegiatan', this.value)" class="bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            <option value="5" selected>5</option>
                             <option value="10">10</option>
                             <option value="25">25</option>
                             <option value="50">50</option>
@@ -710,10 +711,11 @@
             {{-- Footer Pagination untuk Agenda Rapat --}}
             <div id="pagination-rapat" class="px-6 py-3.5 border-t border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                 <div class="flex items-center gap-3 text-gray-500">
-                    <span id="rapat-page-info" class="font-medium text-slate-700">Menampilkan 1 - 10 dari {{ count($kegiatans) }} agenda rapat</span>
+                    <span id="rapat-page-info" class="font-medium text-slate-700">Menampilkan 1 - 5 dari {{ count($kegiatans) }} agenda rapat</span>
                     <div class="flex items-center gap-1.5">
                         <span class="text-[11px] text-gray-400">Tampilkan:</span>
                         <select id="rapat-per-page" onchange="changePerPage('rapat', this.value)" class="bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            <option value="5" selected>5</option>
                             <option value="10">10</option>
                             <option value="25">25</option>
                             <option value="50">50</option>
@@ -904,11 +906,11 @@
 const paginationState = {
     kegiatan: {
         currentPage: 1,
-        perPage: 10
+        perPage: 5
     },
     rapat: {
         currentPage: 1,
-        perPage: 10
+        perPage: 5
     }
 };
 
@@ -954,7 +956,7 @@ function filterTable() {
 }
 
 function changePerPage(type, val) {
-    paginationState[type].perPage = parseInt(val, 10) || 10;
+    paginationState[type].perPage = parseInt(val, 10) || 5;
     paginationState[type].currentPage = 1;
     renderPagination(type);
 }
@@ -1007,6 +1009,8 @@ function renderPagination(type) {
             if (nextRow && nextRow.classList.contains('sub-kegiatan-row')) {
                 if (!isVisible) {
                     nextRow.style.display = 'none';
+                } else if (nextRow.style.display === 'none') {
+                    nextRow.style.display = '';
                 }
             }
         }
@@ -1035,16 +1039,16 @@ function renderPagination(type) {
         // Prev Button
         const prevBtn = document.createElement('button');
         prevBtn.type = 'button';
-        prevBtn.className = `px-2.5 py-1 rounded-lg border text-xs font-semibold flex items-center gap-1 transition ${
+        prevBtn.className = `px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition ${
             curPage <= 1 
                 ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed' 
-                : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 shadow-2xs'
+                : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 shadow-2xs cursor-pointer'
         }`;
         prevBtn.innerHTML = `
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
-            <span class="hidden sm:inline">Sebelumnya</span>
+            <span>Sebelumnya</span>
         `;
         if (curPage > 1) {
             prevBtn.onclick = function() { goToPage(type, curPage - 1); };
@@ -1072,13 +1076,13 @@ function renderPagination(type) {
         pagesToDisplay.forEach(function(p) {
             if (p === '...') {
                 const dots = document.createElement('span');
-                dots.className = 'px-2 py-1 text-gray-400 text-xs select-none';
+                dots.className = 'px-2 py-1 text-gray-400 text-xs font-bold select-none';
                 dots.textContent = '...';
                 btnsEl.appendChild(dots);
             } else {
                 const pBtn = document.createElement('button');
                 pBtn.type = 'button';
-                pBtn.className = `w-7 h-7 rounded-lg text-xs font-bold transition flex items-center justify-center ${
+                pBtn.className = `w-8 h-8 rounded-xl text-xs font-bold transition flex items-center justify-center cursor-pointer ${
                     p === curPage
                         ? 'bg-blue-600 text-white shadow-xs'
                         : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300'
@@ -1092,13 +1096,13 @@ function renderPagination(type) {
         // Next Button
         const nextBtn = document.createElement('button');
         nextBtn.type = 'button';
-        nextBtn.className = `px-2.5 py-1 rounded-lg border text-xs font-semibold flex items-center gap-1 transition ${
+        nextBtn.className = `px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition ${
             curPage >= totalPages 
                 ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed' 
-                : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 shadow-2xs'
+                : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 shadow-2xs cursor-pointer'
         }`;
         nextBtn.innerHTML = `
-            <span class="hidden sm:inline">Berikutnya</span>
+            <span>Berikutnya</span>
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>

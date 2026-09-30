@@ -375,7 +375,9 @@ class KetuaTimController extends Controller
                     $task->jenis_kegiatan   = 'Pelayanan Statistik Terpadu (PST)';
                     $task->tim              = 'Diseminasi dan Layanan Statistik';
                     $task->tempat           = 'Ruang PST BPS Provinsi Sulawesi Tenggara';
-                    $task->status           = 'Sedang Berjalan';
+                    $isPast = \Carbon\Carbon::parse($tglStr)->lt(\Carbon\Carbon::today());
+                    $task->status           = $isPast ? 'Selesai' : 'Sedang Berjalan';
+                    $task->progress         = $isPast ? 100 : 0;
                     $task->setuju_rapat     = 1;
                 }
 

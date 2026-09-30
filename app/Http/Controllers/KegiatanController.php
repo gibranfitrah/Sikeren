@@ -198,6 +198,24 @@ class KegiatanController extends Controller
             ->unique()
             ->toArray();
 
+        // Otomatis ubah status kegiatan PST dan kegiatan dari Excel yang sudah melewati tanggal menjadi 'Selesai'
+        // Kecuali kegiatan yang dibuat manual lewat sistem (Non-Kegiatan, Non-Rapat, atau tanpa jenis_kegiatan khusus)
+        $todayStr = \Carbon\Carbon::today()->format('Y-m-d');
+        Task::where(function($q) use ($todayStr) {
+            $q->where('date_akhir', '<', $todayStr)
+              ->orWhere(function($q2) use ($todayStr) {
+                  $q2->whereNull('date_akhir')->where('start_date', '<', $todayStr);
+              });
+        })
+        ->where(function($q) {
+            $q->where('jenis_kegiatan', 'Pelayanan Statistik Terpadu (PST)')
+              ->orWhere('jenis_kegiatan', 'Proyek Tim')
+              ->orWhere('text', 'like', '%PST%');
+        })
+        ->whereNotIn('jenis_kegiatan', ['Non-Rapat', 'Non-Kegiatan'])
+        ->where('status', '!=', 'Selesai')
+        ->update(['status' => 'Selesai', 'progress' => 100]);
+
         // Query all rapat & kegiatan
         // Ketua tim can see all, or user filter if not ketua tim
         $kegiatans = Task::with('subKegiatans')
