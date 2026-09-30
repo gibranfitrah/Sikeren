@@ -544,9 +544,6 @@
                                                 <h5 class="font-bold text-slate-900 text-sm">Halaman Khusus Tiket QR Peserta</h5>
                                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">Alur Utama</span>
                                             </div>
-                                            <p class="text-[11px] text-slate-600 mt-1 leading-relaxed">
-                                                Setiap peserta rapat memiliki tiket QR unik di HP masing-masing (dapat diakses via notifikasi undangan). <strong>Petugas / PJ / Admin</strong> memindai QR peserta di lokasi rapat untuk memastikan kehadiran fisik secara valid.
-                                            </p>
                                         </div>
                                     </div>
 
