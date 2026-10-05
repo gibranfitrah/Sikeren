@@ -53,8 +53,6 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                      'Classroom': { tanpaSofa: 18, denganSofa: 14, hasSofaOption: true, desc: 'Barisan meja dan kursi menghadap depan panggung. Ideal untuk pelatihan, bimtek, dan rapat teknis.' },
                      'U-Shape': { tanpaSofa: 8, denganSofa: null, hasSofaOption: false, desc: 'Susunan meja berbentuk U / tapal kuda. Sangat baik untuk diskusi dua arah dan rapat pimpinan.' },
                      'Boardroom': { tanpaSofa: 12, denganSofa: null, hasSofaOption: false, desc: 'Satu meja rapat besar di tengah. Efektif untuk rapat tertutup dan koordinasi tim inti.' },
-                     'Round Table': { tanpaSofa: 12, denganSofa: null, hasSofaOption: false, desc: 'Format meja bundar untuk diskusi kelompok / FGD.' },
-                     'Hollow Square': { tanpaSofa: 10, denganSofa: null, hasSofaOption: false, desc: 'Meja persegi dengan ruang terbuka di tengah.' },
                      'Custom Layout': { tanpaSofa: 24, denganSofa: 20, hasSofaOption: true, desc: 'Tata letak khusus disesuaikan kebutuhan acara.' }
                  }
              },
@@ -67,8 +65,6 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                      'Classroom': { tanpaSofa: 48, denganSofa: 40, hasSofaOption: true, desc: 'Meja kelas dengan akses langsung ke Smart TV Display dan Kamera Vicon 360°.' },
                      'U-Shape': { tanpaSofa: 23, denganSofa: null, hasSofaOption: false, desc: 'Susunan meja U-Shape dengan jangkauan optimal Mic Conference Polycom dan kamera.' },
                      'Boardroom': { tanpaSofa: 26, denganSofa: null, hasSofaOption: false, desc: 'Meja eksekutif panjang dengan fasilitas vicon dan audio terintegrasi.' },
-                     'Round Table': { tanpaSofa: 24, denganSofa: null, hasSofaOption: false, desc: 'Format meja bundar untuk workshop dan kolaborasi online-offline.' },
-                     'Hollow Square': { tanpaSofa: 20, denganSofa: null, hasSofaOption: false, desc: 'Susunan meja kotak untuk rapat komisi atau evaluasi.' },
                      'Custom Layout': { tanpaSofa: 58, denganSofa: 48, hasSofaOption: true, desc: 'Tata letak custom disesuaikan kebutuhan zoom/vicon.' }
                  }
              },
@@ -81,8 +77,6 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                      'Classroom': { tanpaSofa: 62, denganSofa: 52, hasSofaOption: true, desc: 'Susunan meja & kursi berkapasitas besar untuk pelatihan regional, bimtek, dan rapat dinas.' },
                      'U-Shape': { tanpaSofa: 58, denganSofa: null, hasSofaOption: false, desc: 'Susunan meja U-Shape megah menghadap panggung utama dan videotron.' },
                      'Boardroom': { tanpaSofa: 66, denganSofa: null, hasSofaOption: false, desc: 'Format meja gabungan konferensi besar untuk forum lintas instansi.' },
-                     'Round Table': { tanpaSofa: 60, denganSofa: null, hasSofaOption: false, desc: 'Format seminar meja bundar atau workshop pleno.' },
-                     'Hollow Square': { tanpaSofa: 50, denganSofa: null, hasSofaOption: false, desc: 'Susunan meja persegi besar untuk pleno komisi.' },
                      'Custom Layout': { tanpaSofa: 100, denganSofa: 80, hasSofaOption: true, desc: 'Tata letak aula disesuaikan khusus untuk acara seremonial.' }
                  }
              }
@@ -1165,36 +1159,8 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                 <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Satu meja rapat oval / panjang</span>
                             </label>
 
-                            {{-- Round Table --}}
-                            <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
-                                   :class="layoutMeja === 'Round Table' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'"
-                                   @click="setLayout('Round Table')">
-                                <div class="flex items-center justify-between mb-1">
-                                    <div class="flex items-center gap-1.5">
-                                        <input type="radio" name="layout_meja" value="Round Table" x-model="layoutMeja" @change="setLayout('Round Table')" class="text-blue-600">
-                                        <span class="text-[11px] font-bold">Round Table</span>
-                                    </div>
-                                    <span class="text-[9px] px-1 bg-slate-100 rounded text-slate-600" x-text="(roomCapacities[selectedVenueId]?.layouts['Round Table'].tanpaSofa || 0) + ' Org'"></span>
-                                </div>
-                                <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Meja bundar kelompok diskusi</span>
-                            </label>
-
-                            {{-- Hollow Square --}}
-                            <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
-                                   :class="layoutMeja === 'Hollow Square' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'"
-                                   @click="setLayout('Hollow Square')">
-                                <div class="flex items-center justify-between mb-1">
-                                    <div class="flex items-center gap-1.5">
-                                        <input type="radio" name="layout_meja" value="Hollow Square" x-model="layoutMeja" @change="setLayout('Hollow Square')" class="text-blue-600">
-                                        <span class="text-[11px] font-bold">Hollow Square</span>
-                                    </div>
-                                    <span class="text-[9px] px-1 bg-slate-100 rounded text-slate-600" x-text="(roomCapacities[selectedVenueId]?.layouts['Hollow Square'].tanpaSofa || 0) + ' Org'"></span>
-                                </div>
-                                <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Persegi berongga tengah</span>
-                            </label>
-
                             {{-- Custom Layout --}}
-                            <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between sm:col-span-2"
+                            <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between col-span-2 sm:col-span-4"
                                    :class="layoutMeja === 'Custom Layout' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'"
                                    @click="setLayout('Custom Layout')">
                                 <div class="flex items-center justify-between mb-1">
@@ -1438,50 +1404,19 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                             </svg>
                                         </template>
 
-                                        {{-- 5. SVG PREVIEW: ROUND TABLE / HOLLOW SQUARE / CUSTOM --}}
-                                        <template x-if="layoutMeja === 'Round Table' || layoutMeja === 'Hollow Square' || layoutMeja === 'Custom Layout'">
+                                        {{-- 5. SVG PREVIEW: CUSTOM LAYOUT --}}
+                                        <template x-if="layoutMeja === 'Custom Layout'">
                                             <svg viewBox="0 0 400 240" class="w-full h-full drop-shadow-xs select-none">
                                                 <rect width="400" height="240" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
                                                 <rect x="90" y="12" width="220" height="24" rx="5" fill="#1e293b"/>
                                                 <text x="200" y="28" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="bold">PANGGUNG PRESENTASI</text>
 
-                                                {{-- Round Tables --}}
-                                                <template x-if="layoutMeja === 'Round Table'">
-                                                    <g>
-                                                        {{-- Table 1 --}}
-                                                        <circle cx="110" cy="95" r="32" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
-                                                        <text x="110" y="98" text-anchor="middle" fill="#1e40af" font-size="8" font-weight="bold">Meja 1</text>
-                                                        <circle cx="110" cy="56" r="6" fill="#2563eb"/><circle cx="145" cy="80" r="6" fill="#2563eb"/><circle cx="145" cy="115" r="6" fill="#2563eb"/><circle cx="110" cy="134" r="6" fill="#2563eb"/><circle cx="75" cy="115" r="6" fill="#2563eb"/><circle cx="75" cy="80" r="6" fill="#2563eb"/>
-
-                                                        {{-- Table 2 --}}
-                                                        <circle cx="290" cy="95" r="32" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
-                                                        <text x="290" y="98" text-anchor="middle" fill="#1e40af" font-size="8" font-weight="bold">Meja 2</text>
-                                                        <circle cx="290" cy="56" r="6" fill="#2563eb"/><circle cx="325" cy="80" r="6" fill="#2563eb"/><circle cx="325" cy="115" r="6" fill="#2563eb"/><circle cx="290" cy="134" r="6" fill="#2563eb"/><circle cx="255" cy="115" r="6" fill="#2563eb"/><circle cx="255" cy="80" r="6" fill="#2563eb"/>
-
-                                                        {{-- Table 3 --}}
-                                                        <circle cx="200" cy="165" r="32" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
-                                                        <text x="200" y="168" text-anchor="middle" fill="#1e40af" font-size="8" font-weight="bold">Meja 3</text>
-                                                        <circle cx="200" cy="126" r="6" fill="#2563eb"/><circle cx="235" cy="150" r="6" fill="#2563eb"/><circle cx="235" cy="185" r="6" fill="#2563eb"/><circle cx="200" cy="204" r="6" fill="#2563eb"/><circle cx="165" cy="185" r="6" fill="#2563eb"/><circle cx="165" cy="150" r="6" fill="#2563eb"/>
-                                                    </g>
-                                                </template>
-
-                                                {{-- Hollow Square --}}
-                                                <template x-if="layoutMeja === 'Hollow Square'">
-                                                    <g>
-                                                        <rect x="100" y="60" width="200" height="120" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
-                                                        <rect x="140" y="86" width="120" height="68" rx="4" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
-                                                        <text x="200" y="124" text-anchor="middle" fill="#64748b" font-size="8.5" font-weight="bold">Ruang Terbuka Tengah</text>
-                                                    </g>
-                                                </template>
-
                                                 {{-- Custom Layout --}}
-                                                <template x-if="layoutMeja === 'Custom Layout'">
-                                                    <g>
-                                                        <rect x="70" y="60" width="260" height="120" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="6 4"/>
-                                                        <text x="200" y="115" text-anchor="middle" fill="#1e40af" font-size="11" font-weight="bold">TATA LETAK FLEKSIBEL (CUSTOM)</text>
-                                                        <text x="200" y="132" text-anchor="middle" fill="#64748b" font-size="8.5">Disesuaikan dengan permintaan khusus pemohon</text>
-                                                    </g>
-                                                </template>
+                                                <g>
+                                                    <rect x="70" y="60" width="260" height="120" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="6 4"/>
+                                                    <text x="200" y="115" text-anchor="middle" fill="#1e40af" font-size="11" font-weight="bold">TATA LETAK FLEKSIBEL (CUSTOM)</text>
+                                                    <text x="200" y="132" text-anchor="middle" fill="#64748b" font-size="8.5">Disesuaikan dengan permintaan khusus pemohon</text>
+                                                </g>
 
                                                 <text x="345" y="226" text-anchor="middle" fill="#64748b" font-size="9" font-weight="600">Pintu Masuk</text>
                                             </svg>

@@ -13,7 +13,7 @@ class RoomCapacity extends Model
      * Layout kanonis sesuai matriks kapasitas final (spreadsheet + hybrid remote).
      * 4 utama dari spreadsheet + 3 tambahan dari preview SVG remote.
      */
-    public const LAYOUTS = ['Theatre', 'Classroom', 'U-Shape', 'Boardroom', 'Round Table', 'Hollow Square', 'Custom Layout'];
+    public const LAYOUTS = ['Theatre', 'Classroom', 'U-Shape', 'Boardroom', 'Custom Layout'];
 
     /**
      * Nilai konfigurasi sofa yang valid.
