@@ -1857,7 +1857,10 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                             <div class="space-y-1">
                                 <span class="text-gray-400 font-medium text-[11px]"><svg class="w-3 h-3 inline-block align-[-1px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg> Tanggal & Waktu:</span>
                                 <p class="font-bold text-gray-800" x-text="selectedBooking.booking_date"></p>
-                                <p class="text-blue-600 font-bold" x-text="'<svg class="w-3 h-3 inline-block align-[-1px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> ' + selectedBooking.start_time + ' - ' + selectedBooking.end_time + ' WITA'"></p>
+                                <p class="text-blue-600 font-bold flex items-center gap-1">
+                                    <svg class="w-3 h-3 inline-block shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <span x-text="selectedBooking.start_time + ' - ' + selectedBooking.end_time + ' WITA'"></span>
+                                </p>
                             </div>
                             <div class="space-y-1">
                                 <span class="text-gray-400 font-medium text-[11px]"><svg class="w-3 h-3 inline-block align-[-1px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0zM19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg> Ruangan / Venue:</span>
