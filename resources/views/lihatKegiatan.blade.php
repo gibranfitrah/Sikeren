@@ -1479,29 +1479,27 @@ function openScannerPetugas() {
         resultBanner.innerText = '';
     }
 
-    // Mulai kamera dengan Html5QrcodeScanner dengan BarcodeDetector & optimal settings
+    // Mulai kamera dengan setting optimal: fps 12 (responsif & hemat CPU), full frame scan, tanpa BarcodeDetector bug
     setTimeout(() => {
         if (!petugasQrScanner) {
             petugasQrScanner = new Html5QrcodeScanner("reader-scanner-petugas", {
-                fps: 20,
+                fps: 12,
                 qrbox: function(viewfinderWidth, viewfinderHeight) {
+                    // Beri area scan seluas mungkin (96%) agar HP tidak perlu tepat di tengah kotak
                     const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                    const size = Math.floor(minEdge * 0.85);
+                    const size = Math.floor(minEdge * 0.96);
                     return { width: size, height: size };
                 },
                 aspectRatio: 1.0,
                 showTorchButtonIfSupported: true,
                 showZoomSliderIfSupported: true,
-                formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ],
-                experimentalFeatures: {
-                    useBarCodeDetectorIfSupported: true
-                }
+                formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ]
             }, /* verbose= */ false);
 
             petugasQrScanner.render(onParticipantScanSuccess, onParticipantScanFailure);
             isScanningActive = true;
         }
-    }, 200);
+    }, 150);
 }
 
 function closeScannerPetugas() {
@@ -1566,22 +1564,32 @@ function processVerificationUrl(rawUrl) {
     let nipParam = clean;
     let tokenParam = '';
 
-    try {
-        if (clean.startsWith('http://') || clean.startsWith('https://')) {
-            const parsed = new URL(clean);
-            if (parsed.searchParams.has('nip')) {
-                nipParam = parsed.searchParams.get('nip');
-                tokenParam = parsed.searchParams.get('token') || '';
-            } else if (parsed.pathname.includes('/rapat/tiket-qr/')) {
-                const segs = parsed.pathname.split('/');
-                nipParam = segs[segs.length - 1];
-            }
-        } else if (clean.startsWith('{') && clean.endsWith('}')) {
-            const json = JSON.parse(clean);
-            nipParam = json.nip || json.id || json.nama || clean;
-            tokenParam = json.token || '';
+    if (clean.startsWith('SIKEREN:')) {
+        const parts = clean.split(':');
+        // Format: SIKEREN:PRESENSI:{taskId}:{nip} atau SIKEREN:{taskId}:{nip}
+        if (parts.length >= 4) {
+            nipParam = parts[3];
+        } else if (parts.length === 3) {
+            nipParam = parts[2];
         }
-    } catch (e) {}
+    } else {
+        try {
+            if (clean.startsWith('http://') || clean.startsWith('https://')) {
+                const parsed = new URL(clean);
+                if (parsed.searchParams.has('nip')) {
+                    nipParam = parsed.searchParams.get('nip');
+                    tokenParam = parsed.searchParams.get('token') || '';
+                } else if (parsed.pathname.includes('/rapat/tiket-qr/')) {
+                    const segs = parsed.pathname.split('/');
+                    nipParam = segs[segs.length - 1];
+                }
+            } else if (clean.startsWith('{') && clean.endsWith('}')) {
+                const json = JSON.parse(clean);
+                nipParam = json.nip || json.id || json.nama || clean;
+                tokenParam = json.token || '';
+            }
+        } catch (e) {}
+    }
 
     // Selalu arahkan ke endpoint kegiatan saat ini pada domain/host aktif PJ
     let fetchUrl = `{{ url('/rapat/verifikasi-kehadiran/' . $rapatId) }}?nip=${encodeURIComponent(nipParam)}` + (tokenParam ? `&token=${encodeURIComponent(tokenParam)}` : '');

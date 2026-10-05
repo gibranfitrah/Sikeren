@@ -1408,11 +1408,12 @@ class KegiatanController extends Controller
 
         // Generate URL Verifikasi yang di-encode ke dalam QR
         $identifier = $user->niplama ?: ($user->nipbaru ?: $user->id);
-        $verifyToken = md5($user->id . '_' . $task->id . '_sikeren_salt');
-        $verifyUrl = self::getQrUrl('rapat/verifikasi-kehadiran/' . $task->id . '?nip=' . urlencode($identifier) . '&token=' . $verifyToken);
+        $verifyUrl = self::getQrUrl('rapat/verifikasi-kehadiran/' . $task->id . '?nip=' . urlencode($identifier));
 
-        // QR SVG dengan margin dan error correction standar ISO agar mudah dipindai kamera
-        $qrSvg = QrCode::size(280)->margin(2)->errorCorrection('M')->generate($verifyUrl);
+        // Gunakan payload ringkas dengan error correction 'L' agar menghasilkan modul (titik) QR yang jauh lebih besar
+        // dan kontras, sehingga kamera laptop/webcam dapat langsung memindai layar HP dalam sekejap tanpa lag.
+        $qrPayload = 'SIKEREN:PRESENSI:' . $task->id . ':' . $identifier;
+        $qrSvg = QrCode::size(280)->margin(1)->errorCorrection('L')->generate($qrPayload);
         $urlPresensiRuangan = self::getQrUrl('daftarhadir/' . $task->id);
 
         return view('rapat.tiket_qr', compact(
@@ -1476,9 +1477,16 @@ class KegiatanController extends Controller
             ]);
         }
 
-        // Ekstrak NIP jika rawNip berupa URL verifikasi atau tiket
+        // Ekstrak NIP jika rawNip berupa format SIKEREN:... atau URL verifikasi atau tiket
         $nip = $rawNip;
-        if (str_contains($rawNip, '?nip=') || str_contains($rawNip, '&nip=')) {
+        if (str_starts_with($rawNip, 'SIKEREN:')) {
+            $parts = explode(':', $rawNip);
+            if (count($parts) >= 4) {
+                $nip = trim($parts[3]);
+            } elseif (count($parts) === 3) {
+                $nip = trim($parts[2]);
+            }
+        } elseif (str_contains($rawNip, '?nip=') || str_contains($rawNip, '&nip=')) {
             $parsedUrl = parse_url($rawNip);
             if (!empty($parsedUrl['query'])) {
                 parse_str($parsedUrl['query'], $qParams);
