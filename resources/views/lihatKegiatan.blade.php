@@ -1315,7 +1315,7 @@ setInterval(refreshPresensi, 5000);
 
             <div class="p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-[11px] leading-relaxed flex items-center gap-2">
                 <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span><strong>Tips:</strong> Tingkatkan kecerahan layar HP peserta dan posisikan kode QR di dalam bingkai kamera. Saat berhasil terpindai, sistem akan berbunyi <em>beep</em>.</span>
+                <span><strong>Bebas Jaringan:</strong> HP peserta <strong>tidak harus memakai jaringan Wi-Fi yang sama</strong>. Cukup tunjukkan Tiket QR (bisa berupa tangkapan layar / screenshot atau PDF cetak tanpa internet). Kamera PJ ini yang akan memverifikasi langsung ke sistem.</span>
             </div>
 
             {{-- Fallback Manual NIP Input --}}
@@ -1531,25 +1531,60 @@ function onParticipantScanSuccess(decodedText, decodedResult) {
 
 function processVerificationUrl(rawUrl) {
     const banner = document.getElementById('scanner-result-banner');
+    const clean = (rawUrl || '').trim();
+    if (!clean) return;
+
+    // 1. Deteksi jika yang dipindai adalah QR Ruangan / Lembar Cetak
+    if (clean.includes('/scan-qr/') || clean.includes('/daftarhadir/') || clean.includes('/qrcode/')) {
+        if (banner) {
+            banner.className = "p-3.5 rounded-2xl text-xs font-bold bg-amber-50 border border-amber-300 text-amber-900 leading-relaxed text-left";
+            banner.innerHTML = `
+                <div class="flex items-center gap-2 mb-1">
+                    <svg class="w-5 h-5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <span class="font-extrabold text-[12px]">Ini adalah Lembar QR Ruangan / Kegiatan!</span>
+                </div>
+                <p class="text-[11px] font-normal text-amber-800">
+                    QR ini adalah <strong>QR Lembar Ruangan</strong> untuk discan mandiri oleh peserta dari HP masing-masing.<br>
+                    Untuk memverifikasi peserta via kamera PJ ini, silakan minta peserta membuka <strong>Tiket QR Saya</strong> di akunnya, atau ketik NIP/Nama peserta di kolom bawah.
+                </p>
+            `;
+            banner.classList.remove('hidden');
+        }
+        setTimeout(() => {
+            isScanningActive = true;
+        }, 4000);
+        return;
+    }
+
     if (banner) {
         banner.className = "p-3 rounded-2xl text-xs font-bold bg-blue-50 border border-blue-200 text-blue-800 flex items-center gap-2";
         banner.innerHTML = `<span class="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full inline-block"></span> Memverifikasi data peserta...`;
         banner.classList.remove('hidden');
     }
 
-    let fetchUrl = rawUrl;
+    // 2. Ekstrak identitas peserta (NIP/ID/Nama) tanpa terikat pada domain atau IP di dalam QR
+    let nipParam = clean;
+    let tokenParam = '';
+
     try {
-        const parsed = new URL(rawUrl, window.location.origin);
-        if (parsed.pathname.includes('/rapat/verifikasi-kehadiran/')) {
-            fetchUrl = parsed.pathname + parsed.search;
-        } else {
-            fetchUrl = `{{ url('/rapat/verifikasi-kehadiran/' . $rapatId) }}?nip=${encodeURIComponent(rawUrl.trim())}`;
+        if (clean.startsWith('http://') || clean.startsWith('https://')) {
+            const parsed = new URL(clean);
+            if (parsed.searchParams.has('nip')) {
+                nipParam = parsed.searchParams.get('nip');
+                tokenParam = parsed.searchParams.get('token') || '';
+            } else if (parsed.pathname.includes('/rapat/tiket-qr/')) {
+                const segs = parsed.pathname.split('/');
+                nipParam = segs[segs.length - 1];
+            }
+        } else if (clean.startsWith('{') && clean.endsWith('}')) {
+            const json = JSON.parse(clean);
+            nipParam = json.nip || json.id || json.nama || clean;
+            tokenParam = json.token || '';
         }
-    } catch (e) {
-        if (!rawUrl.includes('/rapat/verifikasi-kehadiran/')) {
-            fetchUrl = `{{ url('/rapat/verifikasi-kehadiran/' . $rapatId) }}?nip=${encodeURIComponent(rawUrl.trim())}`;
-        }
-    }
+    } catch (e) {}
+
+    // Selalu arahkan ke endpoint kegiatan saat ini pada domain/host aktif PJ
+    let fetchUrl = `{{ url('/rapat/verifikasi-kehadiran/' . $rapatId) }}?nip=${encodeURIComponent(nipParam)}` + (tokenParam ? `&token=${encodeURIComponent(tokenParam)}` : '');
 
     fetch(fetchUrl, {
         headers: {
@@ -1590,7 +1625,7 @@ function processVerificationUrl(rawUrl) {
 function submitManualVerification() {
     const input = document.getElementById('manual-nip-input');
     if (!input || !input.value.trim()) {
-        alert('Silakan masukkan NIP peserta.');
+        alert('Silakan masukkan NIP atau Nama peserta.');
         return;
     }
     processVerificationUrl(input.value.trim());

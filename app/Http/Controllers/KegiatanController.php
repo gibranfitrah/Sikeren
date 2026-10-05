@@ -136,6 +136,18 @@ class KegiatanController extends Controller
 
     public static function getQrUrl($path = '')
     {
+        // 1. Dukung PUBLIC_URL atau domain publik (misal tunnel/ngrok/domain server BPS)
+        // agar presensi via QR dapat diakses dari jaringan manapun (seluler 4G/5G)
+        $publicUrl = env('PUBLIC_URL');
+        if (!empty($publicUrl)) {
+            return rtrim($publicUrl, '/') . '/' . ltrim($path, '/');
+        }
+
+        $appUrl = env('APP_URL');
+        if (!empty($appUrl) && !str_contains($appUrl, 'localhost') && !str_contains($appUrl, '127.0.0.1')) {
+            return rtrim($appUrl, '/') . '/' . ltrim($path, '/');
+        }
+
         $override = env('LOCAL_IP');
         $host   = request()->getHost();
         $port   = request()->getPort();
@@ -1444,27 +1456,94 @@ class KegiatanController extends Controller
             } catch (\Exception $e) {}
         }
 
-        $nip = $request->query('nip');
+        $rawNip = trim($request->query('nip', ''));
         $token = $request->query('token');
 
-        $targetUser = null;
-        if (!empty($nip)) {
-            $targetUser = User::where('niplama', $nip)
-                ->orWhere('nipbaru', $nip)
-                ->orWhere('id', $nip)
-                ->first();
-        }
-
-        if (!$targetUser) {
+        // Deteksi jika yang terkirim adalah QR Ruangan / Lembar Cetak
+        if (str_contains($rawNip, '/scan-qr/') || str_contains($rawNip, '/daftarhadir/') || str_contains($rawNip, '/qrcode/')) {
+            $roomMsg = 'QR yang dipindai adalah Lembar QR Ruangan / Kegiatan (untuk presensi mandiri peserta via HP). Untuk verifikasi via kamera PJ, silakan minta peserta menunjukkan "Tiket QR Saya" atau ketik NIP/Nama di bawah.';
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Peserta tidak ditemukan di database.'
+                    'message' => $roomMsg
+                ], 422);
+            }
+            return view('rapat.verifikasi_hasil', [
+                'success' => false,
+                'message' => $roomMsg,
+                'task'    => $task,
+                'peserta' => null
+            ]);
+        }
+
+        // Ekstrak NIP jika rawNip berupa URL verifikasi atau tiket
+        $nip = $rawNip;
+        if (str_contains($rawNip, '?nip=') || str_contains($rawNip, '&nip=')) {
+            $parsedUrl = parse_url($rawNip);
+            if (!empty($parsedUrl['query'])) {
+                parse_str($parsedUrl['query'], $qParams);
+                if (!empty($qParams['nip'])) {
+                    $nip = trim($qParams['nip']);
+                }
+            }
+        } elseif (str_contains($rawNip, '/rapat/tiket-qr/')) {
+            $parts = explode('/', trim($rawNip, '/'));
+            $nip = end($parts);
+        }
+
+        $targetUser = null;
+        if (!empty($nip)) {
+            // 1. Cari exact match pada tabel users
+            $targetUser = User::where('niplama', $nip)
+                ->orWhere('nipbaru', $nip)
+                ->orWhere('id', $nip)
+                ->orWhere('username', $nip)
+                ->orWhere('nama_lengkap', $nip)
+                ->first();
+
+            // 2. Cari LIKE jika nama peserta
+            if (!$targetUser && strlen($nip) >= 3) {
+                $targetUser = User::where('nama_lengkap', 'LIKE', '%' . $nip . '%')->first();
+            }
+
+            // 3. Cari di daftar penugasan rapat ini
+            if (!$targetUser) {
+                $penugasanMatch = penugasan::where('id_kegiatan', $task->id)
+                    ->where(function ($q) use ($nip) {
+                        $q->where('niplama', $nip)
+                          ->orWhere('peserta', $nip)
+                          ->orWhere('peserta', 'LIKE', '%' . $nip . '%');
+                    })
+                    ->first();
+
+                if ($penugasanMatch) {
+                    $targetUser = User::where('niplama', $penugasanMatch->niplama)
+                        ->orWhere('nama_lengkap', $penugasanMatch->peserta)
+                        ->first();
+
+                    if (!$targetUser) {
+                        $targetUser = (object)[
+                            'id' => null,
+                            'nama_lengkap' => $penugasanMatch->peserta,
+                            'niplama' => $penugasanMatch->niplama,
+                            'nipbaru' => null,
+                        ];
+                    }
+                }
+            }
+        }
+
+        if (!$targetUser) {
+            $notFoundMsg = 'Peserta' . ($nip ? ' (' . $nip . ')' : '') . ' tidak ditemukan di database maupun daftar penugasan rapat.';
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $notFoundMsg
                 ], 404);
             }
             return view('rapat.verifikasi_hasil', [
                 'success' => false,
-                'message' => 'Peserta tidak ditemukan di database.',
+                'message' => $notFoundMsg,
                 'task'    => $task,
                 'peserta' => null
             ]);
