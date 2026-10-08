@@ -57,17 +57,6 @@ const PEGAWAI_DATA = [
         is_active: 1
     },
     {
-        id: 4,
-        nama_lengkap: "Muhammad Gibran Fitrah, S.Kom.",
-        niplama: "19990404",
-        nipbaru: "199904042022011001",
-        email: "gibran.fitrah@bps.go.id",
-        nm_jabatan: "Pranata Komputer Ahli Pertama",
-        id_satker: "7400",
-        nm_satker: "BPS Provinsi Sulawesi Tenggara",
-        is_active: 1
-    },
-    {
         id: 5,
         nama_lengkap: "Dewi Sartika, S.E.",
         niplama: "19950505",
@@ -115,8 +104,7 @@ const TIMS_DATA = [
         nm_tim: "Integrasi Pengolahan dan Diseminasi Statistik (IPDS)",
         deskripsi: "Pengelolaan TI, sistem integrasi, dan diseminasi data BPS",
         anggota_nips: [
-            { niplama: "19880202", jabatan_dalam_tim: "Ketua Tim" },
-            { niplama: "19990404", jabatan_dalam_tim: "Anggota" }
+            { niplama: "19880202", jabatan_dalam_tim: "Ketua Tim" }
         ]
     },
     {
@@ -127,8 +115,7 @@ const TIMS_DATA = [
         deskripsi: "Penyusunan PDRB dan analisis statistik ekonomi",
         anggota_nips: [
             { niplama: "19920303", jabatan_dalam_tim: "Ketua Tim" },
-            { niplama: "19900606", jabatan_dalam_tim: "Anggota" },
-            { niplama: "19990404", jabatan_dalam_tim: "Anggota Tim Analis TI" } // Multi-tim (Gibran ada di IPDS dan Nerwilis)
+            { niplama: "19900606", jabatan_dalam_tim: "Anggota" }
         ]
     },
     {
