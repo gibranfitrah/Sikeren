@@ -17,5 +17,10 @@ class penugasan extends Model
         return $this->belongsTo(User::class, 'niplama', 'niplama');
     }
 
+    public function task()
+    {
+        return $this->belongsTo(Task::class, 'id_kegiatan');
+    }
+
     
 }

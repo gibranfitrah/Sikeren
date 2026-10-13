@@ -1,0 +1,261 @@
+{
+	"info": {
+		"_postman_id": "c3a7d91e-426b-4e12-88ef-934fa79b8821",
+		"name": "STARLA PST API - SIKEREN BPS",
+		"description": "Koleksi Postman resmi untuk integrasi data Jadwal Petugas Pelayanan Statistik Terpadu (PST) antara SIKEREN BPS Sultra dan STARLA.\n\nMemuat 3 parameter utama:\n- TANGGAL (YYYY-MM-DD)\n- SESI (1 atau 2)\n- ANGGOTA (NIP Lama)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. GET Tarik Jadwal Petugas PST (Semua Data)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{BASE_URL}}/api/starla/pst-jadwal",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"api",
+						"starla",
+						"pst-jadwal"
+					]
+				},
+				"description": "Mengambil seluruh jadwal Petugas PST yang telah dikelompokkan berdasarkan TANGGAL dan SESI, beserta daftar ANGGOTA (NIP Lama, NIP Baru, Nama, dan status kehadiran)."
+			},
+			"response": []
+		},
+		{
+			"name": "2. GET Filter Jadwal Petugas PST (by Tanggal)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{BASE_URL}}/api/starla/pst-jadwal?tanggal=2026-09-01",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"api",
+						"starla",
+						"pst-jadwal"
+					],
+					"query": [
+						{
+							"key": "tanggal",
+							"value": "2026-09-01",
+							"description": "Filter tanggal kegiatan PST (Format: YYYY-MM-DD)"
+						}
+					]
+				},
+				"description": "Mengambil jadwal Petugas PST untuk tanggal tertentu (menampilkan Sesi 1 dan Sesi 2 beserta anggota yang bertugas)."
+			},
+			"response": []
+		},
+		{
+			"name": "3. GET Filter Jadwal Petugas PST (by Tanggal & Sesi)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{BASE_URL}}/api/starla/pst-jadwal?tanggal=2026-09-01&sesi=1",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"api",
+						"starla",
+						"pst-jadwal"
+					],
+					"query": [
+						{
+							"key": "tanggal",
+							"value": "2026-09-01",
+							"description": "Filter tanggal (YYYY-MM-DD)"
+						},
+						{
+							"key": "sesi",
+							"value": "1",
+							"description": "Filter sesi (1 = Pagi, 2 = Siang)"
+						}
+					]
+				},
+				"description": "Mengambil data petugas PST untuk tanggal dan sesi spesifik."
+			},
+			"response": []
+		},
+		{
+			"name": "4. GET Filter Jadwal Petugas PST (by Bulan)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{BASE_URL}}/api/starla/pst-jadwal?bulan=2026-09",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"api",
+						"starla",
+						"pst-jadwal"
+					],
+					"query": [
+						{
+							"key": "bulan",
+							"value": "2026-09",
+							"description": "Filter bulan kegiatan (Format: YYYY-MM)"
+						}
+					]
+				},
+				"description": "Mengambil seluruh jadwal petugas PST dalam 1 bulan kalender penuh."
+			},
+			"response": []
+		},
+		{
+			"name": "5. GET Cek Jadwal Petugas PST (by NIP Lama)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{BASE_URL}}/api/starla/pst-jadwal?niplama=340017760",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"api",
+						"starla",
+						"pst-jadwal"
+					],
+					"query": [
+						{
+							"key": "niplama",
+							"value": "340017760",
+							"description": "Filter NIP Lama pegawai untuk mengecek kapan saja pegawai ini bertugas"
+						}
+					]
+				},
+				"description": "Mengecek riwayat penugasan PST seorang pegawai berdasarkan NIP Lama."
+			},
+			"response": []
+		},
+		{
+			"name": "6. POST Kirim / Sync Jadwal PST ke SIKEREN (NIP Lama Array)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"tanggal\": \"2026-10-15\",\n  \"sesi\": 1,\n  \"anggota\": [\n    \"340017760\",\n    \"340055840\",\n    \"340054412\"\n  ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{BASE_URL}}/api/starla/pst-jadwal",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"api",
+						"starla",
+						"pst-jadwal"
+					]
+				},
+				"description": "Endpoint yang digunakan oleh STARLA untuk melempar/mengirim jadwal Petugas PST ke sistem SIKEREN. Sistem otomatis mencocokkan NIP Lama ke database pegawai, memperbarui sub-kegiatan sesi 1/2, dan mengirimkan notifikasi penugasan."
+			},
+			"response": []
+		},
+		{
+			"name": "7. POST Kirim / Sync Jadwal PST ke SIKEREN (NIP Lama Objek)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"tanggal\": \"2026-10-15\",\n  \"sesi\": 2,\n  \"anggota\": [\n    {\n      \"niplama\": \"340055487\",\n      \"nama\": \"Adiman Suriawan, SE, M.E.\"\n    },\n    {\n      \"niplama\": \"340056478\",\n      \"nama\": \"Vianey Weda Rahesti SST, M.E.K.K.\"\n    }\n  ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{BASE_URL}}/api/starla/pst-jadwal",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"api",
+						"starla",
+						"pst-jadwal"
+					]
+				},
+				"description": "Format alternatif POST jika STARLA mengirimkan NIP Lama beserta nama petugas secara lengkap."
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "BASE_URL",
+			"value": "http://127.0.0.1:8000",
+			"type": "string",
+			"description": "Base URL server SIKEREN BPS"
+		}
+	]
+}

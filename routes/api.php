@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use \App\Http\Controllers\GanttController;
 use \App\Http\Controllers\SiseraBeritaController;
 use \App\Http\Controllers\PresensiApiController;
+use \App\Http\Controllers\StarlaApiController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -25,6 +26,18 @@ Route::post('/presensi-create', [PresensiApiController::class, 'store']);
 Route::post('/generate-qr', [PresensiApiController::class, 'generate']);
 Route::get('/running-text', [PresensiApiController::class, 'index_running']);
 
+/*
+|--------------------------------------------------------------------------
+| STARLA API Integration - Jadwal Petugas PST
+|--------------------------------------------------------------------------
+| Endpoint untuk pertukaran data jadwal Petugas PST dengan aplikasi STARLA:
+| - GET  /api/starla/pst-jadwal (Tarik jadwal Petugas PST: Tanggal, Sesi, Anggota/NIP Lama)
+| - POST /api/starla/pst-jadwal (Kirim/Sync jadwal Petugas PST dari STARLA ke SIKEREN)
+*/
+Route::prefix('starla')->group(function () {
+    Route::get('/pst-jadwal', [StarlaApiController::class, 'getJadwalPst'])->name('api.starla.pst.index');
+    Route::post('/pst-jadwal', [StarlaApiController::class, 'storeJadwalPst'])->name('api.starla.pst.store');
+});
 
 Route::resource('task', 'TaskController');
 Route::resource('link', 'LinkController');
