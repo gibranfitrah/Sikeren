@@ -66,7 +66,7 @@ class KegiatanController extends Controller
     {
         $peserta       = User::getPegawaiBps();
         $calon_peserta = User::getPegawaiBps();
-        $id            = Task::latest()->first()->id ?? null;
+        $id            = Task::latest()->value('id');
         $category      = DB::table("master_organisasi")->pluck("nm_organisasi", "id");
         
         $start = $request->input('start');
@@ -81,10 +81,16 @@ class KegiatanController extends Controller
         $groups        = group::join('users', 'users.niplama', 'groups.niplama')->get();
         $master_groups = master_group::all();
 
-        $masterProyeks = \App\Proyek::with(['anggota:proyekid,nama_lengkap,niplama'])
-            ->orderBy('nm_tim', 'asc')
-            ->orderBy('namaproyek', 'asc')
-            ->get();
+        try {
+            $masterProyeks = \Illuminate\Support\Facades\Schema::hasTable('proyeks')
+                ? \App\Proyek::with(['anggota:proyekid,nama_lengkap,niplama'])
+                    ->orderBy('nm_tim', 'asc')
+                    ->orderBy('namaproyek', 'asc')
+                    ->get()
+                : collect();
+        } catch (\Throwable $e) {
+            $masterProyeks = collect();
+        }
         $masterProyeksByTim = $masterProyeks->groupBy('nm_tim');
 
         $notifications = Auth::user()->notifications()->latest()->take(5)->get();

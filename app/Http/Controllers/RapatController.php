@@ -11,6 +11,7 @@ use App\group;
 use App\master_group;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\File;
 
@@ -67,10 +68,17 @@ class RapatController extends Controller
         $jumlah_notif  = Auth::user()->unreadNotifications()->count();
 
         // 7. Master Proyek SIMPATI (80 Proyek & Penugasan SDM)
-        $masterProyeks = \App\Proyek::with(['anggota:proyekid,nama_lengkap,niplama'])
-            ->orderBy('nm_tim', 'asc')
-            ->orderBy('namaproyek', 'asc')
-            ->get();
+        // Defensif: jika tabel belum ada / error, fallback ke koleksi kosong agar halaman tetap bisa dibuka
+        try {
+            $masterProyeks = Schema::hasTable('proyeks')
+                ? \App\Proyek::with(['anggota:proyekid,nama_lengkap,niplama'])
+                    ->orderBy('nm_tim', 'asc')
+                    ->orderBy('namaproyek', 'asc')
+                    ->get()
+                : collect();
+        } catch (\Throwable $e) {
+            $masterProyeks = collect();
+        }
         $masterProyeksByTim = $masterProyeks->groupBy('nm_tim');
 
         return view('rapat', compact(

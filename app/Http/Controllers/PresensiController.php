@@ -100,9 +100,9 @@ $lastIdOrganisasi = DB::table('users_jabatan')
     }
     else{
         $latestQrCode = kode_qr::where('kode_satker', $lastIdSatker.'0')->latest()->first();
-        
+
     }
-    return response()->json(['id' => $latestQrCode->id]);
+    return response()->json(['id' => $latestQrCode ? $latestQrCode->id : null]);
 }
 
     public function import(Request $request)

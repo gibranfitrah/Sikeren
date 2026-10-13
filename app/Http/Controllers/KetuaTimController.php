@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use App\Task;
 use App\SubKegiatan;
@@ -67,10 +68,17 @@ class KetuaTimController extends Controller
         $jumlah_notif  = Auth::user()->unreadNotifications()->count();
 
         // Master Proyek SIMPATI (80 Proyek & Penugasan SDM)
-        $masterProyeks = \App\Proyek::with(['anggota:proyekid,nama_lengkap,niplama'])
-            ->orderBy('nm_tim', 'asc')
-            ->orderBy('namaproyek', 'asc')
-            ->get();
+        // Defensif: fallback kosong agar form tetap bisa dibuka walau tabel belum ada
+        try {
+            $masterProyeks = Schema::hasTable('proyeks')
+                ? \App\Proyek::with(['anggota:proyekid,nama_lengkap,niplama'])
+                    ->orderBy('nm_tim', 'asc')
+                    ->orderBy('namaproyek', 'asc')
+                    ->get()
+                : collect();
+        } catch (\Throwable $e) {
+            $masterProyeks = collect();
+        }
         $masterProyeksByTim = $masterProyeks->groupBy('nm_tim');
 
         return view('ketua_tim.create', compact(

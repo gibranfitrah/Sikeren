@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 use App\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class SimpatiController extends Controller
 {
@@ -91,20 +92,27 @@ class SimpatiController extends Controller
         $kegiatanList = \App\Task::orderBy('created_at', 'desc')->take(100)->get();
 
         // 80 Master Proyek BPS & 2.809 Penugasan Anggota dari Database
-        $proyeks = \App\Proyek::withCount('anggota')
-            ->orderBy('id_tim', 'asc')
-            ->orderBy('namaproyek', 'asc')
-            ->get();
-        $totalProyek = \App\Proyek::count();
-        $totalPenugasan = \App\AnggotaProyek::count();
-        $totalProyekAdaPj = \App\Proyek::whereNotNull('pj_nama')->where('pj_nama', '!=', '')->count();
-        $totalProyekBelumPj = max(0, $totalProyek - $totalProyekAdaPj);
-
-        $proyekTims = \App\Proyek::select('id_tim', 'nm_tim')
-            ->distinct()
-            ->whereNotNull('nm_tim')
-            ->orderBy('nm_tim', 'asc')
-            ->get();
+        // Defensif: fallback kosong jika tabel belum termigrasi agar halaman tetap bisa dibuka
+        try {
+            $hasProyek = Schema::hasTable('proyeks') && Schema::hasTable('anggota_proyeks');
+            $proyeks = $hasProyek
+                ? \App\Proyek::withCount('anggota')->orderBy('id_tim', 'asc')->orderBy('namaproyek', 'asc')->get()
+                : collect();
+            $totalProyek = $hasProyek ? \App\Proyek::count() : 0;
+            $totalPenugasan = $hasProyek ? \App\AnggotaProyek::count() : 0;
+            $totalProyekAdaPj = $hasProyek ? \App\Proyek::whereNotNull('pj_nama')->where('pj_nama', '!=', '')->count() : 0;
+            $totalProyekBelumPj = max(0, $totalProyek - $totalProyekAdaPj);
+            $proyekTims = $hasProyek
+                ? \App\Proyek::select('id_tim', 'nm_tim')->distinct()->whereNotNull('nm_tim')->orderBy('nm_tim', 'asc')->get()
+                : collect();
+        } catch (\Throwable $e) {
+            $proyeks = collect();
+            $totalProyek = 0;
+            $totalPenugasan = 0;
+            $totalProyekAdaPj = 0;
+            $totalProyekBelumPj = 0;
+            $proyekTims = collect();
+        }
 
         $proyekListJson = $proyeks->map(function($p) {
             return [
