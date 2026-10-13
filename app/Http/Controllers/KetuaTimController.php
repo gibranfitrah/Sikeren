@@ -297,19 +297,19 @@ class KetuaTimController extends Controller
             }
 
             $maxRowE = $sheetEntri->getHighestRow();
-            $importedCount = 0;
+            $groupedByDate = [];
 
             for ($r = 2; $r <= $maxRowE; $r++) {
                 $rawTanggal = trim((string)$sheetEntri->getCellByColumnAndRow(1, $r)->getValue());
                 $sesi       = trim((string)$sheetEntri->getCellByColumnAndRow(2, $r)->getValue());
 
-                if (empty($rawTanggal) || empty($sesi)) {
+                // Hanya proses Sesi 1 dan Sesi 2
+                if (empty($rawTanggal) || ($sesi !== '1' && $sesi !== '2')) {
                     continue;
                 }
 
                 // Parse tanggal
                 try {
-                    // Cek jika excel numeric date
                     if (is_numeric($rawTanggal)) {
                         $carbonTgl = \Carbon\Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($rawTanggal));
                     } else {
@@ -325,8 +325,6 @@ class KetuaTimController extends Controller
                 }
 
                 $tglStr = $carbonTgl->format('Y-m-d');
-                $startJam = ($sesi == '1') ? '08:00' : '13:00';
-                $endJam   = ($sesi == '1') ? '12:00' : '16:00';
 
                 // Kumpulkan petugas (Kolom C, D, E, F)
                 $petugasList = [];
@@ -335,7 +333,6 @@ class KetuaTimController extends Controller
                     if ($pCall && isset($petugasMap[$pCall])) {
                         $petugasList[] = $petugasMap[$pCall];
                     } elseif ($pCall) {
-                        // Coba cari nama user yang mirip di DB
                         $u = User::where('nama_lengkap', 'like', '%' . $pCall . '%')->first();
                         if ($u) {
                             $petugasList[] = [
@@ -351,68 +348,153 @@ class KetuaTimController extends Controller
                     }
                 }
 
-                if (empty($petugasList)) {
+                if (!empty($petugasList)) {
+                    $groupedByDate[$tglStr][$sesi] = [
+                        'carbon'      => $carbonTgl,
+                        'petugasList' => $petugasList,
+                    ];
+                }
+            }
+
+            $importedDays = 0;
+
+            foreach ($groupedByDate as $tglStr => $sesiData) {
+                $carbonTgl = null;
+                $allOfficersForDay = [];
+
+                foreach ($sesiData as $sesi => $sInfo) {
+                    $carbonTgl = $sInfo['carbon'];
+                    foreach ($sInfo['petugasList'] as $p) {
+                        $allOfficersForDay[] = $p;
+                    }
+                }
+
+                if (!$carbonTgl) {
                     continue;
                 }
 
-                $namesOnly = array_column($petugasList, 'nama');
-                $nipsOnly  = array_column($petugasList, 'nip');
-                $judulKegiatan = "Petugas PST Sesi " . $sesi . " (" . $carbonTgl->translatedFormat('d M Y') . ")";
-                $agenda = "Jadwal Petugas Pelayanan Statistik Terpadu (PST) Sesi " . $sesi . " (" . $startJam . " - " . $endJam . " WITA). Petugas: " . implode(', ', $namesOnly);
+                $judulKegiatan = "Pelayanan Statistik Terpadu (PST) (" . $carbonTgl->translatedFormat('d M Y') . ")";
+                $isPast = $carbonTgl->lt(\Carbon\Carbon::today());
 
-                // Buat atau Update Task Kegiatan
+                // Buat atau Update Task Utama (1 Kegiatan PST per hari)
                 $task = Task::where('start_date', $tglStr)
-                    ->where('jenis_kegiatan', 'Pelayanan Statistik Terpadu (PST)')
-                    ->where('text', 'like', '%Sesi ' . $sesi . '%')
+                    ->where(function ($q) {
+                        $q->where('jenis_kegiatan', 'Pelayanan Statistik Terpadu (PST)')
+                          ->orWhere('text', 'like', '%Pelayanan Statistik Terpadu (PST)%');
+                    })
                     ->first();
 
                 if (!$task) {
                     $task = new Task();
-                    $task->text             = $judulKegiatan;
                     $task->start_date       = $tglStr;
                     $task->date_akhir       = $tglStr;
-                    $task->start_jam        = $startJam;
-                    $task->end_jam          = $endJam;
+                    $task->start_jam        = '08:00:00';
+                    $task->end_jam          = '16:00:00';
                     $task->jenis            = 'Kegiatan';
                     $task->jenis_kegiatan   = 'Pelayanan Statistik Terpadu (PST)';
                     $task->tim              = 'Diseminasi dan Layanan Statistik';
                     $task->tempat           = 'Ruang PST BPS Provinsi Sulawesi Tenggara';
-                    $isPast = \Carbon\Carbon::parse($tglStr)->lt(\Carbon\Carbon::today());
-                    $task->status           = $isPast ? 'Selesai' : 'Sedang Berjalan';
-                    $task->progress         = $isPast ? 100 : 0;
                     $task->setuju_rapat     = 1;
                 }
 
-                $task->agenda           = $agenda;
-                $task->penanggung_jawab = $namesOnly[0] ?? 'Ketua Tim PST';
-                $task->owners           = json_encode($nipsOnly);
+                $task->text             = $judulKegiatan;
+                $task->penanggung_jawab = 'Ketua Tim PST';
+                $task->status           = $isPast ? 'Selesai' : 'Sedang Berjalan';
+                $task->progress         = $isPast ? 100 : 0;
+                $task->agenda           = "Pelayanan Statistik Terpadu (PST) BPS Provinsi Sulawesi Tenggara pada " . $carbonTgl->translatedFormat('d F Y') . " (Sesi 1: 08:00 - 12:00 WITA, Sesi 2: 13:00 - 16:00 WITA).";
                 $task->save();
 
-                // Simpan penugasan petugas
-                foreach ($petugasList as $p) {
-                    $existingP = \App\penugasan::where('id_kegiatan', $task->id)
-                        ->where(function($q) use ($p) {
-                            $q->where('niplama', $p['nip'])
-                              ->orWhere('peserta', $p['nama']);
-                        })->first();
+                // Buat Sub Kegiatan untuk Sesi 1 dan Sesi 2
+                foreach ($sesiData as $sesi => $sInfo) {
+                    $pList = $sInfo['petugasList'];
+                    $namesOnly = array_column($pList, 'nama');
+                    $sesiName = "PST Sesi " . $sesi . " (" . ($sesi == '1' ? 'Pagi 08:00 - 12:00' : 'Siang 13:00 - 16:00') . ")";
 
-                    if (!$existingP) {
-                        $existingP = new \App\penugasan();
-                        $existingP->id_kegiatan = $task->id;
-                        $existingP->niplama     = $p['nip'];
-                        $existingP->peserta     = $p['nama'];
+                    $sub = SubKegiatan::where('task_id', $task->id)
+                        ->where(function ($q) use ($sesi) {
+                            $q->where('nama_sub', 'like', '%Sesi ' . $sesi . '%')
+                              ->orWhere('nama_sub', 'like', 'PST Sesi ' . $sesi . '%');
+                        })
+                        ->first();
+
+                    if (!$sub) {
+                        $sub = new SubKegiatan();
+                        $sub->task_id    = $task->id;
+                        $sub->start_date = $tglStr;
+                        $sub->end_date   = $tglStr;
+                        $sub->tim        = 'Diseminasi dan Layanan Statistik';
                     }
 
-                    $existingP->keterangan       = "Petugas PST Sesi " . $sesi;
-                    $existingP->status_kehadiran = 'Hadir';
-                    $existingP->waktu_kehadiran  = $tglStr . ' ' . $startJam . ':00';
-                    $existingP->save();
+                    $sub->nama_sub   = $sesiName;
+                    $sub->pj         = $namesOnly[0] ?? 'Petugas PST';
+                    $sub->anggota    = json_encode($namesOnly);
+                    $sub->status     = $isPast ? 'Selesai' : 'Sedang Berjalan';
+                    $sub->progress   = $isPast ? 100 : 0;
+                    $sub->keterangan = "Petugas PST Sesi " . $sesi . " (" . ($sesi == '1' ? '08:00 - 12:00' : '13:00 - 16:00') . " WITA): " . implode(', ', $namesOnly);
+                    $sub->save();
+
+                    // Simpan penugasan & kirim notifikasi ke masing-masing petugas
+                    foreach ($pList as $p) {
+                        $existingP = \App\penugasan::where('id_kegiatan', $task->id)
+                            ->where(function ($q) use ($p) {
+                                $q->where('niplama', $p['nip'])
+                                  ->orWhere('peserta', $p['nama']);
+                            })
+                            ->where('keterangan', 'like', '%Sesi ' . $sesi . '%')
+                            ->first();
+
+                        if (!$existingP) {
+                            $existingP = new \App\penugasan();
+                            $existingP->id_kegiatan = $task->id;
+                            $existingP->niplama     = $p['nip'];
+                            $existingP->peserta     = $p['nama'];
+                            $existingP->status_kehadiran = 'Belum Konfirmasi';
+                        }
+
+                        $existingP->keterangan = "Petugas PST Sesi " . $sesi;
+                        if ($isPast && empty($existingP->status_kehadiran)) {
+                            $existingP->status_kehadiran = 'Hadir';
+                        }
+                        $existingP->save();
+
+                        // Kirim notifikasi ke akun petugas terkait
+                        $userPetugas = User::where('niplama', $p['nip'])
+                            ->orWhere('nama_lengkap', $p['nama'])
+                            ->first();
+
+                        if ($userPetugas) {
+                            $notifExists = \DB::table('notifications')
+                                ->where('notifiable_id', $userPetugas->id)
+                                ->where('data', 'like', '%"task_id":' . $task->id . '%')
+                                ->where('data', 'like', '%"sesi":' . $sesi . '%')
+                                ->exists();
+
+                            if (!$notifExists) {
+                                \DB::table('notifications')->insert([
+                                    'id'              => (string) \Illuminate\Support\Str::uuid(),
+                                    'type'            => 'App\Notifications\PenugasanPstNotification',
+                                    'notifiable_type' => 'App\User',
+                                    'notifiable_id'   => $userPetugas->id,
+                                    'data'            => json_encode([
+                                        'judul'       => "Penugasan Petugas PST Sesi {$sesi}",
+                                        'pesan'       => "Anda ditugaskan sebagai Petugas PST Sesi {$sesi} pada {$carbonTgl->translatedFormat('d F Y')}. Silakan konfirmasi kehadiran Anda.",
+                                        'url'         => '/daftarkegiatan/' . $task->id,
+                                        'task_id'     => $task->id,
+                                        'sesi'        => (int)$sesi,
+                                    ]),
+                                    'read_at'         => null,
+                                    'created_at'      => now(),
+                                    'updated_at'      => now(),
+                                ]);
+                            }
+                        }
+                    }
                 }
 
-                $importedCount++;
+                $importedDays++;
             }
 
-            return redirect()->route('kegiatan.daftar')->with('success', "Berhasil mengimpor {$importedCount} sesi jadwal Petugas PST (Senin - Jumat) dari template Starla! Jadwal kini tampil di kalender dashboard.");
+            return redirect()->route('kegiatan.daftar')->with('success', "Berhasil mengimpor {$importedDays} hari jadwal Petugas PST (Sesi 1 & 2 dimasukkan ke Sub Kegiatan) dari template Starla! Notifikasi telah dikirimkan ke seluruh petugas.");
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal memproses template PST: ' . $e->getMessage());
         }

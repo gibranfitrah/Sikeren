@@ -116,6 +116,102 @@
             <span>{{ session('success') }}</span>
         </div>
     @endif
+    @if(session('success_presensi'))
+        <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-3">
+            <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>{{ session('success_presensi') }}</span>
+        </div>
+    @endif
+
+    {{-- KONFIRMASI KEHADIRAN PETUGAS PST (JIKA USER LOGIN ADALAH PETUGAS PST PADA SESI INI) --}}
+    @if($task->is_pst && Auth::check())
+        @php
+            $authUsr = Auth::user();
+            $myPenugasans = $task->penugasans->filter(function($p) use ($authUsr) {
+                return (!empty($authUsr->niplama) && $authUsr->niplama === $p->niplama) ||
+                       (!empty($authUsr->nipbaru) && $authUsr->nipbaru === $p->niplama) ||
+                       (strcasecmp(trim($authUsr->nama_lengkap ?? ''), trim($p->peserta ?? '')) === 0);
+            });
+        @endphp
+
+        @if($myPenugasans->isNotEmpty())
+            <div class="space-y-3">
+                @foreach($myPenugasans as $myPenugasan)
+                    @php
+                        $mySt = $myPenugasan->status_kehadiran ?: 'Belum Konfirmasi';
+                    @endphp
+                    <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-indigo-50/90 to-blue-50/70 border border-indigo-200/80 shadow-xs">
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-pulse"></span>
+                                    <h4 class="font-black text-indigo-950 text-sm sm:text-base">Konfirmasi Kehadiran Petugas PST</h4>
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-100 text-indigo-700 border border-indigo-200">
+                                        {{ $myPenugasan->keterangan ?: 'Petugas PST' }}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-indigo-800">
+                                    Halo <strong>{{ $myPenugasan->peserta }}</strong>, silakan pilih status kehadiran Anda untuk sesi ini. 
+                                    Status saat ini: 
+                                    @if($mySt === 'Hadir')
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Hadir
+                                        </span>
+                                    @elseif($mySt === 'Tidak Hadir')
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Tidak Hadir
+                                        </span>
+                                    @elseif($mySt === 'Ada Kegiatan Lain' || $mySt === 'Sedang Ada Kegiatan Lain')
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Ada Kegiatan Lain
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold bg-slate-200 text-slate-700 border border-slate-300">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span> Belum Konfirmasi
+                                        </span>
+                                    @endif
+                                </p>
+                            </div>
+
+                            <div class="flex flex-wrap items-center gap-2">
+                                <form action="{{ route('pst.konfirmasi_kehadiran') }}" method="POST" class="inline">
+                                    @csrf
+                                    <input type="hidden" name="penugasan_id" value="{{ $myPenugasan->id }}">
+                                    <input type="hidden" name="status_kehadiran" value="Hadir">
+                                    <button type="submit" class="px-3.5 py-2 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 shadow-xs cursor-pointer {{ $mySt === 'Hadir' ? 'bg-emerald-600 text-white ring-2 ring-emerald-300' : 'bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200' }}">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                        <span>Hadir</span>
+                                    </button>
+                                </form>
+
+                                <form action="{{ route('pst.konfirmasi_kehadiran') }}" method="POST" class="inline">
+                                    @csrf
+                                    <input type="hidden" name="penugasan_id" value="{{ $myPenugasan->id }}">
+                                    <input type="hidden" name="status_kehadiran" value="Tidak Hadir">
+                                    <button type="submit" class="px-3.5 py-2 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 shadow-xs cursor-pointer {{ $mySt === 'Tidak Hadir' ? 'bg-rose-600 text-white ring-2 ring-rose-300' : 'bg-white hover:bg-rose-50 text-rose-700 border border-rose-200' }}">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        <span>Tidak Hadir</span>
+                                    </button>
+                                </form>
+
+                                <form action="{{ route('pst.konfirmasi_kehadiran') }}" method="POST" class="inline">
+                                    @csrf
+                                    <input type="hidden" name="penugasan_id" value="{{ $myPenugasan->id }}">
+                                    <input type="hidden" name="status_kehadiran" value="Ada Kegiatan Lain">
+                                    <button type="submit" class="px-3.5 py-2 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 shadow-xs cursor-pointer {{ ($mySt === 'Ada Kegiatan Lain' || $mySt === 'Sedang Ada Kegiatan Lain') ? 'bg-amber-500 text-white ring-2 ring-amber-300' : 'bg-white hover:bg-amber-50 text-amber-700 border border-amber-200' }}">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        <span>Ada Kegiatan Lain</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    @endif
 
     {{-- =========================================================================
         UNIFIED ACTIVITY OVERVIEW & LIFECYCLE (CLEAN & MINIMALIST)
@@ -304,17 +400,26 @@
 
                                     {{-- Anggota Assigned --}}
                                     <div class="space-y-1">
-                                        <span class="font-semibold text-gray-400 block">Anggota Terlibat:</span>
+                                        <span class="font-semibold text-gray-400 block">{{ $task->is_pst ? 'Petugas Bertugas & Status Kehadiran:' : 'Anggota Terlibat:' }}</span>
                                         @if(!empty($sub->anggota_list))
-                                            <div class="flex items-center gap-1 flex-wrap">
-                                                @foreach(array_slice($sub->anggota_list, 0, 4) as $ang)
-                                                    <span class="px-2 py-0.5 rounded-md text-[10px] bg-blue-50 text-blue-700 border border-blue-100 font-semibold">
-                                                        {{ $ang }}
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                @foreach($sub->anggota_list as $ang)
+                                                    @php
+                                                        $angPenugasan = $task->penugasans->first(function($p) use ($ang) {
+                                                            return strcasecmp(trim($p->peserta ?? ''), trim($ang)) === 0;
+                                                        });
+                                                        $angSt = $angPenugasan ? ($angPenugasan->status_kehadiran ?: 'Belum Konfirmasi') : null;
+                                                    @endphp
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold border 
+                                                        {{ $angSt === 'Hadir' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : ($angSt === 'Tidak Hadir' ? 'bg-rose-50 text-rose-800 border-rose-200' : ($angSt === 'Ada Kegiatan Lain' || $angSt === 'Sedang Ada Kegiatan Lain' ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-blue-50 text-blue-700 border-blue-100')) }}">
+                                                        <span>{{ $ang }}</span>
+                                                        @if($angSt && $task->is_pst)
+                                                            <span class="text-[9px] font-extrabold uppercase opacity-85">
+                                                                ({{ $angSt }})
+                                                            </span>
+                                                        @endif
                                                     </span>
                                                 @endforeach
-                                                @if(count($sub->anggota_list) > 4)
-                                                    <span class="text-[10px] text-gray-400 font-bold">+{{ count($sub->anggota_list) - 4 }} lainnya</span>
-                                                @endif
                                             </div>
                                         @else
                                             <span class="text-gray-400 italic text-[11px]">Seluruh tim terkait</span>
@@ -491,33 +596,87 @@
                 @endphp
                 <x-card 
                     title="Petugas Pelayanan Statistik Terpadu (PST)" 
-                    subtitle="Daftar petugas yang bertugas pada sesi ini"
+                    subtitle="Daftar petugas & status kehadiran pada sesi ini"
                     tag="Petugas">
                     
                     <x-slot name="action">
                         <x-badge variant="primary" size="xs">{{ $petugasPstList->count() ?: 1 }} Petugas</x-badge>
                     </x-slot>
 
-                    <div class="space-y-2 max-h-96 overflow-y-auto pr-1">
+                    <div class="space-y-2.5 max-h-[28rem] overflow-y-auto pr-1">
                         @forelse($petugasPstList as $p)
-                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3">
+                            @php
+                                $pStatus = $p->status_kehadiran ?: 'Belum Konfirmasi';
+                                $isThisOfficer = Auth::check() && (
+                                    (!empty(Auth::user()->niplama) && Auth::user()->niplama === $p->niplama) ||
+                                    (!empty(Auth::user()->nipbaru) && Auth::user()->nipbaru === $p->niplama) ||
+                                    (strcasecmp(trim(Auth::user()->nama_lengkap ?? ''), trim($p->peserta ?? '')) === 0)
+                                );
+                                $canChangeThis = Auth::check() && (
+                                    Auth::user()->isAdmin() || 
+                                    $isThisOfficer || 
+                                    (strcasecmp(Auth::user()->nama_lengkap ?? '', $task->penanggung_jawab ?? '') === 0)
+                                );
+                            @endphp
+                            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-indigo-50/20 transition">
                                 <div class="flex items-center gap-3 min-w-0">
-                                    <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-xs shrink-0">
+                                    <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-xs shrink-0">
                                         {{ strtoupper(substr($p->peserta ?? 'P', 0, 1)) }}
                                     </div>
                                     <div class="space-y-0.5 min-w-0">
-                                        <h4 class="font-bold text-slate-900 text-xs truncate">{{ $p->peserta }}</h4>
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <h4 class="font-bold text-slate-900 text-xs truncate">{{ $p->peserta }}</h4>
+                                            @if($isThisOfficer)
+                                                <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-blue-100 text-blue-700">Anda</span>
+                                            @endif
+                                        </div>
                                         <p class="text-[11px] text-slate-500 font-medium truncate">
                                             @if(!empty($p->niplama) && $p->niplama !== '-')
-                                                NIP: {{ $p->niplama }}
+                                                NIP: {{ $p->niplama }} • 
                                             @endif
-                                            {{ $p->keterangan ? ' • ' . $p->keterangan : '' }}
+                                            <span class="text-indigo-600 font-bold">{{ $p->keterangan ?: 'Petugas PST' }}</span>
                                         </p>
                                     </div>
                                 </div>
-                                <span class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 shrink-0">
-                                    Petugas
-                                </span>
+
+                                <div class="flex items-center gap-2 shrink-0">
+                                    {{-- Status Badge --}}
+                                    @if($pStatus === 'Hadir')
+                                        <span class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1 shadow-2xs">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                            Hadir
+                                        </span>
+                                    @elseif($pStatus === 'Tidak Hadir')
+                                        <span class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-rose-50 text-rose-700 border border-rose-200 inline-flex items-center gap-1 shadow-2xs">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                            Tidak Hadir
+                                        </span>
+                                    @elseif($pStatus === 'Ada Kegiatan Lain' || $pStatus === 'Sedang Ada Kegiatan Lain')
+                                        <span class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-amber-50 text-amber-700 border border-amber-300 inline-flex items-center gap-1 shadow-2xs">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                            Ada Kegiatan Lain
+                                        </span>
+                                    @else
+                                        <span class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-100 text-slate-600 border border-slate-200 inline-flex items-center gap-1 shadow-2xs">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                            Belum Konfirmasi
+                                        </span>
+                                    @endif
+
+                                    {{-- Dropdown untuk ubah status jika berhak --}}
+                                    @if($canChangeThis)
+                                        <form action="{{ route('pst.konfirmasi_kehadiran') }}" method="POST" class="inline">
+                                            @csrf
+                                            <input type="hidden" name="penugasan_id" value="{{ $p->id }}">
+                                            <select name="status_kehadiran" onchange="this.form.submit()" class="text-[10px] font-bold py-1 px-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 cursor-pointer focus:ring-1 focus:ring-indigo-500" title="Ubah status kehadiran">
+                                                <option value="" disabled selected>Ubah</option>
+                                                <option value="Hadir" {{ $pStatus === 'Hadir' ? 'selected' : '' }}>Hadir</option>
+                                                <option value="Tidak Hadir" {{ $pStatus === 'Tidak Hadir' ? 'selected' : '' }}>Tidak Hadir</option>
+                                                <option value="Ada Kegiatan Lain" {{ ($pStatus === 'Ada Kegiatan Lain' || $pStatus === 'Sedang Ada Kegiatan Lain') ? 'selected' : '' }}>Ada Kegiatan Lain</option>
+                                            </select>
+                                        </form>
+                                    @endif
+                                </div>
                             </div>
                         @empty
                             <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">

@@ -389,6 +389,28 @@ class User extends Authenticatable
             }
         }
 
+        // Cek penugasan di Sub Kegiatan untuk kegiatan ini
+        $isSubMember = \DB::table('sub_kegiatans')
+            ->where('task_id', $task->id)
+            ->where(function ($q) use ($nama, $cleanName, $nip, $username) {
+                if (!empty($nama)) {
+                    $q->where('pj', 'LIKE', '%' . $nama . '%')->orWhere('anggota', 'LIKE', '%' . $nama . '%');
+                }
+                if (!empty($cleanName)) {
+                    $q->orWhere('pj', 'LIKE', '%' . $cleanName . '%')->orWhere('anggota', 'LIKE', '%' . $cleanName . '%');
+                }
+                if (!empty($nip) && $nip !== '-') {
+                    $q->orWhere('pj', 'LIKE', '%' . $nip . '%')->orWhere('anggota', 'LIKE', '%' . $nip . '%');
+                }
+                if (!empty($username)) {
+                    $q->orWhere('pj', 'LIKE', '%' . $username . '%')->orWhere('anggota', 'LIKE', '%' . $username . '%');
+                }
+            })->exists();
+
+        if ($isSubMember) {
+            return true;
+        }
+
         // 2. Cek apakah user secara spesifik DITUNJUK pada kegiatan / rapat ini:
         // A. Ditunjuk sebagai Penanggung Jawab (PJ)
         $pj = strtolower(trim($task->penanggung_jawab ?? ''));

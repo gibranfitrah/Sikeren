@@ -84,6 +84,7 @@ Route::get('/api/presensi-rapat/{id}', [KegiatanController::class, 'apiStatusPre
 // Presensi Kehadiran Rapat (Dapat diakses oleh Pegawai BPS setelah login, atau Tamu Eksternal secara langsung)
 Route::get('daftarhadir/{id}', [KegiatanController::class, 'daftarHadir'])->where('id','(.*)')->name('daftarhadir');
 Route::post('daftarhadir/submit', [KegiatanController::class, 'submitDaftarHadir'])->name('daftarhadir.submit');
+Route::post('/kegiatan/konfirmasi-kehadiran-pst', [KegiatanController::class, 'konfirmasiKehadiranPst'])->name('pst.konfirmasi_kehadiran');
 
 Route::group(['middleware' => 'auth'], function () {
     

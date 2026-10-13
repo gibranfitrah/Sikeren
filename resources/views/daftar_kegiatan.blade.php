@@ -248,7 +248,7 @@
                             <th scope="col" class="px-6 py-4">Nama Kegiatan & Tim</th>
                             <th scope="col" class="px-6 py-4">Rentang Waktu</th>
                             <th scope="col" class="px-6 py-4">Wilayah / Lokasi</th>
-                            <th scope="col" class="px-6 py-4">PJ / Petugas & Sub Kegiatan</th>
+                            <th scope="col" class="px-6 py-4">PJ & Sub Kegiatan</th>
                             <th scope="col" class="px-6 py-4">Status Persetujuan</th>
                             <th scope="col" class="px-6 py-4 text-right">Aksi</th>
                         </tr>
@@ -370,49 +370,11 @@
                                 @endif
                             </td>
 
-                            {{-- PJ / Petugas & Dropdown Sub Kegiatan Button --}}
+                            {{-- PJ & Dropdown Sub Kegiatan Button --}}
                             <td class="px-6 py-4">
                                 <div class="space-y-2">
                                     <div class="font-medium text-gray-800">
-                                        @if($isPst)
-                                            <span class="text-indigo-900 font-bold">Petugas:</span>
-                                            @if(!empty($petugasList))
-                                                <button type="button" 
-                                                        @click="petugasModal = { 
-                                                            open: true, 
-                                                            kegiatan: '{{ addslashes($item->text) }}', 
-                                                            tanggal: '{{ $item->start_date ? \Carbon\Carbon::parse($item->start_date)->translatedFormat('d F Y') : '-' }}',
-                                                            jam: '{{ $item->start_jam ? substr($item->start_jam, 0, 5) . ' - ' . substr($item->end_jam, 0, 5) . ' WITA' : '' }}',
-                                                            tempat: '{{ addslashes($item->tempat ?: 'Ruang PST BPS Provinsi Sulawesi Tenggara') }}',
-                                                            petugas: {{ json_encode($petugasDetailList) }}
-                                                        }"
-                                                        class="font-bold text-gray-900 hover:text-indigo-600 transition text-left cursor-pointer inline-flex items-center gap-1">
-                                                    <span>{{ $petugasList[0] }}</span>
-                                                </button>
-                                                @if(count($petugasList) > 1)
-                                                    <button type="button" 
-                                                            @click="petugasModal = { 
-                                                                open: true, 
-                                                                kegiatan: '{{ addslashes($item->text) }}', 
-                                                                tanggal: '{{ $item->start_date ? \Carbon\Carbon::parse($item->start_date)->translatedFormat('d F Y') : '-' }}',
-                                                                jam: '{{ $item->start_jam ? substr($item->start_jam, 0, 5) . ' - ' . substr($item->end_jam, 0, 5) . ' WITA' : '' }}',
-                                                                tempat: '{{ addslashes($item->tempat ?: 'Ruang PST BPS Provinsi Sulawesi Tenggara') }}',
-                                                                petugas: {{ json_encode($petugasDetailList) }}
-                                                            }"
-                                                            class="text-[10px] text-indigo-700 bg-indigo-50 hover:bg-indigo-100 hover:text-indigo-900 border border-indigo-200 hover:border-indigo-300 px-2 py-0.5 rounded-lg font-extrabold cursor-pointer inline-flex items-center gap-1 ml-1 transition shadow-2xs active:scale-95" 
-                                                            title="Klik untuk melihat seluruh petugas PST">
-                                                        <svg class="w-3 h-3 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                                        </svg>
-                                                        <span>+{{ count($petugasList) - 1 }} Petugas</span>
-                                                    </button>
-                                                @endif
-                                            @else
-                                                <span class="font-bold text-gray-900">{{ $item->penanggung_jawab ?: '-' }}</span>
-                                            @endif
-                                        @else
-                                            PJ: <span class="font-bold">{{ $item->penanggung_jawab ?: '-' }}</span>
-                                        @endif
+                                        PJ: <span class="font-bold">{{ $item->penanggung_jawab ?: ($isPst ? 'Ketua Tim PST' : '-') }}</span>
                                     </div>
                                     
                                     {{-- Dropdown Sub Kegiatan Trigger --}}
@@ -560,13 +522,23 @@
                                             @foreach($subs as $sub)
                                                 @php $dl = $sub->deadline_status; @endphp
                                                 <div class="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                                                    <div class="space-y-0.5">
+                                                    <div class="space-y-1">
                                                         <span class="font-bold text-gray-800">{{ $sub->nama_sub }}</span>
                                                         <div class="flex items-center gap-2 text-[11px] text-gray-500">
                                                             <span>PJ: {{ $sub->pj ?: '-' }}</span>
                                                             <span>•</span>
                                                             <span>Waktu: {{ $sub->start_date }} s.d {{ $sub->end_date }}</span>
                                                         </div>
+                                                        @if(!empty($sub->anggota_list))
+                                                            <div class="flex flex-wrap items-center gap-1 pt-0.5">
+                                                                <span class="text-[10px] font-semibold text-slate-500">Petugas:</span>
+                                                                @foreach($sub->anggota_list as $ang)
+                                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                                                        {{ $ang }}
+                                                                    </span>
+                                                                @endforeach
+                                                            </div>
+                                                        @endif
                                                     </div>
 
                                                     <div class="flex items-center gap-3">

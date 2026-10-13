@@ -1639,4 +1639,125 @@ class KegiatanController extends Controller
             'penugasan' => $penugasan
         ]);
     }
+
+    /**
+     * Konfirmasi Kehadiran Petugas PST (Hadir / Tidak Hadir / Ada Kegiatan Lain)
+     */
+    public function konfirmasiKehadiranPst(Request $request)
+    {
+        $currentUser = Auth::user();
+        if (!$currentUser) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Silakan masuk ke akun BPS Anda terlebih dahulu.'], 401);
+            }
+            return redirect()->route('login')->with('info', 'Silakan masuk ke akun BPS Anda terlebih dahulu.');
+        }
+
+        $penugasanId = $request->input('penugasan_id');
+        $taskId      = $request->input('task_id');
+        $status      = trim($request->input('status_kehadiran', ''));
+        $keterangan  = trim($request->input('keterangan', ''));
+
+        $validStatuses = ['Hadir', 'Tidak Hadir', 'Ada Kegiatan Lain'];
+        if (!in_array($status, $validStatuses)) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Pilihan status kehadiran tidak valid. Pilih Hadir, Tidak Hadir, atau Ada Kegiatan Lain.'], 422);
+            }
+            return redirect()->back()->with('error', 'Pilihan status kehadiran tidak valid.');
+        }
+
+        $penugasan = null;
+        if (!empty($penugasanId)) {
+            $penugasan = penugasan::find($penugasanId);
+        } elseif (!empty($taskId)) {
+            $penugasan = penugasan::where('id_kegiatan', $taskId)
+                ->where(function ($q) use ($currentUser) {
+                    if (!empty($currentUser->niplama) && $currentUser->niplama !== '-') {
+                        $q->where('niplama', $currentUser->niplama);
+                    }
+                    if (!empty($currentUser->nipbaru) && $currentUser->nipbaru !== '-') {
+                        $q->orWhere('niplama', $currentUser->nipbaru);
+                    }
+                    $q->orWhere('peserta', $currentUser->nama_lengkap);
+                })
+                ->first();
+        }
+
+        if (!$penugasan) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Data penugasan petugas tidak ditemukan.'], 404);
+            }
+            return redirect()->back()->with('error', 'Data penugasan petugas tidak ditemukan.');
+        }
+
+        $task = Task::find($penugasan->id_kegiatan);
+        $isAdmin = $currentUser->isAdmin();
+        $isPj = $task && (
+            strcasecmp($currentUser->nama_lengkap ?? '', $task->penanggung_jawab ?? '') === 0 ||
+            strcasecmp($currentUser->username ?? '', $task->penanggung_jawab ?? '') === 0
+        );
+        $isSelf = (
+            strcasecmp(trim($currentUser->nama_lengkap ?? ''), trim($penugasan->peserta ?? '')) === 0 ||
+            (!empty($currentUser->niplama) && $currentUser->niplama === $penugasan->niplama)
+        );
+
+        if (!$isAdmin && !$isPj && !$isSelf) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Akses ditolak: Anda hanya dapat mengonfirmasi kehadiran Anda sendiri.'], 403);
+            }
+            return redirect()->back()->with('error', 'Akses ditolak: Anda hanya dapat mengonfirmasi kehadiran Anda sendiri.');
+        }
+
+        $penugasan->status_kehadiran = $status;
+        if (!empty($keterangan)) {
+            $sesiPrefix = '';
+            if (preg_match('/(Petugas PST Sesi \d+)/i', $penugasan->keterangan ?? '', $matches)) {
+                $sesiPrefix = $matches[1] . ' • ';
+            }
+            $penugasan->keterangan = $sesiPrefix . $keterangan;
+        }
+        $penugasan->waktu_kehadiran = ($status === 'Hadir' || $status === 'Ada Kegiatan Lain') ? now() : null;
+        $penugasan->save();
+
+        // Kirim notifikasi ke PJ Task jika konfirmasi dilakukan oleh petugas bersangkutan
+        if ($task && !empty($task->penanggung_jawab)) {
+            $pjUser = User::where('nama_lengkap', 'like', '%' . $task->penanggung_jawab . '%')->first();
+            if ($pjUser && $pjUser->id !== $currentUser->id) {
+                $ketNote = $keterangan ? " (Alasan/Keterangan: {$keterangan})" : "";
+                \DB::table('notifications')->insert([
+                    'id'              => (string) \Illuminate\Support\Str::uuid(),
+                    'type'            => 'App\Notifications\KonfirmasiKehadiranPstNotification',
+                    'notifiable_type' => 'App\User',
+                    'notifiable_id'   => $pjUser->id,
+                    'data'            => json_encode([
+                        'judul'            => "Konfirmasi Petugas PST: {$penugasan->peserta} ({$status})",
+                        'pesan'            => "Petugas {$penugasan->peserta} telah mengonfirmasi status '{$status}' pada kegiatan {$task->text}{$ketNote}.",
+                        'url'              => '/daftarkegiatan/' . $task->id,
+                        'task_id'          => $task->id,
+                        'status_kehadiran' => $status,
+                        'petugas'          => $penugasan->peserta
+                    ]),
+                    'read_at'         => null,
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ]);
+            }
+        }
+
+        $formattedTime = $penugasan->waktu_kehadiran ? \Carbon\Carbon::parse($penugasan->waktu_kehadiran)->format('H:i') . ' WITA' : '-';
+        $message = "Status kehadiran {$penugasan->peserta} berhasil diperbarui menjadi: {$status}!";
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success'          => true,
+                'message'          => $message,
+                'penugasan_id'     => $penugasan->id,
+                'status_kehadiran' => $status,
+                'keterangan'       => $penugasan->keterangan,
+                'waktu'            => $formattedTime,
+            ]);
+        }
+
+        return redirect()->back()->with('success_presensi', $message);
+    }
 }
