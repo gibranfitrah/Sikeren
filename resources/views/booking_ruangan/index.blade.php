@@ -382,7 +382,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
 
                 {{-- Timeline Table Grid Seragam --}}
                 <div class="overflow-x-auto">
-                    <table class="w-full text-xs border-collapse table-fixed min-w-[760px]">
+                    <table class="w-full text-xs border-collapse table-fixed min-w-[760px] max-w-6xl">
                         <thead>
                             <tr class="bg-gray-50/80 border-b border-gray-200 text-gray-700">
                                 <th class="py-2.5 px-3 text-left w-20 font-bold">Jam</th>
@@ -393,263 +393,363 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
-                            @foreach($timeSlots as $slot)
                             @php
-                            $slotStart = $slot . ':00';
-                            $slotEnd = date('H:i:s', strtotime($slot . ' +1 hour'));
+                            $skippedSlots = [
+                                'aula1' => [],
+                                'vicon' => [],
+                                'aula4' => [],
+                                'zoom'  => []
+                            ];
 
-                            $bookingAula1 = $dailyBookings->first(function($b) use ($slotStart, $slotEnd) {
-                                return $b->venue_id == 1 && $b->start_time < $slotEnd && $b->end_time > $slotStart;
-                            });
+                            $resolveSlotBooking = function($venueKey, $slotIdx, $dailyBookings, $timeSlots, &$skippedSlots) {
+                                if (in_array($slotIdx, $skippedSlots[$venueKey])) {
+                                    return ['type' => 'skip'];
+                                }
 
-                            $bookingVicon = $dailyBookings->first(function($b) use ($slotStart, $slotEnd) {
-                                return $b->venue_id == 2 && $b->start_time < $slotEnd && $b->end_time > $slotStart;
-                            });
+                                $slot = $timeSlots[$slotIdx];
+                                $slotStart = $slot . ':00';
+                                $slotEnd = date('H:i:s', strtotime($slot . ' +1 hour'));
 
-                            $bookingAula4 = $dailyBookings->first(function($b) use ($slotStart, $slotEnd) {
-                                return $b->venue_id == 3 && $b->start_time < $slotEnd && $b->end_time > $slotStart;
-                            });
+                                $booking = $dailyBookings->first(function($b) use ($venueKey, $slotStart, $slotEnd, $slotIdx) {
+                                    $matches = false;
+                                    if ($venueKey === 'aula1') {
+                                        $matches = ($b->venue_id == 1);
+                                    } elseif ($venueKey === 'vicon') {
+                                        $matches = ($b->venue_id == 2);
+                                    } elseif ($venueKey === 'aula4') {
+                                        $matches = ($b->venue_id == 3);
+                                    } elseif ($venueKey === 'zoom') {
+                                        $matches = in_array($b->zoom_account, ['zoom_1', 'zoom_2', 'eksternal']);
+                                    }
 
-                            $bookingZoom = $dailyBookings->first(function($b) use ($slotStart, $slotEnd) {
-                                return in_array($b->zoom_account, ['zoom_1', 'zoom_2', 'eksternal']) &&
-                                    $b->start_time < $slotEnd && $b->end_time > $slotStart;
-                            });
+                                    if (!$matches) return false;
+
+                                    if ($slotIdx === 0) {
+                                        return $b->start_time < $slotEnd && $b->end_time > $slotStart;
+                                    } else {
+                                        return $b->start_time >= $slotStart && $b->start_time < $slotEnd;
+                                    }
+                                });
+
+                                if (!$booking) {
+                                    return ['type' => 'empty', 'slot' => $slot];
+                                }
+
+                                // Hitung berapa slot jam yang dicakup (rowspan)
+                                $span = 1;
+                                $totalSlots = count($timeSlots);
+                                for ($i = $slotIdx + 1; $i < $totalSlots; $i++) {
+                                    $nextSlotStart = $timeSlots[$i] . ':00';
+                                    if ($booking->end_time > $nextSlotStart) {
+                                        $span++;
+                                        $skippedSlots[$venueKey][] = $i;
+                                    } else {
+                                        break;
+                                    }
+                                }
+
+                                return [
+                                    'type'    => 'booking',
+                                    'booking' => $booking,
+                                    'span'    => $span,
+                                    'slot'    => $slot,
+                                ];
+                            };
                             @endphp
+
+                            @foreach($timeSlots as $slotIdx => $slot)
                             <tr class="hover:bg-gray-50/40 transition">
                                 {{-- Kolom Waktu --}}
-                                <td class="py-2.5 px-3 font-mono font-bold text-gray-500 align-middle">
+                                <td class="py-2.5 px-3 font-mono font-bold text-gray-500 align-top pt-3">
                                     {{ $slot }}
                                 </td>
 
                                 {{-- Aula Lantai 1 --}}
-                                <td class="py-2 px-2 border-l border-gray-100 align-middle">
-                                    @if($bookingAula1)
-                                        @php
-                                            $bPayload1 = [
-                                                'id'               => $bookingAula1->id,
-                                                'nama_acara'       => $bookingAula1->nama_acara,
-                                                'penyelenggara'    => $bookingAula1->penyelenggara,
-                                                'jumlah_peserta'   => $bookingAula1->jumlah_peserta,
-                                                'tipe_pertemuan'   => ucfirst($bookingAula1->tipe_pertemuan),
-                                                'nama_ruangan'     => $bookingAula1->nama_ruangan ?? 'Aula Lantai 1',
-                                                'booking_date'     => \Carbon\Carbon::parse($bookingAula1->booking_date)->translatedFormat('l, d F Y'),
-                                                'start_time'       => substr($bookingAula1->start_time, 0, 5),
-                                                'end_time'         => substr($bookingAula1->end_time, 0, 5),
-                                                'layout_meja'      => $bookingAula1->layout_meja ?: 'Classroom',
-                                                'setup_podium'     => $bookingAula1->setup_podium_data,
-                                                'special_requests' => $bookingAula1->special_requests_data,
-                                                'fasilitas'        => $bookingAula1->fasilitas,
-                                                'zoom_account'     => $bookingAula1->zoom_account,
-                                                'zoom_link'        => $bookingAula1->zoom_link,
-                                                'keterangan'       => $bookingAula1->keterangan,
-                                            ];
-                                        @endphp
-                                        <div class="h-[74px] p-2 rounded-xl bg-blue-50/90 border border-blue-200 text-blue-900 shadow-2xs hover:bg-blue-100/70 hover:shadow-xs cursor-pointer transition flex flex-col justify-between overflow-hidden"
+                                @php $resAula1 = $resolveSlotBooking('aula1', $slotIdx, $dailyBookings, $timeSlots, $skippedSlots); @endphp
+                                @if($resAula1['type'] === 'booking')
+                                    @php
+                                        $bookingAula1 = $resAula1['booking'];
+                                        $span1 = $resAula1['span'];
+                                        $bPayload1 = [
+                                            'id'               => $bookingAula1->id,
+                                            'nama_acara'       => $bookingAula1->nama_acara,
+                                            'penyelenggara'    => $bookingAula1->penyelenggara,
+                                            'jumlah_peserta'   => $bookingAula1->jumlah_peserta,
+                                            'tipe_pertemuan'   => ucfirst($bookingAula1->tipe_pertemuan),
+                                            'nama_ruangan'     => $bookingAula1->nama_ruangan ?? 'Aula Lantai 1',
+                                            'booking_date'     => \Carbon\Carbon::parse($bookingAula1->booking_date)->translatedFormat('l, d F Y'),
+                                            'start_time'       => substr($bookingAula1->start_time, 0, 5),
+                                            'end_time'         => substr($bookingAula1->end_time, 0, 5),
+                                            'layout_meja'      => $bookingAula1->layout_meja ?: 'Classroom',
+                                            'setup_podium'     => $bookingAula1->setup_podium_data,
+                                            'special_requests' => $bookingAula1->special_requests_data,
+                                            'fasilitas'        => $bookingAula1->fasilitas,
+                                            'zoom_account'     => $bookingAula1->zoom_account,
+                                            'zoom_link'        => $bookingAula1->zoom_link,
+                                            'keterangan'       => $bookingAula1->keterangan,
+                                        ];
+                                    @endphp
+                                    <td @if($span1 > 1) rowspan="{{ $span1 }}" @endif class="py-2 px-2 border-l border-gray-100 align-top">
+                                        <div class="w-full h-full p-2.5 rounded-xl bg-blue-50/90 border border-blue-200 text-blue-900 shadow-2xs hover:bg-blue-100/70 hover:shadow-xs cursor-pointer transition flex flex-col justify-between overflow-hidden"
+                                             style="min-height: {{ $span1 > 1 ? ($span1 * 74 + ($span1 - 1) * 17) : 74 }}px;"
                                              @click="openDetail({{ json_encode($bPayload1) }})"
                                              title="{{ $bookingAula1->nama_acara }} (Klik untuk melihat detail)">
-                                            <div>
-                                                <div class="flex items-center justify-between gap-1">
-                                                    <p class="font-bold text-[11px] truncate leading-tight" title="{{ $bookingAula1->nama_acara }}">
-                                                        {{ \Illuminate\Support\Str::limit($bookingAula1->nama_acara, 28, '...') }}
+                                            <div class="space-y-1">
+                                                <div class="flex items-start justify-between gap-1">
+                                                    <p class="font-bold text-[11px] leading-snug line-clamp-2 text-blue-950" title="{{ $bookingAula1->nama_acara }}">
+                                                        {{ $bookingAula1->nama_acara }}
                                                     </p>
                                                     @if($bookingAula1->tipe_pertemuan === 'hybrid')
-                                                        <span class="px-1.5 py-0.2 bg-blue-200 text-blue-800 rounded text-[9px] font-bold shrink-0">Hybrid</span>
+                                                        <span class="px-1.5 py-0.5 bg-blue-200 text-blue-800 rounded text-[9px] font-bold shrink-0">Hybrid</span>
                                                     @endif
                                                 </div>
-                                                <p class="text-[10px] text-blue-700 truncate mt-0.5">
-                                                    {{ substr($bookingAula1->start_time, 0, 5) }}-{{ substr($bookingAula1->end_time, 0, 5) }} • {{ $bookingAula1->penyelenggara }}
+                                                <div class="flex items-center gap-1 text-[10px] text-blue-700 font-medium">
+                                                    <svg class="w-3 h-3 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span>{{ substr($bookingAula1->start_time, 0, 5) }} - {{ substr($bookingAula1->end_time, 0, 5) }}</span>
+                                                </div>
+                                                <p class="text-[10px] text-blue-800/80 truncate">
+                                                    {{ $bookingAula1->penyelenggara }}
+                                                    @if($span1 > 1 && $bookingAula1->jumlah_peserta)
+                                                        • {{ $bookingAula1->jumlah_peserta }} Peserta
+                                                    @endif
                                                 </p>
                                             </div>
-                                            <div class="flex items-center gap-1 text-[9px] text-blue-800 truncate">
-                                                <span class="px-1 py-0.5 bg-white/80 rounded border border-blue-200 font-medium truncate">
+                                            <div class="flex items-center gap-1 text-[9px] text-blue-800 pt-1 mt-auto">
+                                                <span class="px-1.5 py-0.5 bg-white/90 rounded border border-blue-200 font-medium truncate">
                                                     {{ $bookingAula1->layout_meja ?: 'Classroom' }}
                                                 </span>
                                                 @if(!empty($bookingAula1->setup_podium_data['tipe']) && $bookingAula1->setup_podium_data['tipe'] !== 'Tanpa Podium')
-                                                    <span class="px-1 py-0.5 bg-white/80 rounded border border-blue-200 font-medium truncate">
+                                                    <span class="px-1.5 py-0.5 bg-white/90 rounded border border-blue-200 font-medium truncate">
                                                         Podium
                                                     </span>
                                                 @endif
                                             </div>
                                         </div>
-                                    @else
+                                    </td>
+                                @elseif($resAula1['type'] === 'empty')
+                                    <td class="py-2 px-2 border-l border-gray-100 align-middle">
                                         <button type="button"
                                                 @click="openBookingModal(1, null, '{{ $slot }}')"
                                                 class="w-full h-[74px] flex items-center justify-center rounded-xl border border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50/50 text-gray-400 hover:text-blue-600 text-[11px] font-medium transition">
                                             + Kosong
                                         </button>
-                                    @endif
-                                </td>
+                                    </td>
+                                @endif
 
                                 {{-- Vicon Lantai 3 --}}
-                                <td class="py-2 px-2 border-l border-gray-100 align-middle">
-                                    @if($bookingVicon)
-                                        @php
-                                            $bPayload2 = [
-                                                'id'               => $bookingVicon->id,
-                                                'nama_acara'       => $bookingVicon->nama_acara,
-                                                'penyelenggara'    => $bookingVicon->penyelenggara,
-                                                'jumlah_peserta'   => $bookingVicon->jumlah_peserta,
-                                                'tipe_pertemuan'   => ucfirst($bookingVicon->tipe_pertemuan),
-                                                'nama_ruangan'     => $bookingVicon->nama_ruangan ?? 'Vicon Lantai 3',
-                                                'booking_date'     => \Carbon\Carbon::parse($bookingVicon->booking_date)->translatedFormat('l, d F Y'),
-                                                'start_time'       => substr($bookingVicon->start_time, 0, 5),
-                                                'end_time'         => substr($bookingVicon->end_time, 0, 5),
-                                                'layout_meja'      => $bookingVicon->layout_meja ?: 'Classroom',
-                                                'setup_podium'     => $bookingVicon->setup_podium_data,
-                                                'special_requests' => $bookingVicon->special_requests_data,
-                                                'fasilitas'        => $bookingVicon->fasilitas,
-                                                'zoom_account'     => $bookingVicon->zoom_account,
-                                                'zoom_link'        => $bookingVicon->zoom_link,
-                                                'keterangan'       => $bookingVicon->keterangan,
-                                            ];
-                                        @endphp
-                                        <div class="h-[74px] p-2 rounded-xl bg-purple-50/90 border border-purple-200 text-purple-900 shadow-2xs hover:bg-purple-100/70 hover:shadow-xs cursor-pointer transition flex flex-col justify-between overflow-hidden"
+                                @php $resVicon = $resolveSlotBooking('vicon', $slotIdx, $dailyBookings, $timeSlots, $skippedSlots); @endphp
+                                @if($resVicon['type'] === 'booking')
+                                    @php
+                                        $bookingVicon = $resVicon['booking'];
+                                        $span2 = $resVicon['span'];
+                                        $bPayload2 = [
+                                            'id'               => $bookingVicon->id,
+                                            'nama_acara'       => $bookingVicon->nama_acara,
+                                            'penyelenggara'    => $bookingVicon->penyelenggara,
+                                            'jumlah_peserta'   => $bookingVicon->jumlah_peserta,
+                                            'tipe_pertemuan'   => ucfirst($bookingVicon->tipe_pertemuan),
+                                            'nama_ruangan'     => $bookingVicon->nama_ruangan ?? 'Vicon Lantai 3',
+                                            'booking_date'     => \Carbon\Carbon::parse($bookingVicon->booking_date)->translatedFormat('l, d F Y'),
+                                            'start_time'       => substr($bookingVicon->start_time, 0, 5),
+                                            'end_time'         => substr($bookingVicon->end_time, 0, 5),
+                                            'layout_meja'      => $bookingVicon->layout_meja ?: 'Classroom',
+                                            'setup_podium'     => $bookingVicon->setup_podium_data,
+                                            'special_requests' => $bookingVicon->special_requests_data,
+                                            'fasilitas'        => $bookingVicon->fasilitas,
+                                            'zoom_account'     => $bookingVicon->zoom_account,
+                                            'zoom_link'        => $bookingVicon->zoom_link,
+                                            'keterangan'       => $bookingVicon->keterangan,
+                                        ];
+                                    @endphp
+                                    <td @if($span2 > 1) rowspan="{{ $span2 }}" @endif class="py-2 px-2 border-l border-gray-100 align-top">
+                                        <div class="w-full h-full p-2.5 rounded-xl bg-purple-50/90 border border-purple-200 text-purple-900 shadow-2xs hover:bg-purple-100/70 hover:shadow-xs cursor-pointer transition flex flex-col justify-between overflow-hidden"
+                                             style="min-height: {{ $span2 > 1 ? ($span2 * 74 + ($span2 - 1) * 17) : 74 }}px;"
                                              @click="openDetail({{ json_encode($bPayload2) }})"
                                              title="{{ $bookingVicon->nama_acara }} (Klik untuk melihat detail)">
-                                            <div>
-                                                <div class="flex items-center justify-between gap-1">
-                                                    <p class="font-bold text-[11px] truncate leading-tight" title="{{ $bookingVicon->nama_acara }}">
-                                                        {{ \Illuminate\Support\Str::limit($bookingVicon->nama_acara, 28, '...') }}
+                                            <div class="space-y-1">
+                                                <div class="flex items-start justify-between gap-1">
+                                                    <p class="font-bold text-[11px] leading-snug line-clamp-2 text-purple-950" title="{{ $bookingVicon->nama_acara }}">
+                                                        {{ $bookingVicon->nama_acara }}
                                                     </p>
                                                     @if($bookingVicon->tipe_pertemuan === 'hybrid')
-                                                        <span class="px-1.5 py-0.2 bg-purple-200 text-purple-800 rounded text-[9px] font-bold shrink-0">Hybrid</span>
+                                                        <span class="px-1.5 py-0.5 bg-purple-200 text-purple-800 rounded text-[9px] font-bold shrink-0">Hybrid</span>
                                                     @endif
                                                 </div>
-                                                <p class="text-[10px] text-purple-700 truncate mt-0.5">
-                                                    {{ substr($bookingVicon->start_time, 0, 5) }}-{{ substr($bookingVicon->end_time, 0, 5) }} • {{ $bookingVicon->penyelenggara }}
+                                                <div class="flex items-center gap-1 text-[10px] text-purple-700 font-medium">
+                                                    <svg class="w-3 h-3 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span>{{ substr($bookingVicon->start_time, 0, 5) }} - {{ substr($bookingVicon->end_time, 0, 5) }}</span>
+                                                </div>
+                                                <p class="text-[10px] text-purple-800/80 truncate">
+                                                    {{ $bookingVicon->penyelenggara }}
+                                                    @if($span2 > 1 && $bookingVicon->jumlah_peserta)
+                                                        • {{ $bookingVicon->jumlah_peserta }} Peserta
+                                                    @endif
                                                 </p>
                                             </div>
-                                            <div class="flex items-center gap-1 text-[9px] text-purple-800 truncate">
-                                                <span class="px-1 py-0.5 bg-white/80 rounded border border-purple-200 font-medium truncate">
+                                            <div class="flex items-center gap-1 text-[9px] text-purple-800 pt-1 mt-auto">
+                                                <span class="px-1.5 py-0.5 bg-white/90 rounded border border-purple-200 font-medium truncate">
                                                     {{ $bookingVicon->layout_meja ?: 'Classroom' }}
                                                 </span>
                                                 @if(!empty($bookingVicon->setup_podium_data['tipe']) && $bookingVicon->setup_podium_data['tipe'] !== 'Tanpa Podium')
-                                                    <span class="px-1 py-0.5 bg-white/80 rounded border border-purple-200 font-medium truncate">
+                                                    <span class="px-1.5 py-0.5 bg-white/90 rounded border border-purple-200 font-medium truncate">
                                                         Podium
                                                     </span>
                                                 @endif
                                             </div>
                                         </div>
-                                    @else
+                                    </td>
+                                @elseif($resVicon['type'] === 'empty')
+                                    <td class="py-2 px-2 border-l border-gray-100 align-middle">
                                         <button type="button"
                                                 @click="openBookingModal(2, null, '{{ $slot }}')"
                                                 class="w-full h-[74px] flex items-center justify-center rounded-xl border border-dashed border-gray-200 hover:border-purple-400 hover:bg-purple-50/50 text-gray-400 hover:text-purple-600 text-[11px] font-medium transition">
                                             + Kosong
                                         </button>
-                                    @endif
-                                </td>
+                                    </td>
+                                @endif
 
                                 {{-- Aula Lantai 4 --}}
-                                <td class="py-2 px-2 border-l border-gray-100 align-middle">
-                                    @if($bookingAula4)
-                                        @php
-                                            $bPayload3 = [
-                                                'id'               => $bookingAula4->id,
-                                                'nama_acara'       => $bookingAula4->nama_acara,
-                                                'penyelenggara'    => $bookingAula4->penyelenggara,
-                                                'jumlah_peserta'   => $bookingAula4->jumlah_peserta,
-                                                'tipe_pertemuan'   => ucfirst($bookingAula4->tipe_pertemuan),
-                                                'nama_ruangan'     => $bookingAula4->nama_ruangan ?? 'Aula Lantai 4',
-                                                'booking_date'     => \Carbon\Carbon::parse($bookingAula4->booking_date)->translatedFormat('l, d F Y'),
-                                                'start_time'       => substr($bookingAula4->start_time, 0, 5),
-                                                'end_time'         => substr($bookingAula4->end_time, 0, 5),
-                                                'layout_meja'      => $bookingAula4->layout_meja ?: 'Classroom',
-                                                'setup_podium'     => $bookingAula4->setup_podium_data,
-                                                'special_requests' => $bookingAula4->special_requests_data,
-                                                'fasilitas'        => $bookingAula4->fasilitas,
-                                                'zoom_account'     => $bookingAula4->zoom_account,
-                                                'zoom_link'        => $bookingAula4->zoom_link,
-                                                'keterangan'       => $bookingAula4->keterangan,
-                                            ];
-                                        @endphp
-                                        <div class="h-[74px] p-2 rounded-xl bg-emerald-50/90 border border-emerald-200 text-emerald-900 shadow-2xs hover:bg-emerald-100/70 hover:shadow-xs cursor-pointer transition flex flex-col justify-between overflow-hidden"
+                                @php $resAula4 = $resolveSlotBooking('aula4', $slotIdx, $dailyBookings, $timeSlots, $skippedSlots); @endphp
+                                @if($resAula4['type'] === 'booking')
+                                    @php
+                                        $bookingAula4 = $resAula4['booking'];
+                                        $span3 = $resAula4['span'];
+                                        $bPayload3 = [
+                                            'id'               => $bookingAula4->id,
+                                            'nama_acara'       => $bookingAula4->nama_acara,
+                                            'penyelenggara'    => $bookingAula4->penyelenggara,
+                                            'jumlah_peserta'   => $bookingAula4->jumlah_peserta,
+                                            'tipe_pertemuan'   => ucfirst($bookingAula4->tipe_pertemuan),
+                                            'nama_ruangan'     => $bookingAula4->nama_ruangan ?? 'Aula Lantai 4',
+                                            'booking_date'     => \Carbon\Carbon::parse($bookingAula4->booking_date)->translatedFormat('l, d F Y'),
+                                            'start_time'       => substr($bookingAula4->start_time, 0, 5),
+                                            'end_time'         => substr($bookingAula4->end_time, 0, 5),
+                                            'layout_meja'      => $bookingAula4->layout_meja ?: 'Classroom',
+                                            'setup_podium'     => $bookingAula4->setup_podium_data,
+                                            'special_requests' => $bookingAula4->special_requests_data,
+                                            'fasilitas'        => $bookingAula4->fasilitas,
+                                            'zoom_account'     => $bookingAula4->zoom_account,
+                                            'zoom_link'        => $bookingAula4->zoom_link,
+                                            'keterangan'       => $bookingAula4->keterangan,
+                                        ];
+                                    @endphp
+                                    <td @if($span3 > 1) rowspan="{{ $span3 }}" @endif class="py-2 px-2 border-l border-gray-100 align-top">
+                                        <div class="w-full h-full p-2.5 rounded-xl bg-emerald-50/90 border border-emerald-200 text-emerald-900 shadow-2xs hover:bg-emerald-100/70 hover:shadow-xs cursor-pointer transition flex flex-col justify-between overflow-hidden"
+                                             style="min-height: {{ $span3 > 1 ? ($span3 * 74 + ($span3 - 1) * 17) : 74 }}px;"
                                              @click="openDetail({{ json_encode($bPayload3) }})"
                                              title="{{ $bookingAula4->nama_acara }} (Klik untuk melihat detail)">
-                                            <div>
-                                                <div class="flex items-center justify-between gap-1">
-                                                    <p class="font-bold text-[11px] truncate leading-tight" title="{{ $bookingAula4->nama_acara }}">
-                                                        {{ \Illuminate\Support\Str::limit($bookingAula4->nama_acara, 28, '...') }}
+                                            <div class="space-y-1">
+                                                <div class="flex items-start justify-between gap-1">
+                                                    <p class="font-bold text-[11px] leading-snug line-clamp-2 text-emerald-950" title="{{ $bookingAula4->nama_acara }}">
+                                                        {{ $bookingAula4->nama_acara }}
                                                     </p>
                                                     @if($bookingAula4->tipe_pertemuan === 'hybrid')
-                                                        <span class="px-1.5 py-0.2 bg-emerald-200 text-emerald-800 rounded text-[9px] font-bold shrink-0">Hybrid</span>
+                                                        <span class="px-1.5 py-0.5 bg-emerald-200 text-emerald-800 rounded text-[9px] font-bold shrink-0">Hybrid</span>
                                                     @endif
                                                 </div>
-                                                <p class="text-[10px] text-emerald-700 truncate mt-0.5">
-                                                    {{ substr($bookingAula4->start_time, 0, 5) }}-{{ substr($bookingAula4->end_time, 0, 5) }} • {{ $bookingAula4->penyelenggara }}
+                                                <div class="flex items-center gap-1 text-[10px] text-emerald-700 font-medium">
+                                                    <svg class="w-3 h-3 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span>{{ substr($bookingAula4->start_time, 0, 5) }} - {{ substr($bookingAula4->end_time, 0, 5) }}</span>
+                                                </div>
+                                                <p class="text-[10px] text-emerald-800/80 truncate">
+                                                    {{ $bookingAula4->penyelenggara }}
+                                                    @if($span3 > 1 && $bookingAula4->jumlah_peserta)
+                                                        • {{ $bookingAula4->jumlah_peserta }} Peserta
+                                                    @endif
                                                 </p>
                                             </div>
-                                            <div class="flex items-center gap-1 text-[9px] text-emerald-800 truncate">
-                                                <span class="px-1 py-0.5 bg-white/80 rounded border border-emerald-200 font-medium truncate">
+                                            <div class="flex items-center gap-1 text-[9px] text-emerald-800 pt-1 mt-auto">
+                                                <span class="px-1.5 py-0.5 bg-white/90 rounded border border-emerald-200 font-medium truncate">
                                                     {{ $bookingAula4->layout_meja ?: 'Classroom' }}
                                                 </span>
                                                 @if(!empty($bookingAula4->setup_podium_data['tipe']) && $bookingAula4->setup_podium_data['tipe'] !== 'Tanpa Podium')
-                                                    <span class="px-1 py-0.5 bg-white/80 rounded border border-emerald-200 font-medium truncate">
+                                                    <span class="px-1.5 py-0.5 bg-white/90 rounded border border-emerald-200 font-medium truncate">
                                                         Podium
                                                     </span>
                                                 @endif
                                             </div>
                                         </div>
-                                    @else
+                                    </td>
+                                @elseif($resAula4['type'] === 'empty')
+                                    <td class="py-2 px-2 border-l border-gray-100 align-middle">
                                         <button type="button"
                                                 @click="openBookingModal(3, null, '{{ $slot }}')"
                                                 class="w-full h-[74px] flex items-center justify-center rounded-xl border border-dashed border-gray-200 hover:border-emerald-400 hover:bg-emerald-50/50 text-gray-400 hover:text-emerald-600 text-[11px] font-medium transition">
                                             + Kosong
                                         </button>
-                                    @endif
-                                </td>
+                                    </td>
+                                @endif
 
                                 {{-- Akun Zoom --}}
-                                <td class="py-2 px-2 border-l border-gray-100 align-middle">
-                                    @if($bookingZoom)
-                                        @php
-                                            $bPayloadZ = [
-                                                'id'               => $bookingZoom->id,
-                                                'nama_acara'       => $bookingZoom->nama_acara,
-                                                'penyelenggara'    => $bookingZoom->penyelenggara,
-                                                'jumlah_peserta'   => $bookingZoom->jumlah_peserta,
-                                                'tipe_pertemuan'   => ucfirst($bookingZoom->tipe_pertemuan),
-                                                'nama_ruangan'     => $bookingZoom->nama_ruangan ?? 'Online Zoom',
-                                                'booking_date'     => \Carbon\Carbon::parse($bookingZoom->booking_date)->translatedFormat('l, d F Y'),
-                                                'start_time'       => substr($bookingZoom->start_time, 0, 5),
-                                                'end_time'         => substr($bookingZoom->end_time, 0, 5),
-                                                'layout_meja'      => $bookingZoom->layout_meja ?: '-',
-                                                'setup_podium'     => $bookingZoom->setup_podium_data,
-                                                'special_requests' => $bookingZoom->special_requests_data,
-                                                'fasilitas'        => $bookingZoom->fasilitas,
-                                                'zoom_account'     => $bookingZoom->zoom_account,
-                                                'zoom_link'        => $bookingZoom->zoom_link,
-                                                'keterangan'       => $bookingZoom->keterangan,
-                                            ];
-                                        @endphp
-                                        <div class="h-[74px] p-2 rounded-xl bg-sky-50/90 border border-sky-200 text-sky-900 shadow-2xs hover:bg-sky-100/70 hover:shadow-xs cursor-pointer transition flex flex-col justify-between overflow-hidden"
+                                @php $resZoom = $resolveSlotBooking('zoom', $slotIdx, $dailyBookings, $timeSlots, $skippedSlots); @endphp
+                                @if($resZoom['type'] === 'booking')
+                                    @php
+                                        $bookingZoom = $resZoom['booking'];
+                                        $spanZ = $resZoom['span'];
+                                        $bPayloadZ = [
+                                            'id'               => $bookingZoom->id,
+                                            'nama_acara'       => $bookingZoom->nama_acara,
+                                            'penyelenggara'    => $bookingZoom->penyelenggara,
+                                            'jumlah_peserta'   => $bookingZoom->jumlah_peserta,
+                                            'tipe_pertemuan'   => ucfirst($bookingZoom->tipe_pertemuan),
+                                            'nama_ruangan'     => $bookingZoom->nama_ruangan ?? 'Online Zoom',
+                                            'booking_date'     => \Carbon\Carbon::parse($bookingZoom->booking_date)->translatedFormat('l, d F Y'),
+                                            'start_time'       => substr($bookingZoom->start_time, 0, 5),
+                                            'end_time'         => substr($bookingZoom->end_time, 0, 5),
+                                            'layout_meja'      => $bookingZoom->layout_meja ?: '-',
+                                            'setup_podium'     => $bookingZoom->setup_podium_data,
+                                            'special_requests' => $bookingZoom->special_requests_data,
+                                            'fasilitas'        => $bookingZoom->fasilitas,
+                                            'zoom_account'     => $bookingZoom->zoom_account,
+                                            'zoom_link'        => $bookingZoom->zoom_link,
+                                            'keterangan'       => $bookingZoom->keterangan,
+                                        ];
+                                    @endphp
+                                    <td @if($spanZ > 1) rowspan="{{ $spanZ }}" @endif class="py-2 px-2 border-l border-gray-100 align-top">
+                                        <div class="w-full h-full p-2.5 rounded-xl bg-sky-50/90 border border-sky-200 text-sky-900 shadow-2xs hover:bg-sky-100/70 hover:shadow-xs cursor-pointer transition flex flex-col justify-between overflow-hidden"
+                                             style="min-height: {{ $spanZ > 1 ? ($spanZ * 74 + ($spanZ - 1) * 17) : 74 }}px;"
                                              @click="openDetail({{ json_encode($bPayloadZ) }})"
                                              title="{{ $bookingZoom->nama_acara }} (Klik untuk melihat detail)">
-                                            <div>
-                                                <div class="flex items-center justify-between gap-1">
-                                                    <p class="font-bold text-[11px] truncate leading-tight" title="{{ $bookingZoom->nama_acara }}">
-                                                        {{ \Illuminate\Support\Str::limit($bookingZoom->nama_acara, 28, '...') }}
+                                            <div class="space-y-1">
+                                                <div class="flex items-start justify-between gap-1">
+                                                    <p class="font-bold text-[11px] leading-snug line-clamp-2 text-sky-950" title="{{ $bookingZoom->nama_acara }}">
+                                                        {{ $bookingZoom->nama_acara }}
                                                     </p>
-                                                    <span class="text-[9px] font-bold px-1.5 py-0.2 bg-sky-200 text-sky-800 rounded shrink-0">
+                                                    <span class="text-[9px] font-bold px-1.5 py-0.5 bg-sky-200 text-sky-800 rounded shrink-0">
                                                         {{ $bookingZoom->zoom_account === 'zoom_1' ? 'Zoom 1' : ($bookingZoom->zoom_account === 'zoom_2' ? 'Zoom 2' : 'Eksternal') }}
                                                     </span>
                                                 </div>
-                                                <p class="text-[10px] text-sky-700 truncate mt-0.5">
-                                                    {{ substr($bookingZoom->start_time, 0, 5) }}-{{ substr($bookingZoom->end_time, 0, 5) }} • {{ $bookingZoom->penyelenggara }}
+                                                <div class="flex items-center gap-1 text-[10px] text-sky-700 font-medium">
+                                                    <svg class="w-3 h-3 text-sky-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span>{{ substr($bookingZoom->start_time, 0, 5) }} - {{ substr($bookingZoom->end_time, 0, 5) }}</span>
+                                                </div>
+                                                <p class="text-[10px] text-sky-800/80 truncate">
+                                                    {{ $bookingZoom->penyelenggara }}
                                                 </p>
                                             </div>
-                                            <div class="flex items-center justify-between text-[9px] text-sky-800">
+                                            <div class="flex items-center justify-between text-[9px] text-sky-800 pt-1 mt-auto">
                                                 <span class="truncate">Online Meeting</span>
                                                 <span class="text-blue-600 font-semibold underline">Detail &rarr;</span>
                                             </div>
                                         </div>
-                                    @else
+                                    </td>
+                                @elseif($resZoom['type'] === 'empty')
+                                    <td class="py-2 px-2 border-l border-gray-100 align-middle">
                                         <button type="button"
                                                 @click="openBookingModal(null, 'zoom_1', '{{ $slot }}')"
                                                 class="w-full h-[74px] flex items-center justify-center rounded-xl border border-dashed border-gray-200 hover:border-sky-400 hover:bg-sky-50/50 text-gray-400 hover:text-sky-600 text-[11px] font-medium transition">
                                             + Kosong
                                         </button>
-                                    @endif
-                                </td>
+                                    </td>
+                                @endif
                             </tr>
                             @endforeach
                         </tbody>
@@ -1758,8 +1858,8 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                     </div>
                 </div>
 
-                {{-- Tanggal, Jam Mulai, Jam Selesai --}}
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {{-- Tanggal dan Waktu Pelaksanaan (Jam Mulai & Selesai Digabungkan) --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                             Tanggal <span class="text-rose-500">*</span>
@@ -1769,17 +1869,16 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                            Jam Mulai <span class="text-rose-500">*</span>
+                            Waktu Pelaksanaan (Jam Mulai s/d Selesai) <span class="text-rose-500">*</span>
                         </label>
-                        <input type="time" name="start_time" x-model="startTime" required
-                            class="w-full px-3.5 py-2 text-xs rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                            Jam Selesai <span class="text-rose-500">*</span>
-                        </label>
-                        <input type="time" name="end_time" x-model="endTime" required
-                            class="w-full px-3.5 py-2 text-xs rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
+                        <div class="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-xl border border-gray-200 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:bg-white transition">
+                            <input type="time" name="start_time" x-model="startTime" required
+                                class="w-full bg-transparent border-0 p-0 text-xs text-gray-800 font-bold focus:ring-0 focus:outline-none" title="Jam Mulai">
+                            <span class="text-xs text-gray-400 font-bold shrink-0">s/d</span>
+                            <input type="time" name="end_time" x-model="endTime" required
+                                class="w-full bg-transparent border-0 p-0 text-xs text-gray-800 font-bold focus:ring-0 focus:outline-none" title="Jam Selesai">
+                            <span class="text-[10px] font-extrabold text-gray-400 shrink-0">WITA</span>
+                        </div>
                     </div>
                 </div>
 
@@ -1976,10 +2075,50 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                     </div>
 
                     {{-- Sticky Footer --}}
-                    <div class="p-4 sm:p-5 border-t border-gray-100 shrink-0 bg-gray-50/90 flex items-center justify-end rounded-b-2xl">
+                    <div class="p-4 sm:p-5 border-t border-gray-100 shrink-0 bg-gray-50/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-b-2xl">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            {{-- Tombol Edit dengan Icon --}}
+                            <button type="button"
+                                    @click="
+                                        namaAcara = selectedBooking.nama_acara || '';
+                                        penyelenggara = selectedBooking.penyelenggara || '';
+                                        jumlahPeserta = selectedBooking.jumlah_peserta || 25;
+                                        selectedVenueId = selectedBooking.venue_id || '1';
+                                        tipePertemuan = selectedBooking.tipe_pertemuan || 'offline';
+                                        zoomAccount = selectedBooking.zoom_account || 'zoom_1';
+                                        bookingDate = selectedBooking.booking_date || '';
+                                        startTime = selectedBooking.start_time ? selectedBooking.start_time.substring(0, 5) : '09:00';
+                                        endTime = selectedBooking.end_time ? selectedBooking.end_time.substring(0, 5) : '11:00';
+                                        taskId = selectedBooking.task_id || '';
+                                        keterangan = selectedBooking.keterangan || '';
+                                        detailModalOpen = false;
+                                        modalOpen = true;
+                                    "
+                                    class="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-xs font-bold rounded-xl transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                                <span>Ubah Jadwal</span>
+                            </button>
+
+                            {{-- Tombol Hapus dengan Icon --}}
+                            <form :action="'{{ url('/booking-ruangan') }}/' + selectedBooking.id" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan dan menghapus reservasi ruangan ini?')" class="inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit"
+                                        class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 text-xs font-bold rounded-xl transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                                        title="Batalkan / Hapus Booking">
+                                    <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                    <span>Hapus Reservasi</span>
+                                </button>
+                            </form>
+                        </div>
+
                         <button type="button"
                                 @click="detailModalOpen = false"
-                                class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-bold rounded-xl transition">
+                                class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-bold rounded-xl transition cursor-pointer">
                             Tutup
                         </button>
                     </div>

@@ -1,86 +1,326 @@
 @extends('layouts.app')
 
-@section('title', 'Buat Rapat Baru - Sikeren')
-@section('header_title', 'Buat Rapat')
+@section('title', 'Agenda Rapat - Sikeren')
+@section('header_title', 'Agenda Rapat')
 
 @section('content')
-<div class="max-w-5xl mx-auto space-y-6 pb-12">
+@php
+    $currentUser = Auth::user();
+@endphp
+
+<style>
+    .meta-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        color: #475569;
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 3px 8px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+</style>
+
+<div class="max-w-6xl mx-auto space-y-6 pb-12" x-data="{ 
+    activeTab: '{{ request('tab', ((isset($errors) && $errors->any()) ? 'form' : 'daftar')) }}',
+    rapatSearch: '',
+    approvalModal: { open: false, id: null, text: '', pj: '', jenis: 'Rapat' }
+}">
 
     {{-- ==========================================
-        PAGE HEADER & WORKFLOW STEPPER
+        PAGE HEADER & TAB CONTROLS
     =========================================== --}}
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div class="flex items-center gap-3">
-            <a href="{{ url('/daftar_kegiatan') }}" 
-               class="p-2.5 bg-white hover:bg-gray-100 text-gray-600 rounded-xl border border-gray-200 shadow-xs transition-colors" 
-               title="Kembali ke Daftar Kegiatan">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+    <div class="bg-white p-6 rounded-2xl border border-gray-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-100">
+                    Manajemen Rapat
+                </span>
+                <span class="text-xs text-gray-400">•</span>
+                <span class="text-xs text-gray-500 font-medium">BPS Provinsi Sulawesi Tenggara</span>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900 mt-1">Agenda Rapat</h2>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+            <button type="button" 
+                    @click="activeTab = 'daftar'"
+                    :class="activeTab === 'daftar' ? 'bg-blue-600 text-white shadow-xs' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                    class="px-4 py-2.5 text-xs font-bold rounded-xl transition flex items-center gap-2 cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
-            </a>
-            <div>
-                <h2 class="text-xl font-bold text-gray-800">Form Buat Rapat Baru</h2>
-                <p class="text-xs text-gray-500 mt-0.5">Rapat adalah bagian spesifik dari sebuah kegiatan (atau koordinasi mandiri) yang membutuhkan pimpinan, notulis, penentuan ruangan/zoom, dan notulen.</p>
-            </div>
-        </div>
+                <span>Daftar Agenda Rapat</span>
+                <span :class="activeTab === 'daftar' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ml-1">
+                    {{ count($rapatList ?? []) }}
+                </span>
+            </button>
 
-        {{-- Minimalist Workflow Step Indicator --}}
-        <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-600 shadow-xs">
-            <span class="inline-flex items-center gap-1.5 text-blue-600 font-bold">
-                <span class="w-5 h-5 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center font-bold">1</span>
-                <span>1. Buat Rapat</span>
-            </span>
-            <span class="text-gray-300">&rarr;</span>
-            <span class="text-blue-600 font-semibold">2. Booking Ruangan & Zoom</span>
-            <span class="text-gray-300">&rarr;</span>
-            <span class="text-gray-500">3. Persetujuan</span>
-            <span class="text-gray-300">&rarr;</span>
-            <span class="text-gray-500">4. Presensi QR</span>
-            <span class="text-gray-300">&rarr;</span>
-            <span class="text-gray-500">5. Notulen</span>
+            <button type="button" 
+                    @click="activeTab = 'form'"
+                    :class="activeTab === 'form' ? 'bg-blue-600 text-white shadow-xs' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'"
+                    class="px-4 py-2.5 text-xs font-bold rounded-xl transition flex items-center gap-2 cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                <span>Buat Rapat Baru</span>
+            </button>
         </div>
     </div>
 
     {{-- ==========================================
-        ALERT NOTIFICATIONS
+        PANEL TAB 1: DAFTAR AGENDA RAPAT
     =========================================== --}}
-    @if (session('success'))
-    <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-xl shadow-xs">
-        <div class="flex items-center">
-            <svg class="h-5 w-5 text-green-500 mr-3 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-            </svg>
-            <p class="text-xs font-medium text-green-800">{{ session('success') }}</p>
-        </div>
-    </div>
-    @endif
+    <div x-show="activeTab === 'daftar'" x-cloak class="space-y-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            {{-- Toolbar: Search & Action --}}
+            <div class="p-4 sm:p-5 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="relative w-full sm:max-w-md">
+                    <input type="text" 
+                           x-model="rapatSearch" 
+                           placeholder="Cari topik rapat, tanggal, pimpinan, notulis, ruangan..." 
+                           class="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-gray-200 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                    <svg class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
+            </div>
 
-    @if ($errors->any())
-    <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl shadow-xs">
-        <div class="flex items-start">
-            <svg class="h-5 w-5 text-red-500 mr-3 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-            </svg>
-            <div>
-                <h4 class="text-xs font-bold text-red-800">Terdapat kesalahan pengisian formulir:</h4>
-                <ul class="list-disc list-inside mt-1 text-xs text-red-700 space-y-0.5">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+            {{-- Table --}}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 text-left">
+                    <thead class="bg-gray-50/80 text-[11px] font-bold text-gray-600 uppercase tracking-wider">
+                        <tr>
+                            <th scope="col" class="px-6 py-4">Topik & Informasi Rapat</th>
+                            <th scope="col" class="px-6 py-4">Petugas Rapat</th>
+                            <th scope="col" class="px-6 py-4">Tahapan Alur Rapat</th>
+                            <th scope="col" class="px-6 py-4 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100 text-xs">
+                        @forelse ($rapatList as $post)
+                        @php
+                            $canAccessRapat = $currentUser && $currentUser->canAccessDetailKegiatan($post);
+                            $isPemimpinThisRapat = $currentUser && (
+                                strcasecmp($currentUser->nama_lengkap ?? '', $post->pemimpin ?? '') === 0 ||
+                                strcasecmp($currentUser->username ?? '', $post->pemimpin ?? '') === 0 ||
+                                (isset($currentUser->level) && strtolower($currentUser->level) === 'admin')
+                            );
+                            $dateStr = \Carbon\Carbon::parse($post->start_date)->translatedFormat('d M Y');
+                            $searchHaystack = strtolower(($post->text ?? '') . ' ' . $dateStr . ' ' . ($post->tempat ?? '') . ' ' . ($post->pemimpin ?? '') . ' ' . ($post->notulis ?? ''));
+                        @endphp
+                        <tr class="hover:bg-slate-50/60 transition-colors"
+                            x-show="!rapatSearch || '{{ addslashes($searchHaystack) }}'.includes(rapatSearch.toLowerCase())">
+                            <td class="px-6 py-4">
+                                <div class="space-y-2 max-w-lg">
+                                    <div class="flex items-center gap-2">
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
+                                            #{{ $post->id_kegiatan ?? $post->id }}
+                                        </span>
+                                        @if($canAccessRapat)
+                                            <a href="{{ url('daftarkegiatan/' . ($post->id_kegiatan ?? $post->id)) }}" class="font-bold text-gray-900 hover:text-blue-600 transition-colors text-sm line-clamp-1">
+                                                {{ $post->text }}
+                                            </a>
+                                        @else
+                                            <span class="font-bold text-gray-900 text-sm line-clamp-1" title="Mode pantau agenda">
+                                                {{ $post->text }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="meta-chip">
+                                            <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                            </svg>
+                                            <span>{{ $dateStr }}</span>
+                                        </span>
+
+                                        <span class="meta-chip font-mono">
+                                            <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            <span>{{ substr($post->start_jam, 0, 5) }} - {{ !empty($post->end_jam) ? substr($post->end_jam, 0, 5) . ' WITA' : 'Selesai' }}</span>
+                                        </span>
+
+                                        <span class="meta-chip" title="{{ $post->tempat }}">
+                                            <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                            </svg>
+                                            <span class="truncate max-w-[200px]">{{ $post->tempat ?? 'Aula / Kantor BPS' }}</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td class="px-6 py-4 whitespace-nowrap text-xs">
+                                <div class="space-y-1.5">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-5 h-5 rounded-md bg-blue-100 text-blue-700 text-[10px] font-bold flex items-center justify-center shrink-0" title="Pemimpin Rapat">P</span>
+                                        <span class="font-semibold text-gray-800 truncate max-w-[160px]">{{ $post->pemimpin ?? '-' }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-5 h-5 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold flex items-center justify-center shrink-0" title="Notulis Rapat">N</span>
+                                        <span class="text-gray-600 font-medium truncate max-w-[160px]">{{ $post->notulis ?? '-' }}</span>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td class="px-6 py-4">
+                                @if($post->setuju_rapat == 1 && (!empty($post->notulen) || ($post->notulen_selesai ?? 0) == 1))
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                        <span>Tahap 4: Notulen Selesai</span>
+                                    </span>
+                                @elseif($post->setuju_rapat == 1)
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                        <span>Tahap 3: Presensi QR Aktif</span>
+                                    </span>
+                                @elseif($post->setuju_rapat == 3)
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-red-50 text-red-700 border border-red-200">
+                                        <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                        <span>Tahap 2: Ditolak</span>
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                        <span>Tahap 2: Menunggu Persetujuan</span>
+                                    </span>
+                                @endif
+                            </td>
+
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-xs">
+                                <div class="flex items-center justify-end gap-2">
+                                    {{-- Tombol Persetujuan Cepat untuk Pemimpin Rapat --}}
+                                    @if($isPemimpinThisRapat && $post->setuju_rapat == 0)
+                                        <button type="button" 
+                                                @click="approvalModal = { open: true, id: {{ $post->id_kegiatan ?? $post->id }}, text: '{{ addslashes($post->text) }}', pj: '{{ addslashes($post->pemimpin ?? '-') }}', jenis: 'Rapat' }" 
+                                                class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition inline-flex items-center gap-1 shadow-xs cursor-pointer" 
+                                                title="Tinjau dan Berikan Persetujuan Rapat">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            <span>Persetujuan</span>
+                                        </button>
+                                    @endif
+
+                                    @if($canAccessRapat)
+                                        <a href="{{ url('daftarkegiatan/' . ($post->id_kegiatan ?? $post->id)) }}" class="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl border border-blue-200 text-xs transition inline-flex items-center gap-1">
+                                            <span>Detail</span>
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                        </a>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-gray-100 text-gray-400 font-semibold text-[11px] cursor-not-allowed select-none border border-gray-200" title="Detail rapat hanya dapat dibuka oleh Pemimpin / Notulis / PJ">
+                                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                            </svg>
+                                            <span>Hanya PJ</span>
+                                        </span>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="4" class="px-6 py-16 text-center text-gray-400">
+                                <div class="max-w-xs mx-auto text-center space-y-3">
+                                    <div class="w-12 h-12 rounded-2xl bg-gray-50 text-gray-300 flex items-center justify-center mx-auto">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                        </svg>
+                                    </div>
+                                    <p class="text-xs font-medium text-gray-500">Belum ada agenda rapat yang terdaftar.</p>
+                                    <button type="button" @click="activeTab = 'form'" class="inline-flex items-center px-3.5 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-xl hover:bg-blue-700 transition cursor-pointer">
+                                        Buat Rapat Sekarang
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="p-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                <span>Total: <strong class="text-gray-800">{{ count($rapatList ?? []) }}</strong> agenda rapat</span>
             </div>
         </div>
     </div>
-    @endif
 
     {{-- ==========================================
-        MAIN FORM CARD (UNIFIED & TIDY)
+        PANEL TAB 2: FORM BUAT RAPAT BARU
     =========================================== --}}
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <form action="{{ route('rapat.store') }}" method="POST" enctype="multipart/form-data" id="formBuatRapat">
-            @csrf
-            <input type="hidden" name="jenis" value="Rapat">
-            <input type="hidden" name="tes2" value="{{ $id + 1 }}">
+    <div x-show="activeTab === 'form'" x-cloak class="space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <button type="button" 
+                        @click="activeTab = 'daftar'"
+                        class="p-2.5 bg-white hover:bg-gray-100 text-gray-600 rounded-xl border border-gray-200 shadow-xs transition-colors cursor-pointer" 
+                        title="Kembali ke Daftar Agenda Rapat">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                </button>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Formulir Buat Rapat Baru</h2>
+                    <p class="text-xs text-gray-500 mt-0.5">Rapat adalah bagian spesifik dari sebuah kegiatan (atau koordinasi mandiri) yang membutuhkan pimpinan, notulis, penentuan ruangan/zoom, dan notulen.</p>
+                </div>
+            </div>
+
+            {{-- Minimalist Workflow Step Indicator --}}
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-600 shadow-xs">
+                <span class="inline-flex items-center gap-1.5 text-blue-600 font-bold">
+                    <span class="w-5 h-5 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center font-bold">1</span>
+                    <span>1. Buat Rapat</span>
+                </span>
+                <span class="text-gray-300">&rarr;</span>
+                <span class="text-blue-600 font-semibold">2. Booking Ruangan & Zoom</span>
+                <span class="text-gray-300">&rarr;</span>
+                <span class="text-gray-500">3. Persetujuan</span>
+                <span class="text-gray-300">&rarr;</span>
+                <span class="text-gray-500">4. Presensi QR</span>
+                <span class="text-gray-300">&rarr;</span>
+                <span class="text-gray-500">5. Notulen</span>
+            </div>
+        </div>
+
+        {{-- ALERT NOTIFICATIONS --}}
+        @if (session('success'))
+        <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-xl shadow-xs">
+            <div class="flex items-center">
+                <svg class="h-5 w-5 text-green-500 mr-3 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                <p class="text-xs font-medium text-green-800">{{ session('success') }}</p>
+            </div>
+        </div>
+        @endif
+
+        @if (isset($errors) && $errors->any())
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl shadow-xs">
+            <div class="flex items-start">
+                <svg class="h-5 w-5 text-red-500 mr-3 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <div>
+                    <h4 class="text-xs font-bold text-red-800">Terdapat kesalahan pengisian formulir:</h4>
+                    <ul class="list-disc list-inside mt-1 text-xs text-red-700 space-y-0.5">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        {{-- MAIN FORM CARD --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <form action="{{ route('rapat.store') }}" method="POST" enctype="multipart/form-data" id="formBuatRapat">
+                @csrf
+                <input type="hidden" name="jenis" value="Rapat">
+                <input type="hidden" name="tes2" value="{{ $id + 1 }}">
 
             {{-- ---------------------------------------------------------
                 BAGIAN 1: INFORMASI & AGENDA RAPAT
@@ -549,6 +789,82 @@
             </div>
 
         </form>
+    </div>
+    </div> {{-- Close Panel Tab 2 --}}
+
+    {{-- =========================================================================
+        MODAL APPROVAL RAPAT
+    ========================================================================== --}}
+    <div x-show="approvalModal.open" 
+         x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-md p-6 space-y-4 my-8 transition-all transform"
+             @click.away="approvalModal.open = false">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-900 text-sm">Persetujuan Agenda Rapat</h3>
+                        <p class="text-[11px] text-gray-400">Tentukan status persetujuan rapat</p>
+                    </div>
+                </div>
+                <button type="button" @click="approvalModal.open = false" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="space-y-3 text-xs bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <div>
+                    <span class="text-gray-400 text-[10px] uppercase font-bold tracking-wider">Topik Rapat:</span>
+                    <p class="font-bold text-gray-900 text-sm mt-0.5" x-text="approvalModal.text"></p>
+                </div>
+                <div class="flex items-center justify-between text-gray-600 pt-1 border-t border-slate-200/60">
+                    <span>Pemimpin Rapat:</span>
+                    <span class="font-bold text-gray-800" x-text="approvalModal.pj"></span>
+                </div>
+            </div>
+
+            <p class="text-xs text-gray-500 leading-relaxed">
+                Sebagai Pemimpin Rapat / PJ, silakan tentukan apakah agenda rapat ini disetujui untuk dilaksanakan atau ditolak.
+            </p>
+
+            <div class="flex items-center gap-3 pt-2">
+                {{-- Form Tolak --}}
+                <form action="{{ url('/setuju_rapat') }}" method="POST" class="flex-1">
+                    @csrf
+                    <input type="hidden" name="id" :value="approvalModal.id">
+                    <input type="hidden" name="setuju_rapat" value="3">
+                    <button type="submit" 
+                            onclick="return confirm('Apakah Anda yakin ingin menolak agenda rapat ini?')" 
+                            class="w-full py-2.5 px-4 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+                        <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        <span>Tolak</span>
+                    </button>
+                </form>
+
+                {{-- Form Setujui --}}
+                <form action="{{ url('/setuju_rapat') }}" method="POST" class="flex-1">
+                    @csrf
+                    <input type="hidden" name="id" :value="approvalModal.id">
+                    <input type="hidden" name="setuju_rapat" value="1">
+                    <button type="submit" 
+                            class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1.5 cursor-pointer">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Setujui Rapat</span>
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 
 </div>

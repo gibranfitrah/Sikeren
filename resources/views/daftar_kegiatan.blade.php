@@ -54,6 +54,8 @@
 
 <div class="space-y-6 pb-12 max-w-7xl mx-auto" x-data="{ 
     expandedSub: null, 
+    openPstModal: false,
+    pstSearch: '',
     approvalModal: { open: false, id: null, text: '', pj: '', jenis: 'Kegiatan' },
     statusModal: { open: false, id: null, text: '', currentStatus: 'Sedang Berjalan', newStatus: 'Sedang Berjalan', alasan: '' },
     petugasModal: { open: false, kegiatan: '', tanggal: '', jam: '', tempat: '', petugas: [] }
@@ -70,9 +72,6 @@
                 <span class="text-xs text-gray-500 font-medium">BPS Kabupaten/Kota</span>
             </div>
             <h2 class="text-xl font-bold text-gray-900 mt-1">Kelola Kegiatan & Sub Kegiatan</h2>
-            <p class="text-xs text-gray-500 mt-0.5">
-                Kelola seluruh kegiatan, pantau sub-kegiatan terintegrasi melalui menu dropdown, dan delegasikan penugasan tim.
-            </p>
         </div>
         <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
             <a href="{{ route('agenda.downloadWord') }}" class="inline-flex items-center justify-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs hover:shadow transition-all duration-150">
@@ -205,20 +204,7 @@
                     </svg>
                     <span>Daftar Kegiatan Penugasan</span>
                     <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 ml-1">
-                        {{ count($kegiatans2) }}
-                    </span>
-                </button>
-
-                <button type="button" 
-                        onclick="switchTab('tab-rapat')" 
-                        id="btn-tab-rapat" 
-                        class="tab-btn px-4 py-3 text-xs font-bold border-b-2 border-transparent text-gray-500 hover:text-gray-700 flex items-center gap-2 transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                    </svg>
-                    <span>Agenda Rapat</span>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-600 ml-1">
-                        {{ count($kegiatans) }}
+                        {{ count($kegiatans2) + (isset($pstTasks) && $pstTasks->isNotEmpty() ? 1 : 0) }}
                     </span>
                 </button>
             </div>
@@ -254,6 +240,79 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-100 text-xs">
+                        {{-- ==============================================================
+                            BARIS TUNGGAL KHUSUS PELAYANAN STATISTIK TERPADU (PST)
+                        =============================================================== --}}
+                        @if(isset($pstTasks) && $pstTasks->isNotEmpty())
+                        @php
+                            $pstFirst = $pstTasks->sortBy('start_date')->first();
+                            $pstLast = $pstTasks->sortByDesc('start_date')->first();
+                            $pstEarliest = $pstFirst ? \Carbon\Carbon::parse($pstFirst->start_date)->translatedFormat('d M Y') : '01 Sep 2026';
+                            $pstLatest = $pstLast ? \Carbon\Carbon::parse($pstLast->start_date)->translatedFormat('d M Y') : '30 Sep 2026';
+                        @endphp
+                        <tr class="hover:bg-blue-50/50 transition-colors kegiatan-row bg-blue-50/20 border-l-4 border-l-blue-600">
+                            <td class="px-6 py-4">
+                                <div class="space-y-1.5 max-w-md">
+                                    <div class="flex items-center gap-2">
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                                            Diseminasi & Layanan
+                                        </span>
+                                    </div>
+                                    <button type="button" 
+                                            @click="openPstModal = true" 
+                                            class="font-extrabold text-blue-800 hover:text-blue-950 text-sm block text-left hover:underline cursor-pointer group flex items-center gap-1.5">
+                                        <span>Pelayanan Statistik Terpadu (PST)</span>
+                                    </button>
+                                </div>
+                            </td>
+
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+                                <div class="font-semibold text-gray-800">
+                                    {{ $pstEarliest }}
+                                </div>
+                                <div class="text-[11px] text-gray-500 mt-0.5">
+                                    s.d {{ $pstLatest }}
+                                </div>
+                            </td>
+
+                            <td class="px-6 py-4">
+                                <span class="meta-chip">Ruang PST BPS Prov. Sultra</span>
+                            </td>
+
+                            <td class="px-6 py-4">
+                                <div class="space-y-2">
+                                    <div class="font-medium text-gray-800">
+                                        PJ: <span class="font-bold">Ketua Tim PST</span>
+                                    </div>
+                                    <button type="button" 
+                                            @click="openPstModal = true"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-300 cursor-pointer">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                                        </svg>
+                                        <span>Buka Daftar PST ({{ $pstTasks->count() }})</span>
+                                    </button>
+                                </div>
+                            </td>
+
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    <span>Operasional Berjalan</span>
+                                </span>
+                            </td>
+
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-xs">
+                                <div class="flex items-center justify-end gap-1.5">
+                                    <a href="{{ url('daftarkegiatan/' . ($pstFirst ? $pstFirst->id : '')) }}" 
+                                       class="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl border border-blue-200 text-xs transition inline-flex items-center gap-1 shadow-2xs">
+                                        Detail
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        @endif
+
                         @forelse($kegiatans2 as $item)
                         @php
                             $isPst = $item->is_pst;
@@ -588,7 +647,7 @@
             {{-- Footer Pagination untuk Kegiatan Penugasan --}}
             <div id="pagination-kegiatan" class="px-6 py-3.5 border-t border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                 <div class="flex items-center gap-3 text-gray-500">
-                    <span id="kegiatan-page-info" class="font-medium text-slate-700">Menampilkan 1 - 5 dari {{ count($kegiatans2) }} kegiatan</span>
+                    <span id="kegiatan-page-info" class="font-medium text-slate-700">Menampilkan 1 - 5 dari {{ count($kegiatans2) + (isset($pstTasks) && $pstTasks->isNotEmpty() ? 1 : 0) }} kegiatan</span>
                     <div class="flex items-center gap-1.5">
                         <span class="text-[11px] text-gray-400">Tampilkan:</span>
                         <select id="kegiatan-per-page" onchange="changePerPage('kegiatan', this.value)" class="bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
@@ -1050,6 +1109,152 @@
 
         </div>
     </div>
+
+    {{-- =========================================================================
+        MODAL POPUP SELURUH KEGIATAN PELAYANAN STATISTIK TERPADU (PST)
+    ========================================================================== --}}
+    @if(isset($pstTasks) && $pstTasks->isNotEmpty())
+    <div x-show="openPstModal" 
+         x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-4xl p-6 sm:p-7 space-y-4 my-8 transition-all transform max-h-[90vh] flex flex-col"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             @click.away="openPstModal = false">
+            
+            {{-- Modal Header --}}
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0 shadow-2xs border border-blue-100">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-black text-slate-900 text-lg">Pelayanan Statistik Terpadu (PST)</h3>
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-blue-100 text-blue-800">
+                                {{ $pstTasks->count() }} Jadwal Kegiatan
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 font-medium">BPS Provinsi Sulawesi Tenggara • Seluruh Jadwal Operasional & Petugas</p>
+                    </div>
+                </div>
+                <button type="button" @click="openPstModal = false" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-xl transition cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            {{-- Live Search Filter inside PST --}}
+            <div class="shrink-0 flex items-center gap-3">
+                <div class="relative flex-1">
+                    <input type="text" 
+                           x-model="pstSearch"
+                           placeholder="Cari tanggal PST atau nama petugas..." 
+                           class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                    <svg class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
+            </div>
+
+            {{-- Scrollable Table of All PST Tasks --}}
+            <div class="overflow-y-auto flex-1 border border-gray-100 rounded-2xl">
+                <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
+                    <thead class="bg-gray-50 text-[11px] font-bold text-gray-600 uppercase tracking-wider sticky top-0 z-10 shadow-2xs">
+                        <tr>
+                            <th class="px-4 py-3">Tanggal Kegiatan</th>
+                            <th class="px-4 py-3">Sesi Pelayanan</th>
+                            <th class="px-4 py-3">Petugas Bertugas</th>
+                            <th class="px-4 py-3">Status</th>
+                            <th class="px-4 py-3 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 bg-white">
+                        @foreach($pstTasks->sortBy('start_date') as $idx => $pstItem)
+                        @php
+                            $petugasNames = $pstItem->penugasans->pluck('peserta')->filter()->unique()->values();
+                            if ($petugasNames->isEmpty() && !empty($pstItem->petugas_list)) {
+                                $petugasNames = collect($pstItem->petugas_list);
+                            }
+                            $dateFormatted = \Carbon\Carbon::parse($pstItem->start_date)->translatedFormat('l, d F Y');
+                            $searchHaystack = strtolower($dateFormatted . ' ' . $petugasNames->implode(' '));
+                        @endphp
+                        <tr class="hover:bg-blue-50/30 transition-colors"
+                            x-show="!pstSearch || '{{ addslashes($searchHaystack) }}'.includes(pstSearch.toLowerCase())">
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <div class="font-bold text-gray-900">{{ $dateFormatted }}</div>
+                                <span class="text-[10px] text-gray-400 font-mono">ID #{{ $pstItem->id }}</span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="space-y-0.5 text-gray-700">
+                                    <div class="font-medium text-slate-800">Sesi 1: 08:00 - 12:00 WITA</div>
+                                    <div class="font-medium text-slate-800">Sesi 2: 13:00 - 16:00 WITA</div>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex flex-wrap gap-1 max-w-md">
+                                    @foreach($petugasNames as $pName)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                                            {{ $pName }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    <span>Selesai</span>
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-right">
+                                <div class="flex items-center justify-end gap-1.5">
+                                    {{-- Tombol Edit dengan Icon --}}
+                                    <a href="{{ route('ketua-tim.edit', $pstItem->id) }}" 
+                                       class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition border border-transparent hover:border-blue-200" 
+                                       title="Edit Jadwal PST">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
+                                    </a>
+
+                                    {{-- Tombol Hapus dengan Icon --}}
+                                    <form action="{{ route('ketua-tim.destroy', $pstItem->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus jadwal kegiatan PST untuk tanggal {{ $dateFormatted }}?')" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition border border-transparent hover:border-rose-200" title="Hapus Jadwal PST">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-gray-100 text-xs text-gray-500 shrink-0">
+                <span>Total: <strong class="text-gray-800">{{ $pstTasks->count() }}</strong> jadwal operasional PST BPS Provinsi Sulawesi Tenggara</span>
+                <button type="button" @click="openPstModal = false" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition cursor-pointer">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
 
 <script>

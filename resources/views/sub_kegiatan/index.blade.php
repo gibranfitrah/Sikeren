@@ -18,7 +18,6 @@
                 <span class="text-xs text-gray-500 font-medium">Sub Kegiatan & Deadline</span>
             </div>
             <h2 class="text-xl font-bold text-gray-900 mt-1">Daftar Sub Kegiatan</h2>
-            <p class="text-xs text-gray-500 mt-0.5">Kelola rincian sub kegiatan di bawah kegiatan utama, penugasan personil, dan pantau indikator batas waktu (deadline).</p>
         </div>
         <div class="flex items-center gap-2.5">
             <button type="button" 
@@ -123,7 +122,6 @@
             <div class="flex items-center gap-3">
                 <div>
                     <h3 class="font-bold text-gray-800 text-sm">Kelola Sub Kegiatan</h3>
-                    <p class="text-[11px] text-gray-400">Dikelompokkan secara berhirarki per Kegiatan Induk agar rapi</p>
                 </div>
                 <span class="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-semibold">{{ count($subKegiatans) }} Data</span>
             </div>
@@ -238,7 +236,7 @@
                                 @click="modalTambah = true; $nextTick(() => { document.getElementById('selectParentTask').value = '{{ $parentTask->id }}'; })"
                                 class="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition flex items-center gap-1 border border-blue-200/80 shadow-2xs">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            <span>+ Sub</span>
+                            <span>Sub</span>
                         </button>
                         @endif
                     </div>

@@ -104,10 +104,13 @@ class TugasSayaController extends Controller
         $notifications = Auth::user()->notifications()->latest()->take(5)->get();
         $jumlah_notif = Auth::user()->unreadNotifications()->count();
 
+        $availableTasks = Task::orderBy('start_date', 'desc')->take(60)->get();
+
         return view('tugas_saya.index', compact(
             'myTasks',
             'mySubKegiatans',
             'myBookings',
+            'availableTasks',
             'filterStatus',
             'notifications',
             'jumlah_notif'

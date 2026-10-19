@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Detail Kegiatan: ' . ($task->text ?? 'Kegiatan') . ' - Sikeren')
-@section('header_title', 'Detail Kegiatan')
+@section('title', ($task->text ?? 'Kegiatan') . ' - Sikeren')
+@section('header_title', $task->text ?? 'Detail Kegiatan')
 
 @section('content')
 @php
@@ -46,66 +46,43 @@
     $isRejected = ($setujuVal === 3 || $stLower === 'ditolak');
     $isApproved = ($setujuVal === 1 || in_array($stLower, ['disetujui', 'sedang berjalan']) || $isDone || $isDelayed || $isInactive);
     $isWaiting  = ($setujuVal === 0 && !$isApproved && !$isRejected && in_array($stLower, ['menunggu', 'menunggu persetujuan', 'belum']));
+
+    // Helper warna status agar tidak sama dengan tag header card biru
+    $getStatusBadgeClass = function($status) {
+        $st = strtolower(trim($status ?? ''));
+        if (in_array($st, ['selesai', 'hadir', 'disetujui', '100%', 'tuntas'])) {
+            return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+        } elseif (in_array($st, ['sedang berjalan', 'berjalan', 'aktif', 'proses', 'pada jalur'])) {
+            return 'bg-amber-50 text-amber-700 border border-amber-200';
+        } elseif (in_array($st, ['terlambat', 'tidak hadir', 'dibatalkan', 'ditolak', 'tidak berjalan', 'batal'])) {
+            return 'bg-rose-50 text-rose-700 border border-rose-200';
+        } elseif (in_array($st, ['ada kegiatan lain', 'sedang ada kegiatan lain'])) {
+            return 'bg-purple-50 text-purple-700 border border-purple-200';
+        } else {
+            return 'bg-slate-100 text-slate-700 border border-slate-200';
+        }
+    };
 @endphp
 
-<div class="space-y-6 pb-12 w-full max-w-full" x-data="{ modalTambahSub: false, modalEditSub: false, activeSub: null, modalUpdateStatus: false, newStatus: '{{ $task->status ?? 'Sedang Berjalan' }}', alasanStatus: '{{ addslashes($task->alasan_status ?? '') }}' }">
+<div class="space-y-6 pb-12 w-full max-w-full" x-data="{ 
+    modalTambahSub: false, 
+    modalEditSub: false, 
+    activeSub: null, 
+    modalUpdateStatus: false, 
+    newStatus: '{{ $task->status ?? 'Sedang Berjalan' }}', 
+    alasanStatus: '{{ addslashes($task->alasan_status ?? '') }}',
+    activeSesiId: {{ $subKegiatans->first()->id ?? 'null' }},
+    openDropdownPetugas: false,
+    selectedPetugasId: 'all'
+}">
 
-    {{-- =========================================================================
-        1. TOP HEADER & ACTIONS
-    ========================================================================== --}}
-    <x-heading 
-        :title="$task->text"
-        :subtitle="'Agenda: ' . ($task->agenda ?? 'Tidak ada catatan agenda khusus')"
-        :tag="$task->is_pst ? 'Petugas PST' : 'Kegiatan Tim'"
-        :subtag="$task->tim ?? 'BPS Provinsi Sulawesi Tenggara'"
-        :backUrl="url('/daftar_kegiatan')">
-        
-        <x-slot name="action"> 
-
-            @if(!empty($task->id))
-                <div class="relative shrink-0" x-data="{ unduhOpen: false }">
-                    <button type="button" 
-                            @click="unduhOpen = !unduhOpen"
-                            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition shadow-2xs cursor-pointer shrink-0">
-                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        <span>Unduh Dokumen</span>
-                        <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="unduhOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div x-show="unduhOpen" 
-                         @click.away="unduhOpen = false"
-                         x-cloak
-                         x-transition:enter="transition ease-out duration-100"
-                         x-transition:enter-start="opacity-0 scale-95"
-                         x-transition:enter-end="opacity-100 scale-100"
-                         x-transition:leave="transition ease-in duration-75"
-                         x-transition:leave-start="opacity-100 scale-100"
-                         x-transition:leave-end="opacity-0 scale-95"
-                         class="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-100 py-1.5 z-30">
-                        <a href="{{ url('/employee/pdf_kegiatan/' . $task->id) }}" target="_blank"
-                           class="flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition">
-                            <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                            <span>Unduh Dokumen PDF (.pdf)</span>
-                        </a>
-                        <a href="{{ route('kegiatan.downloadWord', $task->id) }}"
-                           class="flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition">
-                            <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                            <span>Unduh Berkas Word (.docx)</span>
-                        </a>
-                    </div>
-                </div>
-            @endif
-
-            @if(!$task->is_pst)
-                <x-button 
-                    variant="primary" 
-                    size="sm"
-                    @click="modalTambahSub = true"
-                    icon='<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>'>
-                    Tambah Sub Kegiatan
-                </x-button>
-            @endif
-        </x-slot>
-    </x-heading>
+    {{-- Navigasi Kembali ke Kelola Kegiatan --}}
+    <div class="flex items-center gap-3">
+        <a href="{{ url('/daftar_kegiatan') }}" class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl border border-blue-200 text-xs transition shadow-2xs">
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            <span>Kembali ke Kelola Kegiatan</span>
+        </a>
+    </div>
 
     {{-- Flash Notifications --}}
     @if(session('success'))
@@ -148,30 +125,16 @@
                                 <div class="flex items-center gap-2 flex-wrap">
                                     <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-pulse"></span>
                                     <h4 class="font-black text-indigo-950 text-sm sm:text-base">Konfirmasi Kehadiran Petugas PST</h4>
-                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-100 text-indigo-700 border border-indigo-200">
-                                        {{ $myPenugasan->keterangan ?: 'Petugas PST' }}
+                                    <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-100">
+                                        {{ $myPenugasan->keterangan ?: 'PETUGAS PST' }}
                                     </span>
                                 </div>
                                 <p class="text-xs text-indigo-800">
                                     Halo <strong>{{ $myPenugasan->peserta }}</strong>, silakan pilih status kehadiran Anda untuk sesi ini. 
                                     Status saat ini: 
-                                    @if($mySt === 'Hadir')
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Hadir
-                                        </span>
-                                    @elseif($mySt === 'Tidak Hadir')
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Tidak Hadir
-                                        </span>
-                                    @elseif($mySt === 'Ada Kegiatan Lain' || $mySt === 'Sedang Ada Kegiatan Lain')
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Ada Kegiatan Lain
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold bg-slate-200 text-slate-700 border border-slate-300">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span> Belum Konfirmasi
-                                        </span>
-                                    @endif
+                                    <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-100">
+                                        {{ strtoupper($mySt) }}
+                                    </span>
                                 </p>
                             </div>
 
@@ -218,7 +181,7 @@
     ========================================================================== --}}
     <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-            <div class="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
+            <div class="flex items-center gap-3.5 min-w-0 flex-1">
                 <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 {{ $isDone ? 'bg-emerald-100 text-emerald-700' : ($isDelayed ? 'bg-amber-100 text-amber-700' : ($isInactive || $isRejected ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700')) }}">
                     @if($isDone)
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
@@ -233,28 +196,59 @@
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-2 flex-wrap">
                         <span class="text-xs font-semibold text-slate-500">Status:</span>
-                        <x-badge :variant="$statusVariant" size="xs" :dot="true">{{ $statusText }}</x-badge>
+                        <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider {{ $getStatusBadgeClass($statusText) }}">
+                            {{ strtoupper($statusText) }}
+                        </span>
                     </div>
-                    <p class="text-xs text-slate-600 mt-0.5 break-words">
-                        @if($isDone)
-                            Kegiatan telah selesai dan seluruh target tuntas 100%.
-                        @elseif($isDelayed)
-                            Pelaksanaan kegiatan berstatus tertunda.
-                        @elseif($isInactive)
-                            Kegiatan tidak berjalan / dibatalkan.
-                        @elseif($isRejected)
-                            {{ $task->is_pst ? 'Jadwal penugasan PST ini ditolak.' : 'Kegiatan ini ditolak oleh Penanggung Jawab.' }}
-                        @elseif($isApproved)
-                            {{ $task->is_pst ? 'Jadwal Petugas PST terkonfirmasi dan sedang berjalan.' : 'Kegiatan disetujui oleh Penanggung Jawab dan sedang berjalan.' }}
-                        @else
-                            {{ $task->is_pst ? 'Menunggu konfirmasi Petugas.' : 'Menunggu persetujuan Penanggung Jawab (' . $pjNama . ').' }}
-                        @endif
-                    </p>
                 </div>
             </div>
 
-            {{-- Action Buttons for PJ --}}
-            <div class="flex items-center gap-2 shrink-0">
+            {{-- Action Buttons: Unduh Dokumen & Tombol PJ --}}
+            <div class="flex items-center gap-2 flex-wrap shrink-0">
+                {{-- Dropdown Unduh Dokumen --}}
+                @if(!empty($task->id))
+                    <div class="relative shrink-0" x-data="{ unduhOpen: false }">
+                        <button type="button" 
+                                @click="unduhOpen = !unduhOpen"
+                                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition shadow-2xs cursor-pointer shrink-0">
+                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            <span>Unduh Dokumen</span>
+                            <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="unduhOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div x-show="unduhOpen" 
+                             @click.away="unduhOpen = false"
+                             x-cloak
+                             x-transition:enter="transition ease-out duration-100"
+                             x-transition:enter-start="opacity-0 scale-95"
+                             x-transition:enter-end="opacity-100 scale-100"
+                             x-transition:leave="transition ease-in duration-75"
+                             x-transition:leave-start="opacity-100 scale-100"
+                             x-transition:leave-end="opacity-0 scale-95"
+                             class="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-100 py-1.5 z-30">
+                            <a href="{{ url('/employee/pdf_kegiatan/' . $task->id) }}" target="_blank"
+                               class="flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition">
+                                <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                                <span>Unduh Dokumen PDF (.pdf)</span>
+                            </a>
+                            <a href="{{ route('kegiatan.downloadWord', $task->id) }}"
+                               class="flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition">
+                                <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                <span>Unduh Berkas Word (.docx)</span>
+                            </a>
+                        </div>
+                    </div>
+                @endif
+
+                @if(!$task->is_pst)
+                    <x-button 
+                        variant="primary" 
+                        size="sm"
+                        @click="modalTambahSub = true"
+                        icon='<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>'>
+                        Tambah Sub
+                    </x-button>
+                @endif
+
                 @if($isPj && $isWaiting)
                     <form action="{{ url('/setuju_rapat') }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menolak kegiatan ini?')">
                         @csrf
@@ -333,7 +327,6 @@
             {{-- SUB KEGIATAN & MILESTONES --}}
             <x-card 
                 title="Sub Kegiatan & Rincian Tugas" 
-                subtitle="Tahapan pengerjaan kegiatan yang terbagi ke anggota tim"
                 tag="Milestone">
                 
                 @if(!$task->is_pst)
@@ -349,60 +342,52 @@
                 @endif
 
                 @if($subKegiatans->count() > 0)
-                    <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 items-stretch">
                         @foreach($subKegiatans as $sub)
                             @php
                                 $deadline = $sub->deadline_status;
                             @endphp
-                            <div class="p-4 sm:p-5 rounded-2xl bg-gray-50/70 border border-gray-200/80 hover:border-blue-200 hover:bg-blue-50/20 transition-all space-y-3.5">
+                            <div class="p-3.5 sm:p-4 rounded-xl border border-gray-200/90 bg-white shadow-2xs flex flex-col justify-between gap-3 h-full hover:border-blue-300 transition-colors">
                                 
                                 {{-- Sub Header: Title & Badges --}}
-                                <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5">
-                                    <div class="space-y-1">
-                                        <div class="flex items-center gap-2 flex-wrap">
-                                            <h4 class="font-bold text-gray-900 text-sm sm:text-base">{{ $sub->nama_sub }}</h4>
-                                            @if($sub->tim)
-                                                <x-badge variant="neutral" size="xs">{{ $sub->tim }}</x-badge>
-                                            @endif
+                                <div class="flex items-start justify-between gap-2">
+                                    <div class="space-y-1 min-w-0">
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            <h4 class="font-bold text-gray-900 text-sm truncate">{{ $sub->nama_sub }}</h4>
                                         </div>
-                                        @if($sub->keterangan)
-                                            <p class="text-xs text-gray-600 leading-relaxed">{{ $sub->keterangan }}</p>
-                                        @endif
                                     </div>
 
-                                    {{-- Status & Deadline Pill --}}
+                                    {{-- Status Badge dengan Warna Semantik Status --}}
                                     <div class="shrink-0">
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border {{ $deadline['class'] }}">
-                                            <span class="w-1.5 h-1.5 rounded-full {{ $deadline['dot'] }}"></span>
-                                            <span>{{ $deadline['label'] }}</span>
+                                        @php
+                                            $subStatusText = $deadline['label'] ?? ($sub->progress >= 100 ? 'SELESAI' : 'BERJALAN');
+                                        @endphp
+                                        <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider {{ $getStatusBadgeClass($subStatusText) }}">
+                                            {{ strtoupper($subStatusText) }}
                                         </span>
                                     </div>
                                 </div>
 
                                 {{-- Sub Info Details (PJ, Date, Members) --}}
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-white p-3 rounded-xl border border-gray-100">
+                                <div class="bg-slate-50/70 p-2.5 rounded-lg border border-gray-100 text-xs space-y-2">
                                     {{-- PJ & Waktu --}}
-                                    <div class="space-y-1.5">
-                                        <div class="flex items-center gap-2 text-gray-500">
-                                            <span class="font-semibold text-gray-400 w-16">PJ Sub:</span>
-                                            <span class="font-bold text-gray-800">{{ $sub->pj ?: ($task->penanggung_jawab ?? '-') }}</span>
+                                    <div class="flex items-center justify-between gap-2 text-[11px] text-gray-500">
+                                        <div class="truncate">
+                                            <span class="text-gray-400">PJ:</span>
+                                            <span class="font-bold text-gray-800 ml-1">{{ $sub->pj ?: ($task->penanggung_jawab ?? '-') }}</span>
                                         </div>
-                                        <div class="flex items-center gap-2 text-gray-500">
-                                            <span class="font-semibold text-gray-400 w-16">Waktu:</span>
-                                            <span class="text-gray-700">
+                                        <div class="shrink-0">
+                                            <span class="text-gray-700 font-medium">
                                                 {{ $sub->start_date ? \Carbon\Carbon::parse($sub->start_date)->translatedFormat('d M Y') : '-' }}
-                                                @if($sub->end_date && $sub->end_date != $sub->start_date)
-                                                    <span class="text-gray-400">&rarr;</span> {{ \Carbon\Carbon::parse($sub->end_date)->translatedFormat('d M Y') }}
-                                                @endif
                                             </span>
                                         </div>
                                     </div>
 
                                     {{-- Anggota Assigned --}}
-                                    <div class="space-y-1">
-                                        <span class="font-semibold text-gray-400 block">{{ $task->is_pst ? 'Petugas Bertugas & Status Kehadiran:' : 'Anggota Terlibat:' }}</span>
+                                    <div class="space-y-1 pt-1.5 border-t border-gray-200/60">
+                                        <span class="text-[10px] font-semibold text-gray-400 block">{{ $task->is_pst ? 'Petugas Bertugas & Kehadiran:' : 'Anggota Terlibat:' }}</span>
                                         @if(!empty($sub->anggota_list))
-                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                            <div class="flex items-center gap-1 flex-wrap">
                                                 @foreach($sub->anggota_list as $ang)
                                                     @php
                                                         $angPenugasan = $task->penugasans->first(function($p) use ($ang) {
@@ -410,59 +395,60 @@
                                                         });
                                                         $angSt = $angPenugasan ? ($angPenugasan->status_kehadiran ?: 'Belum Konfirmasi') : null;
                                                     @endphp
-                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold border 
-                                                        {{ $angSt === 'Hadir' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : ($angSt === 'Tidak Hadir' ? 'bg-rose-50 text-rose-800 border-rose-200' : ($angSt === 'Ada Kegiatan Lain' || $angSt === 'Sedang Ada Kegiatan Lain' ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-blue-50 text-blue-700 border-blue-100')) }}">
+                                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
                                                         <span>{{ $ang }}</span>
                                                         @if($angSt && $task->is_pst)
-                                                            <span class="text-[9px] font-extrabold uppercase opacity-85">
-                                                                ({{ $angSt }})
+                                                            <span class="text-[9px] font-extrabold px-1 rounded {{ $angSt === 'Hadir' ? 'bg-emerald-100 text-emerald-800' : ($angSt === 'Tidak Hadir' ? 'bg-rose-100 text-rose-800' : 'bg-slate-200 text-slate-700') }}">
+                                                                {{ strtoupper($angSt) }}
                                                             </span>
                                                         @endif
                                                     </span>
                                                 @endforeach
                                             </div>
                                         @else
-                                            <span class="text-gray-400 italic text-[11px]">Seluruh tim terkait</span>
+                                            <span class="text-gray-400 italic text-[10px]">Seluruh tim terkait</span>
                                         @endif
                                     </div>
                                 </div>
 
                                 {{-- Progress & Quick Actions --}}
-                                <div class="pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div class="pt-1 flex items-center justify-between gap-2.5">
                                     {{-- Interactive Progress Bar --}}
                                     <div class="flex-1 space-y-1">
-                                        <div class="flex items-center justify-between text-[11px]">
-                                            <span class="font-bold text-gray-600">Progres Pengerjaan</span>
+                                        <div class="flex items-center justify-between text-[10px]">
+                                            <span class="font-bold text-gray-500">Progres</span>
                                             <span class="font-black {{ $sub->progress >= 100 ? 'text-emerald-600' : 'text-blue-600' }}">{{ $sub->progress }}%</span>
                                         </div>
-                                        <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                                            <div class="h-2 rounded-full transition-all duration-300 {{ $sub->progress >= 100 ? 'bg-emerald-500' : 'bg-blue-600' }}" style="width: {{ $sub->progress }}%"></div>
+                                        <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                            <div class="h-1.5 rounded-full transition-all duration-300 {{ $sub->progress >= 100 ? 'bg-emerald-500' : 'bg-blue-600' }}" style="width: {{ $sub->progress }}%"></div>
                                         </div>
                                     </div>
 
                                     {{-- Quick Update Dropdown --}}
-                                    <div class="flex items-center gap-2 shrink-0">
-                                        <form action="{{ route('sub-kegiatan.progress', $sub->id) }}" method="POST" class="flex items-center gap-1.5">
+                                    <div class="flex items-center gap-1 shrink-0">
+                                        <form action="{{ route('sub-kegiatan.progress', $sub->id) }}" method="POST" class="flex items-center">
                                             @csrf
-                                            <select name="progress" onchange="this.form.submit()" class="text-xs py-1.5 px-2 rounded-xl border border-gray-200 bg-white text-gray-700 font-bold focus:ring-1 focus:ring-blue-500">
+                                            <select name="progress" onchange="this.form.submit()" class="text-[11px] py-1 px-1.5 rounded-lg border border-gray-200 bg-white text-gray-700 font-bold focus:ring-1 focus:ring-blue-500">
                                                 <option value="0" {{ $sub->progress == 0 ? 'selected' : '' }}>0%</option>
                                                 <option value="25" {{ $sub->progress == 25 ? 'selected' : '' }}>25%</option>
                                                 <option value="50" {{ $sub->progress == 50 ? 'selected' : '' }}>50%</option>
                                                 <option value="75" {{ $sub->progress == 75 ? 'selected' : '' }}>75%</option>
-                                                <option value="100" {{ $sub->progress == 100 ? 'selected' : '' }}>100% (Selesai)</option>
+                                                <option value="100" {{ $sub->progress == 100 ? 'selected' : '' }}>100%</option>
                                             </select>
                                         </form>
 
-                                        {{-- Delete Sub Button --}}
-                                        <form action="{{ route('sub-kegiatan.destroy', $sub->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus sub kegiatan ini?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="p-1.5 rounded-xl text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition" title="Hapus Sub Kegiatan">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                                </svg>
-                                            </button>
-                                        </form>
+                                        @if(!$task->is_pst)
+                                            {{-- Delete Sub Button --}}
+                                            <form action="{{ route('sub-kegiatan.destroy', $sub->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus sub kegiatan ini?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="p-1 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition" title="Hapus Sub Kegiatan">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        @endif
                                     </div>
                                 </div>
 
@@ -495,33 +481,30 @@
             {{-- INFORMASI LENGKAP & DASAR PELAKSANAAN --}}
             <x-card 
                 title="Informasi & Dasar Pelaksanaan" 
-                subtitle="Data administrasi dan legalitas kegiatan tim"
                 tag="Administrasi">
                 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {{-- Nama Kegiatan --}}
-                    <div class="p-3.5 rounded-xl bg-gray-50 border border-gray-100 space-y-1">
-                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Nama Kegiatan</span>
-                        <p class="text-xs font-bold text-gray-900">{{ $task->text }}</p>
+                <div class="bg-gray-50/70 rounded-xl border border-gray-200/80 divide-y divide-gray-200/70 text-xs">
+                    <div class="p-3.5 sm:px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                        <span class="font-semibold text-gray-500 w-44 shrink-0">Nama Kegiatan</span>
+                        <span class="font-bold text-gray-900 sm:text-right">{{ $task->text }}</span>
                     </div>
 
-                    {{-- Tim Pengampu --}}
-                    <div class="p-3.5 rounded-xl bg-gray-50 border border-gray-100 space-y-1">
-                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Tim Pengampu</span>
-                        <p class="text-xs font-bold text-gray-900">{{ $task->tim ?? '-' }}</p>
+                    <div class="p-3.5 sm:px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                        <span class="font-semibold text-gray-500 w-44 shrink-0">Tim Pengampu</span>
+                        <span class="font-bold text-blue-700 sm:text-right">{{ $task->tim ?? '-' }}</span>
                     </div>
 
-                    {{-- Agenda / Perihal --}}
-                    <div class="p-3.5 rounded-xl bg-gray-50 border border-gray-100 space-y-1 sm:col-span-2">
-                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Perihal / Deskripsi Agenda</span>
-                        <p class="text-xs text-gray-800 leading-relaxed font-medium">{{ $task->agenda ?? '-' }}</p>
+                    @if(!$task->is_pst && !empty($task->agenda) && !str_starts_with($task->agenda, 'Pelayanan Statistik Terpadu'))
+                    <div class="p-3.5 sm:px-4 flex flex-col sm:flex-row sm:items-start justify-between gap-1.5">
+                        <span class="font-semibold text-gray-500 w-44 shrink-0">Perihal / Agenda</span>
+                        <span class="font-medium text-gray-800 sm:text-right max-w-lg leading-relaxed">{{ $task->agenda }}</span>
                     </div>
+                    @endif
 
-                    {{-- Dasar Surat / Dokumen Tugas --}}
-                    <div class="p-3.5 rounded-xl bg-gray-50 border border-gray-100 space-y-1">
-                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">No. Surat Tugas / Dasar Dokumen</span>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-bold text-gray-900">{{ $task->surat ?? '-' }}</span>
+                    <div class="p-3.5 sm:px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                        <span class="font-semibold text-gray-500 w-44 shrink-0">No. Surat / Dasar Dokumen</span>
+                        <div class="flex items-center gap-2 sm:justify-end">
+                            <span class="font-bold text-gray-900">{{ $task->surat ?? '-' }}</span>
                             @if(!empty($task->surat) && file_exists(public_path('documents/' . $task->surat)))
                                 <a href="{{ asset('documents/' . $task->surat) }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-[11px] font-bold underline inline-flex items-center gap-1">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
@@ -531,10 +514,9 @@
                         </div>
                     </div>
 
-                    {{-- Rentang Waktu --}}
-                    <div class="p-3.5 rounded-xl bg-gray-50 border border-gray-100 space-y-1">
-                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Periode Tanggal Pelaksanaan</span>
-                        <p class="text-xs font-bold text-gray-900">{{ $startFormatted }} &rarr; {{ $endFormatted }}</p>
+                    <div class="p-3.5 sm:px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                        <span class="font-semibold text-gray-500 w-44 shrink-0">Periode Tanggal Pelaksanaan</span>
+                        <span class="font-bold text-gray-900 sm:text-right">{{ $startFormatted }} &rarr; {{ $endFormatted }}</span>
                     </div>
                 </div>
             </x-card>
@@ -560,7 +542,9 @@
                     @if(!empty($wilayahList) && count($wilayahList) > 0)
                         <div class="flex items-center justify-between mb-1">
                             <span class="text-xs font-semibold text-gray-500">Daftar Wilayah Terpilih:</span>
-                            <x-badge variant="primary" size="xs">{{ count($wilayahList) }} Wilayah</x-badge>
+                            <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-100">
+                                {{ count($wilayahList) }} WILAYAH
+                            </span>
                         </div>
                         <div class="flex flex-wrap gap-2">
                             @foreach($wilayahList as $w)
@@ -596,101 +580,94 @@
                 @endphp
                 <x-card 
                     title="Petugas Pelayanan Statistik Terpadu (PST)" 
-                    subtitle="Daftar petugas & status kehadiran pada sesi ini"
                     tag="Petugas">
                     
                     <x-slot name="action">
-                        <x-badge variant="primary" size="xs">{{ $petugasPstList->count() ?: 1 }} Petugas</x-badge>
+                        <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-100">
+                            {{ $petugasPstList->count() ?: 1 }} PETUGAS
+                        </span>
                     </x-slot>
 
-                    <div class="space-y-2.5 max-h-[28rem] overflow-y-auto pr-1">
-                        @forelse($petugasPstList as $p)
-                            @php
-                                $pStatus = $p->status_kehadiran ?: 'Belum Konfirmasi';
-                                $isThisOfficer = Auth::check() && (
-                                    (!empty(Auth::user()->niplama) && Auth::user()->niplama === $p->niplama) ||
-                                    (!empty(Auth::user()->nipbaru) && Auth::user()->nipbaru === $p->niplama) ||
-                                    (strcasecmp(trim(Auth::user()->nama_lengkap ?? ''), trim($p->peserta ?? '')) === 0)
-                                );
-                                $canChangeThis = Auth::check() && (
-                                    Auth::user()->isAdmin() || 
-                                    $isThisOfficer || 
-                                    (strcasecmp(Auth::user()->nama_lengkap ?? '', $task->penanggung_jawab ?? '') === 0)
-                                );
-                            @endphp
-                            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-indigo-50/20 transition">
-                                <div class="flex items-center gap-3 min-w-0">
-                                    <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-xs shrink-0">
-                                        {{ strtoupper(substr($p->peserta ?? 'P', 0, 1)) }}
-                                    </div>
-                                    <div class="space-y-0.5 min-w-0">
-                                        <div class="flex items-center gap-2 flex-wrap">
-                                            <h4 class="font-bold text-slate-900 text-xs truncate">{{ $p->peserta }}</h4>
-                                            @if($isThisOfficer)
-                                                <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-blue-100 text-blue-700">Anda</span>
-                                            @endif
+                    <div class="space-y-3">
+                        {{-- Tombol Toggle Buka/Tutup Seluruh Petugas --}}
+                        <div>
+                            <button type="button" 
+                                    @click="openDropdownPetugas = !openDropdownPetugas"
+                                    class="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-blue-50/40 border border-slate-200/80 text-xs font-bold text-slate-700 hover:text-blue-700 hover:border-blue-200 transition">
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                    <span x-text="openDropdownPetugas ? 'Tutup Daftar Petugas' : 'Buka Seluruh Petugas ({{ $petugasPstList->count() }})'"></span>
+                                </span>
+                                <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" :class="openDropdownPetugas ? 'rotate-180 text-blue-600' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                        </div>
+
+                        {{-- Tampilan Seluruh Petugas saat Dibuka --}}
+                        <div class="space-y-2 pt-1" 
+                             x-show="openDropdownPetugas"
+                             x-cloak>
+                            @forelse($petugasPstList as $p)
+                                @php
+                                    $pStatus = $p->status_kehadiran ?: 'Belum Konfirmasi';
+                                    $isThisOfficer = Auth::check() && (
+                                        (!empty(Auth::user()->niplama) && Auth::user()->niplama === $p->niplama) ||
+                                        (!empty(Auth::user()->nipbaru) && Auth::user()->nipbaru === $p->niplama) ||
+                                        (strcasecmp(trim(Auth::user()->nama_lengkap ?? ''), trim($p->peserta ?? '')) === 0)
+                                    );
+                                    $canChangeThis = Auth::check() && (
+                                        Auth::user()->isAdmin() || 
+                                        $isThisOfficer || 
+                                        (strcasecmp(Auth::user()->nama_lengkap ?? '', $task->penanggung_jawab ?? '') === 0)
+                                    );
+                                @endphp
+                                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 hover:bg-blue-50/20 transition">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-black text-xs shadow-xs shrink-0">
+                                            {{ strtoupper(substr($p->peserta ?? 'P', 0, 1)) }}
                                         </div>
-                                        <p class="text-[11px] text-slate-500 font-medium truncate">
-                                            @if(!empty($p->niplama) && $p->niplama !== '-')
-                                                NIP: {{ $p->niplama }} • 
-                                            @endif
-                                            <span class="text-indigo-600 font-bold">{{ $p->keterangan ?: 'Petugas PST' }}</span>
-                                        </p>
+                                        <div class="space-y-0.5 min-w-0">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <h4 class="font-bold text-slate-900 text-xs truncate">{{ $p->peserta }}</h4>
+                                                @if($isThisOfficer)
+                                                    <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-blue-100 text-blue-700">Anda</span>
+                                                @endif
+                                            </div>
+                                            <p class="text-[11px] text-slate-500 font-medium truncate">
+                                                @if(!empty($p->niplama) && $p->niplama !== '-')
+                                                    NIP: {{ $p->niplama }} &bull; 
+                                                @endif
+                                                <span class="text-indigo-600 font-semibold">{{ $p->keterangan ?: 'Petugas PST' }}</span>
+                                            </p>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div class="flex items-center gap-2 shrink-0">
-                                    {{-- Status Badge --}}
-                                    @if($pStatus === 'Hadir')
-                                        <span class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1 shadow-2xs">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                            Hadir
+                                    <div class="flex items-center gap-2 shrink-0">
+                                        {{-- Status Badge dengan Warna Semantik Status --}}
+                                        <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider {{ $getStatusBadgeClass($pStatus) }}">
+                                            {{ strtoupper($pStatus) }}
                                         </span>
-                                    @elseif($pStatus === 'Tidak Hadir')
-                                        <span class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-rose-50 text-rose-700 border border-rose-200 inline-flex items-center gap-1 shadow-2xs">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                            Tidak Hadir
-                                        </span>
-                                    @elseif($pStatus === 'Ada Kegiatan Lain' || $pStatus === 'Sedang Ada Kegiatan Lain')
-                                        <span class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-amber-50 text-amber-700 border border-amber-300 inline-flex items-center gap-1 shadow-2xs">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                            Ada Kegiatan Lain
-                                        </span>
-                                    @else
-                                        <span class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-100 text-slate-600 border border-slate-200 inline-flex items-center gap-1 shadow-2xs">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                                            Belum Konfirmasi
-                                        </span>
-                                    @endif
 
-                                    {{-- Dropdown untuk ubah status jika berhak --}}
-                                    @if($canChangeThis)
-                                        <form action="{{ route('pst.konfirmasi_kehadiran') }}" method="POST" class="inline">
-                                            @csrf
-                                            <input type="hidden" name="penugasan_id" value="{{ $p->id }}">
-                                            <select name="status_kehadiran" onchange="this.form.submit()" class="text-[10px] font-bold py-1 px-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 cursor-pointer focus:ring-1 focus:ring-indigo-500" title="Ubah status kehadiran">
-                                                <option value="" disabled selected>Ubah</option>
-                                                <option value="Hadir" {{ $pStatus === 'Hadir' ? 'selected' : '' }}>Hadir</option>
-                                                <option value="Tidak Hadir" {{ $pStatus === 'Tidak Hadir' ? 'selected' : '' }}>Tidak Hadir</option>
-                                                <option value="Ada Kegiatan Lain" {{ ($pStatus === 'Ada Kegiatan Lain' || $pStatus === 'Sedang Ada Kegiatan Lain') ? 'selected' : '' }}>Ada Kegiatan Lain</option>
-                                            </select>
-                                        </form>
-                                    @endif
-                                </div>
-                            </div>
-                        @empty
-                            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
-                                <div class="flex items-center gap-3.5">
-                                    <div class="w-11 h-11 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-base shadow-xs">
-                                        {{ strtoupper(substr($pjNama, 0, 1)) }}
-                                    </div>
-                                    <div class="space-y-0.5 min-w-0">
-                                        <h4 class="font-bold text-slate-900 text-sm truncate">{{ $pjNama }}</h4>
-                                        <p class="text-xs text-slate-500 font-medium truncate">Petugas PST</p>
+                                        {{-- Dropdown untuk ubah status jika berhak --}}
+                                        @if($canChangeThis)
+                                            <form action="{{ route('pst.konfirmasi_kehadiran') }}" method="POST" class="inline">
+                                                @csrf
+                                                <input type="hidden" name="penugasan_id" value="{{ $p->id }}">
+                                                <select name="status_kehadiran" onchange="this.form.submit()" class="text-[10px] font-bold py-1 px-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 cursor-pointer focus:ring-1 focus:ring-indigo-500" title="Ubah status kehadiran">
+                                                    <option value="" disabled selected>Ubah</option>
+                                                    <option value="Hadir" {{ $pStatus === 'Hadir' ? 'selected' : '' }}>Hadir</option>
+                                                    <option value="Tidak Hadir" {{ $pStatus === 'Tidak Hadir' ? 'selected' : '' }}>Tidak Hadir</option>
+                                                    <option value="Ada Kegiatan Lain" {{ ($pStatus === 'Ada Kegiatan Lain' || $pStatus === 'Sedang Ada Kegiatan Lain') ? 'selected' : '' }}>Ada Kegiatan Lain</option>
+                                                </select>
+                                            </form>
+                                        @endif
                                     </div>
                                 </div>
-                            </div>
-                        @endforelse
+                            @empty
+                                <div class="p-3 text-center text-slate-400 text-xs">
+                                    <p>Tidak ada petugas PST yang tercatat.</p>
+                                </div>
+                            @endforelse
+                        </div>
                     </div>
                 </x-card>
             @else
@@ -719,7 +696,9 @@
                     tag="Tim">
                     
                     <x-slot name="action">
-                        <x-badge variant="neutral" size="xs">{{ $assignedUsers->count() }} Anggota</x-badge>
+                        <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-100">
+                            {{ $assignedUsers->count() }} ANGGOTA
+                        </span>
                     </x-slot>
 
                     <div class="space-y-2 max-h-80 overflow-y-auto pr-1">
@@ -731,7 +710,9 @@
                                     </div>
                                     <p class="text-xs font-semibold text-slate-800 truncate">{{ $usr->nama_lengkap ?? $usr->username }}</p>
                                 </div>
-                                <x-badge variant="success" size="xs">Ditugaskan</x-badge>
+                                <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-100">
+                                    DITUGASKAN
+                                </span>
                             </div>
                         @empty
                             <div class="p-6 text-center text-slate-400 text-xs">
@@ -870,6 +851,9 @@
                         Simpan Sub Kegiatan
                     </x-button>
                 </div>
+            </form>
+        </div>
+    </div>
     {{-- =========================================================================
         5. MODAL UPDATE STATUS PELAKSANAAN KEGIATAN
     ========================================================================== --}}

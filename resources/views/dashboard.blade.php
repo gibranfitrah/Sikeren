@@ -265,7 +265,6 @@
                 <span class="text-xs text-gray-500 font-medium">BPS Provinsi Sulawesi Tenggara</span>
             </div>
             <h2 class="text-xl sm:text-2xl font-black text-gray-900 mt-1">Dashboard Utama & Kalender Kerja</h2>
-            <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Pantau kalender jadwal, rincian kegiatan personal, dan aktivitas tim kerja secara real-time.</p>
         </div>
 
         <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
@@ -458,7 +457,6 @@
                     <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
                     <div>
                         <h3 class="font-bold text-gray-900 text-sm sm:text-base">Tugas Saya</h3>
-                        <p class="text-xs text-gray-400">Daftar penugasan kegiatan yang melibatkan Anda (PJ, Pemimpin, Peserta)</p>
                     </div>
                 </div>
                 <a href="{{ url('/tugas-saya') }}" class="text-xs font-bold text-blue-600 hover:text-blue-800 transition">
@@ -515,7 +513,6 @@
                     <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
                     <div>
                         <h3 class="font-bold text-gray-900 text-sm sm:text-base">Sub Kegiatan & Deadline</h3>
-                        <p class="text-xs text-gray-400">Penugasan sub kegiatan spesifik Anda</p>
                     </div>
                 </div>
                 <a href="{{ route('sub-kegiatan.index') }}" class="text-xs font-bold text-amber-700 hover:text-amber-900 transition">

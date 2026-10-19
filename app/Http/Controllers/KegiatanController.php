@@ -239,10 +239,21 @@ class KegiatanController extends Controller
             ->orderBy('tasks.id', 'desc')
             ->get();
 
-        $kegiatans2 = Task::with(['subKegiatans', 'penugasans'])
+        $allKegiatans2 = Task::with(['subKegiatans', 'penugasans'])
             ->where('tasks.jenis', 'Kegiatan')
             ->orderBy('tasks.id', 'desc')
             ->get();
+
+        $pstTasks = $allKegiatans2->filter(function($k) {
+            return $k->is_pst;
+        })->values();
+
+        $nonPstTasks = $allKegiatans2->reject(function($k) {
+            return $k->is_pst;
+        })->values();
+
+        // Create unified array/collection for display in tabel kegiatan
+        $kegiatans2 = $nonPstTasks;
 
         $qrcode2 = base64_encode(QrCode::format('svg')->size(400)->generate("''74caca''"));
         $a       = 1;  
@@ -261,6 +272,7 @@ class KegiatanController extends Controller
 
         return view('daftar_kegiatan', compact(
             'kegiatans2',
+            'pstTasks',
             'kegiatans',
             'a',
             'qrcode2',

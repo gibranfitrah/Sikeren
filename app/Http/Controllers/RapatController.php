@@ -81,6 +81,13 @@ class RapatController extends Controller
         }
         $masterProyeksByTim = $masterProyeks->groupBy('nm_tim');
 
+        // 8. Seluruh Agenda Rapat untuk tampilan tabel daftar rapat
+        Task::updateExpiredKegiatanStatus();
+        $rapatList = Task::with(['subKegiatans', 'penugasans'])
+            ->where('tasks.jenis', 'Rapat')
+            ->orderBy('tasks.id', 'desc')
+            ->get();
+
         return view('rapat', compact(
             'id',
             'peserta',
@@ -93,6 +100,7 @@ class RapatController extends Controller
             'master_groups',
             'masterProyeks',
             'masterProyeksByTim',
+            'rapatList',
             'notifications',
             'jumlah_notif'
         ));
