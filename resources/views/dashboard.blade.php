@@ -564,7 +564,7 @@
 
     </div>
 
-    {{-- 3. KETERSEDIAAN RUANGAN & ZOOM (DIBAWAH DARI TUGAS SAYA & SUB KEGIATAN) --}}
+    {{-- 3. JADWAL RAPAT (RUANGAN & ZOOM) --}}
     <div class="w-full bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-xs space-y-5">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
                 <div class="flex items-center gap-3">
@@ -572,14 +572,14 @@
                         <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
                     </div>
                     <div>
-                        <h3 class="text-sm sm:text-base font-bold text-gray-900 leading-tight">Ketersediaan Ruangan & Zoom</h3>
-                        <p class="text-[11px] text-gray-400">Status real-time ruangan & Zoom hari ini</p>
+                        <h3 class="text-sm sm:text-base font-bold text-gray-900 leading-tight">Jadwal Rapat</h3>
+                        <p class="text-[11px] text-gray-400">Jadwal dan status real-time ruangan rapat & akun Zoom hari ini</p>
                     </div>
                 </div>
 
                 <a href="{{ route('booking-ruangan.index') }}" 
                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold rounded-lg shadow-2xs transition shrink-0">
-                    <span>Jadwal Ruangan &rarr;</span>
+                    <span>Jadwal Rapat &rarr;</span>
                 </a>
             </div>
 
@@ -1138,6 +1138,263 @@
 
         {{-- FullCalendar Element --}}
         <div id="dashboardCalendar" class="min-h-[600px] bg-white rounded-xl p-1"></div>
+    </div>
+
+    {{-- ========================================================
+        5. PETUGAS BERTUGAS HARI INI (SIMPATI & PELAYANAN BPS)
+    ========================================================= --}}
+    <div class="w-full bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-xs space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-base sm:text-lg font-bold text-gray-900 leading-tight">Petugas Bertugas Hari Ini</h3>
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            {{ \Carbon\Carbon::parse($today)->translatedFormat('l, d F Y') }}
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-0.5">Daftar petugas PST, PPID, Penjaga Kantor, serta Satpam & Cleaning Service yang bertugas</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                @if(Auth::check() && Auth::user()->canAccessSimpati())
+                    <a href="{{ route('simpati.jadwal.index') }}" 
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-xl border border-blue-200 transition">
+                        <span>Kelola Jadwal SIMPATI &rarr;</span>
+                    </a>
+                @endif
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {{-- 1. PELAYANAN STATISTIK TERPADU (PST) --}}
+            <div class="rounded-2xl border border-blue-200/80 bg-blue-50/20 p-4 sm:p-5 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-blue-100">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+                            PST
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-900">Pelayanan Statistik Terpadu (PST)</h4>
+                            <p class="text-[11px] text-gray-500">4 Petugas / Hari &bull; Sesi Pagi & Siang</p>
+                        </div>
+                    </div>
+                    <span class="text-[11px] font-bold text-blue-700 bg-blue-100 px-2.5 py-1 rounded-lg">
+                        {{ count($petugasHariIni['pst'] ?? []) }} Terjadwal
+                    </span>
+                </div>
+
+                {{-- Sesi 1 & Sesi 2 --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {{-- Sesi 1 --}}
+                    <div class="bg-white rounded-xl p-3 border border-gray-100 shadow-2xs space-y-2">
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-1.5">
+                            <span class="text-[11px] font-bold text-blue-700 uppercase">Sesi 1 (Pagi)</span>
+                            <span class="text-[10px] font-mono text-gray-400">08:00 - 12:00</span>
+                        </div>
+                        @php
+                            $pstSesi1 = collect($petugasHariIni['pst'] ?? [])->filter(fn($p) => ($p->sesi ?? 1) == 1);
+                        @endphp
+                        @forelse($pstSesi1 as $p)
+                            @php
+                                $u = $p->petugas_bertugas ?? $p->user ?? null;
+                                $status = $p->status_ketersediaan ?? 'Tersedia';
+                                $isBerhalangan = (strtolower($status) === 'berhalangan');
+                            @endphp
+                            <div class="p-2 rounded-lg {{ $isBerhalangan ? 'bg-rose-50/60 border border-rose-100' : 'bg-gray-50/70' }} space-y-1">
+                                <div class="flex items-start justify-between gap-1">
+                                    <div class="truncate">
+                                        <p class="text-xs font-bold text-gray-900 truncate {{ $isBerhalangan && !empty($p->pengganti) ? 'line-through text-gray-400' : '' }}">
+                                            {{ $u->nama_lengkap ?? ($p->nama ?? 'Petugas') }}
+                                        </p>
+                                        <p class="text-[10px] text-gray-400 truncate">{{ $u->role_label ?? 'Petugas PST' }}</p>
+                                    </div>
+                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold shrink-0 {{ $isBerhalangan ? 'bg-rose-100 text-rose-700' : (strtolower($status) === 'hadir' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700') }}">
+                                        {{ ucfirst($status) }}
+                                    </span>
+                                </div>
+                                @if(!empty($p->pengganti))
+                                    <div class="text-[10px] text-amber-800 font-semibold bg-amber-50 p-1 rounded border border-amber-200">
+                                        &bull; Digantikan: {{ $p->pengganti->nama_lengkap ?? 'Pengganti' }}
+                                    </div>
+                                @endif
+                            </div>
+                        @empty
+                            <p class="text-xs text-gray-400 italic py-2 text-center">Belum ada petugas Sesi 1</p>
+                        @endforelse
+                    </div>
+
+                    {{-- Sesi 2 --}}
+                    <div class="bg-white rounded-xl p-3 border border-gray-100 shadow-2xs space-y-2">
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-1.5">
+                            <span class="text-[11px] font-bold text-blue-700 uppercase">Sesi 2 (Siang)</span>
+                            <span class="text-[10px] font-mono text-gray-400">13:00 - 16:00</span>
+                        </div>
+                        @php
+                            $pstSesi2 = collect($petugasHariIni['pst'] ?? [])->filter(fn($p) => ($p->sesi ?? 1) == 2);
+                        @endphp
+                        @forelse($pstSesi2 as $p)
+                            @php
+                                $u = $p->petugas_bertugas ?? $p->user ?? null;
+                                $status = $p->status_ketersediaan ?? 'Tersedia';
+                                $isBerhalangan = (strtolower($status) === 'berhalangan');
+                            @endphp
+                            <div class="p-2 rounded-lg {{ $isBerhalangan ? 'bg-rose-50/60 border border-rose-100' : 'bg-gray-50/70' }} space-y-1">
+                                <div class="flex items-start justify-between gap-1">
+                                    <div class="truncate">
+                                        <p class="text-xs font-bold text-gray-900 truncate {{ $isBerhalangan && !empty($p->pengganti) ? 'line-through text-gray-400' : '' }}">
+                                            {{ $u->nama_lengkap ?? ($p->nama ?? 'Petugas') }}
+                                        </p>
+                                        <p class="text-[10px] text-gray-400 truncate">{{ $u->role_label ?? 'Petugas PST' }}</p>
+                                    </div>
+                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold shrink-0 {{ $isBerhalangan ? 'bg-rose-100 text-rose-700' : (strtolower($status) === 'hadir' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700') }}">
+                                        {{ ucfirst($status) }}
+                                    </span>
+                                </div>
+                                @if(!empty($p->pengganti))
+                                    <div class="text-[10px] text-amber-800 font-semibold bg-amber-50 p-1 rounded border border-amber-200">
+                                        &bull; Digantikan: {{ $p->pengganti->nama_lengkap ?? 'Pengganti' }}
+                                    </div>
+                                @endif
+                            </div>
+                        @empty
+                            <p class="text-xs text-gray-400 italic py-2 text-center">Belum ada petugas Sesi 2</p>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
+            {{-- 2. PETUGAS PPID --}}
+            <div class="rounded-2xl border border-indigo-200/80 bg-indigo-50/20 p-4 sm:p-5 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-indigo-100">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
+                            PPID
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-900">Petugas Layanan PPID</h4>
+                            <p class="text-[11px] text-gray-500">Pejabat Pengelola Informasi & Dokumentasi</p>
+                        </div>
+                    </div>
+                    <span class="text-[11px] font-bold text-indigo-700 bg-indigo-100 px-2.5 py-1 rounded-lg">
+                        {{ count($petugasHariIni['ppid'] ?? []) }} Bertugas
+                    </span>
+                </div>
+
+                <div class="space-y-2">
+                    @forelse($petugasHariIni['ppid'] ?? [] as $p)
+                        @php
+                            $u = $p->petugas_bertugas ?? $p->user ?? null;
+                            $status = $p->status_ketersediaan ?? 'Tersedia';
+                        @endphp
+                        <div class="p-3 bg-white rounded-xl border border-gray-100 shadow-2xs flex items-center justify-between gap-3">
+                            <div>
+                                <h5 class="text-xs font-bold text-gray-900">{{ $u->nama_lengkap ?? ($p->nama ?? 'Petugas PPID') }}</h5>
+                                <p class="text-[10px] text-gray-400">{{ $u->role_label ?? 'Layanan Informasi Publik' }}</p>
+                            </div>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ strtolower($status) === 'berhalangan' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700' }}">
+                                {{ ucfirst($status) }}
+                            </span>
+                        </div>
+                    @empty
+                        <div class="bg-white rounded-xl p-4 text-center border border-gray-100 text-xs text-gray-400 italic">
+                            Jadwal PPID mengikuti jam operasional kantor atau penugasan berkala.
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+
+            {{-- 3. PETUGAS PENJAGA KANTOR --}}
+            <div class="rounded-2xl border border-amber-200/80 bg-amber-50/20 p-4 sm:p-5 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-amber-100">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg bg-amber-600 text-white flex items-center justify-center font-bold text-xs">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-900">Petugas Penjaga Kantor</h4>
+                            <p class="text-[11px] text-gray-500">Piket keamanan & operasional gedung kantor BPS</p>
+                        </div>
+                    </div>
+                    <span class="text-[11px] font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-lg">
+                        {{ count($petugasHariIni['penjaga_kantor'] ?? []) }} Petugas
+                    </span>
+                </div>
+
+                <div class="space-y-2">
+                    @forelse($petugasHariIni['penjaga_kantor'] ?? [] as $p)
+                        @php
+                            $u = $p->petugas_bertugas ?? $p->user ?? null;
+                            $status = $p->status_ketersediaan ?? 'Tersedia';
+                        @endphp
+                        <div class="p-3 bg-white rounded-xl border border-gray-100 shadow-2xs flex items-center justify-between gap-3">
+                            <div>
+                                <h5 class="text-xs font-bold text-gray-900">{{ $u->nama_lengkap ?? ($p->nama ?? 'Petugas Penjaga') }}</h5>
+                                <p class="text-[10px] text-gray-400">Piket Penjagaan Kantor Hari Ini</p>
+                            </div>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ strtolower($status) === 'berhalangan' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700' }}">
+                                {{ ucfirst($status) }}
+                            </span>
+                        </div>
+                    @empty
+                        <div class="bg-white rounded-xl p-4 text-center border border-gray-100 text-xs text-gray-400 italic">
+                            Jadwal piket penjaga kantor diatur sesuai giliran dinas mingguan.
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+
+            {{-- 4. SATPAM & CLEANING SERVICE --}}
+            <div class="rounded-2xl border border-teal-200/80 bg-teal-50/20 p-4 sm:p-5 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-teal-100">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg bg-teal-600 text-white flex items-center justify-center font-bold text-xs">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-900">Satpam & Cleaning Service</h4>
+                            <p class="text-[11px] text-gray-500">Status Tugas: Bertugas Aktif / Standby Sesuai Shift</p>
+                        </div>
+                    </div>
+                    <span class="text-[11px] font-bold text-teal-800 bg-teal-100 px-2.5 py-1 rounded-lg">
+                        {{ count($petugasHariIni['satpam_cs'] ?? []) }} Personel
+                    </span>
+                </div>
+
+                <div class="space-y-2">
+                    @forelse($petugasHariIni['satpam_cs'] ?? [] as $p)
+                        @php
+                            $u = $p->petugas_bertugas ?? $p->user ?? null;
+                            $tipe = $p->tipe_tugas ?? 'bertugas';
+                        @endphp
+                        <div class="p-3 bg-white rounded-xl border border-gray-100 shadow-2xs flex items-center justify-between gap-3">
+                            <div>
+                                <h5 class="text-xs font-bold text-gray-900">{{ $u->nama_lengkap ?? ($p->nama ?? 'Personel Satpam/CS') }}</h5>
+                                <p class="text-[10px] text-gray-400">{{ $u->role_label ?? 'Keamanan & Kebersihan' }}</p>
+                            </div>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ $tipe === 'standby' ? 'bg-gray-100 text-gray-600' : 'bg-teal-100 text-teal-800' }}">
+                                {{ $tipe === 'standby' ? 'STANDBY' : 'BERTUGAS' }}
+                            </span>
+                        </div>
+                    @empty
+                        <div class="bg-white rounded-xl p-4 text-center border border-gray-100 text-xs text-gray-400 italic">
+                            Personel Satpam dan CS aktif bertugas sesuai shift kerja harian.
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
     </div>
 
     </div>

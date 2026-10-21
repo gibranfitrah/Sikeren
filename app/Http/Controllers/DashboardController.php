@@ -460,6 +460,89 @@ class DashboardController extends Controller
             ];
         }
 
+        // 5. Data Petugas yang Bertugas Hari Ini (Widget Bawah Dashboard)
+        $petugasHariIni = [
+            'pst'            => collect(),
+            'ppid'           => collect(),
+            'satpam_cs'      => collect(),
+            'penjaga_kantor' => collect(),
+        ];
+
+        // Sumber 1: jadwal_layanans (SIMPATI Layanan)
+        if (\Illuminate\Support\Facades\Schema::hasTable('jadwal_layanans')) {
+            $jlRows = \App\JadwalLayanan::with('user')->where('tanggal', $today)->get();
+            foreach ($jlRows as $jl) {
+                $code = $jl->grup;
+                if ($code === 'satpam' || $code === 'cs') {
+                    $code = 'satpam_cs';
+                }
+
+                if (isset($petugasHariIni[$code])) {
+                    $userJl = $jl->user;
+                    $petugasHariIni[$code]->push((object) [
+                        'id'                  => $jl->id,
+                        'user'                => $userJl,
+                        'petugas_bertugas'    => $userJl ?: (object)['nama_lengkap' => $jl->nama, 'role_label' => class_exists(\App\Support\SimpatiRoles::class) ? \App\Support\SimpatiRoles::grupLabel($jl->grup) : ucfirst($jl->grup)],
+                        'sesi'                => $jl->sesi,
+                        'sesi_label'          => $jl->sesi ? 'Sesi ' . $jl->sesi . ' (' . ($jl->sesi === 1 ? '08:00 - 12:00 WITA' : '13:00 - 16:00 WITA') . ')' : 'Jadwal Harian',
+                        'jam_mulai'           => $jl->jam_mulai,
+                        'jam_selesai'         => $jl->jam_selesai,
+                        'tipe_tugas'          => ($jl->status === 'Standby' ? 'standby' : 'bertugas'),
+                        'status_ketersediaan' => $jl->status,
+                        'status_color'        => 'emerald',
+                        'pengganti'           => null,
+                    ]);
+                }
+            }
+        }
+
+        // Sumber 2: jadwal_petugas_pelayanan
+        if (\Illuminate\Support\Facades\Schema::hasTable('jadwal_petugas_pelayanan')) {
+            $jadwalsToday = \App\JadwalPetugasPelayanan::with(['kelompok', 'user', 'pengganti'])
+                ->where('tanggal', $today)
+                ->get();
+
+            foreach ($jadwalsToday as $j) {
+                $code = $j->kelompok->kode ?? 'pst';
+                if (isset($petugasHariIni[$code])) {
+                    $petugasHariIni[$code]->push($j);
+                }
+            }
+        }
+
+        // Sumber 3: Fallback PST dari penugasans kegiatan jika belum ada di tabel layanan
+        if ($petugasHariIni['pst']->isEmpty()) {
+            $legacyPst = penugasan::whereHas('task', function ($q) use ($today) {
+                    $q->where('start_date', $today)
+                      ->where(function ($sq) {
+                          $sq->where('jenis_kegiatan', 'Pelayanan Statistik Terpadu (PST)')
+                             ->orWhere('text', 'like', '%Pelayanan Statistik Terpadu%')
+                             ->orWhere('text', 'like', '%PST%');
+                      });
+                })
+                ->with(['task', 'user'])
+                ->get();
+
+            foreach ($legacyPst as $lp) {
+                $sesi = 1;
+                if (preg_match('/Sesi\s*(\d+)/i', $lp->keterangan ?? '', $matches)) {
+                    $sesi = (int)$matches[1];
+                }
+                $userLp = $lp->user;
+                $petugasHariIni['pst']->push((object) [
+                    'id'                  => $lp->id,
+                    'user'                => $userLp,
+                    'petugas_bertugas'    => $userLp ?: (object)['nama_lengkap' => $lp->peserta, 'role_label' => 'Petugas PST'],
+                    'sesi'                => $sesi,
+                    'sesi_label'          => 'Sesi ' . $sesi . ' (' . ($sesi === 1 ? '08:00 - 12:00 WITA' : '13:00 - 16:00 WITA') . ')',
+                    'tipe_tugas'          => 'bertugas',
+                    'status_ketersediaan' => $lp->status_kehadiran ?: 'Tersedia',
+                    'status_color'        => 'emerald',
+                    'pengganti'           => null,
+                ]);
+            }
+        }
+
         return view('dashboard', compact(
             'userArr',
             'allTasks',
@@ -480,7 +563,8 @@ class DashboardController extends Controller
             'dashboardVenuesStatus',
             'dashboardZoomStatus',
             'ganttDays',
-            'todayGanttIndex'
+            'todayGanttIndex',
+            'petugasHariIni'
         ));
     }   
 }

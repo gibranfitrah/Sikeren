@@ -37,6 +37,8 @@ Route::get('/running-text', [PresensiApiController::class, 'index_running']);
 Route::prefix('starla')->group(function () {
     Route::get('/pst-jadwal', [StarlaApiController::class, 'getJadwalPst'])->name('api.starla.pst.index');
     Route::post('/pst-jadwal', [StarlaApiController::class, 'storeJadwalPst'])->name('api.starla.pst.store');
+    Route::get('/petugas-hari-ini', [StarlaApiController::class, 'getPetugasHariIni'])->name('api.starla.petugas.hari_ini');
+    Route::get('/ketersediaan', [StarlaApiController::class, 'getKetersediaanLive'])->name('api.starla.ketersediaan');
 });
 
 Route::resource('task', 'TaskController');

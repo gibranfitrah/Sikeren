@@ -407,9 +407,33 @@ class BookingRuanganController extends Controller
             }
         }
 
+        // Kirim Notifikasi kepada Pemohon / Pembuat Booking jika booking dibatalkan / ditolak
+        $targetUserId = $booking->created_by;
+        if (!$targetUserId && $booking->task_id && isset($task)) {
+            $targetUserId = $task->id_user ?? null;
+        }
+
+        if ($targetUserId) {
+            \Illuminate\Support\Facades\DB::table('notifications')->insert([
+                'id'              => (string) \Illuminate\Support\Str::uuid(),
+                'type'            => 'App\Notifications\BookingRuanganDitolakNotification',
+                'notifiable_type' => 'App\User',
+                'notifiable_id'   => $targetUserId,
+                'data'            => json_encode([
+                    'judul'   => 'Booking Ruangan Dibatalkan / Ditolak',
+                    'pesan'   => 'Pengajuan booking ruangan untuk acara "' . $booking->nama_acara . '" pada tanggal ' . \Carbon\Carbon::parse($booking->booking_date)->translatedFormat('d F Y') . ' telah dibatalkan atau ditolak.',
+                    'url'     => '/booking-ruangan',
+                    'status'  => 'Dibatalkan',
+                ]),
+                'read_at'         => null,
+                'created_at'      => now(),
+                'updated_at'      => now(),
+            ]);
+        }
+
         $booking->delete();
 
-        return back()->with('success', 'Booking ruangan berhasil dibatalkan.');
+        return back()->with('success', 'Booking ruangan berhasil dibatalkan dan notifikasi telah dikirimkan ke pemohon.');
     }
 
     /**

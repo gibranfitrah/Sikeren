@@ -362,4 +362,212 @@ class StarlaApiController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * GET /api/starla/petugas-hari-ini
+     * Mengambil daftar seluruh petugas pelayanan yang bertugas hari ini (atau ?tanggal=YYYY-MM-DD)
+     * untuk keperluan antrean STARLA (PST, PPID, Satpam & CS, Penjaga Kantor).
+     * Mendukung tabel jadwal_layanans (SIMPATI), jadwal_petugas_pelayanan, dan fallback ke penugasans.
+     */
+    public function getPetugasHariIni(Request $request)
+    {
+        $tanggal = $request->query('tanggal', Carbon::today()->format('Y-m-d'));
+        $carbonTgl = Carbon::parse($tanggal);
+
+        $result = [
+            'tanggal'        => $tanggal,
+            'hari'           => $carbonTgl->translatedFormat('l'),
+            'tanggal_format' => $carbonTgl->translatedFormat('d F Y'),
+            'pst'            => [],
+            'ppid'           => [],
+            'satpam_cs'      => [],
+            'penjaga_kantor' => [],
+        ];
+
+        // 1. Cek dari tabel jadwal_layanans (SIMPATI Layanan)
+        if (\Illuminate\Support\Facades\Schema::hasTable('jadwal_layanans')) {
+            $jlRows = \App\JadwalLayanan::with('user')->where('tanggal', $tanggal)->get();
+            foreach ($jlRows as $jl) {
+                $code = $jl->grup;
+                if ($code === 'satpam' || $code === 'cs') {
+                    $code = 'satpam_cs';
+                }
+
+                $sesiLabel = $jl->sesi ? 'Sesi ' . $jl->sesi . ' (' . ($jl->sesi === 1 ? '08:00 - 12:00 WITA' : '13:00 - 16:00 WITA') . ')' : null;
+                $item = [
+                    'id_jadwal'           => $jl->id,
+                    'user_id'             => $jl->user_id,
+                    'nama'                => $jl->nama,
+                    'niplama'             => $jl->niplama,
+                    'nipbaru'             => $jl->user->nipbaru ?? null,
+                    'role'                => class_exists(\App\Support\SimpatiRoles::class) ? \App\Support\SimpatiRoles::grupLabel($jl->grup) : ucfirst($jl->grup),
+                    'sesi'                => $jl->sesi,
+                    'sesi_label'          => $sesiLabel,
+                    'jam_mulai'           => $jl->jam_mulai ? substr($jl->jam_mulai, 0, 5) : null,
+                    'jam_selesai'         => $jl->jam_selesai ? substr($jl->jam_selesai, 0, 5) : null,
+                    'tipe_tugas'          => ($jl->status === 'Standby' ? 'standby' : 'bertugas'),
+                    'status_ketersediaan' => $jl->status,
+                    'is_pengganti'        => false,
+                    'petugas_digantikan'  => null,
+                    'alasan_pengganti'    => null,
+                ];
+
+                if (isset($result[$code])) {
+                    $result[$code][] = $item;
+                }
+            }
+        }
+
+        // 2. Cek dari tabel jadwal_petugas_pelayanan jika ada
+        if (\Illuminate\Support\Facades\Schema::hasTable('jadwal_petugas_pelayanan')) {
+            $jadwals = \App\JadwalPetugasPelayanan::with(['kelompok', 'user', 'pengganti'])
+                ->where('tanggal', $tanggal)
+                ->get();
+
+            foreach ($jadwals as $j) {
+                $kelompokKode = $j->kelompok->kode ?? 'pst';
+                $isSubstituted = ($j->status_ketersediaan === 'berhalangan' && !empty($j->petugas_pengganti_id));
+                $petugasAktif = $isSubstituted ? $j->pengganti : $j->user;
+
+                if (!$petugasAktif) continue;
+
+                $item = [
+                    'id_jadwal'           => $j->id,
+                    'user_id'             => $petugasAktif->id,
+                    'nama'                => $petugasAktif->nama_lengkap,
+                    'niplama'             => $petugasAktif->niplama,
+                    'nipbaru'             => $petugasAktif->nipbaru,
+                    'role'                => $j->kelompok->nama ?? 'Petugas Layanan',
+                    'sesi'                => $j->sesi,
+                    'sesi_label'          => $j->sesi_label,
+                    'jam_mulai'           => $j->jam_mulai ? substr($j->jam_mulai, 0, 5) : null,
+                    'jam_selesai'         => $j->jam_selesai ? substr($j->jam_selesai, 0, 5) : null,
+                    'tipe_tugas'          => $j->tipe_tugas,
+                    'status_ketersediaan' => $j->status_ketersediaan,
+                    'is_pengganti'        => $isSubstituted,
+                    'petugas_digantikan'  => $isSubstituted ? ($j->user->nama_lengkap ?? null) : null,
+                    'alasan_pengganti'    => $isSubstituted ? $j->catatan_pengganti : null,
+                ];
+
+                if (isset($result[$kelompokKode])) {
+                    $result[$kelompokKode][] = $item;
+                }
+            }
+        }
+
+        // 3. Fallback PST dari penugasans lama jika PST masih kosong
+        if (empty($result['pst'])) {
+            $penugasans = penugasan::whereHas('task', function ($q) use ($tanggal) {
+                    $q->where('start_date', $tanggal)
+                      ->where(function ($sq) {
+                          $sq->where('jenis_kegiatan', 'Pelayanan Statistik Terpadu (PST)')
+                             ->orWhere('text', 'like', '%Pelayanan Statistik Terpadu%')
+                             ->orWhere('text', 'like', '%PST%');
+                      });
+                })
+                ->with(['task', 'user'])
+                ->get();
+
+            foreach ($penugasans as $p) {
+                $sesi = 1;
+                if (preg_match('/Sesi\s*(\d+)/i', $p->keterangan ?? '', $matches)) {
+                    $sesi = (int)$matches[1];
+                }
+                $user = $p->user;
+                $result['pst'][] = [
+                    'id_jadwal'           => $p->id,
+                    'user_id'             => $user ? $user->id : null,
+                    'nama'                => $p->peserta ?: ($user ? $user->nama_lengkap : '-'),
+                    'niplama'             => $p->niplama,
+                    'nipbaru'             => $user ? $user->nipbaru : null,
+                    'role'                => 'Petugas PST Sesi ' . $sesi,
+                    'sesi'                => $sesi,
+                    'sesi_label'          => 'Sesi ' . $sesi . ' (' . ($sesi === 1 ? '08:00 - 12:00 WITA' : '13:00 - 16:00 WITA') . ')',
+                    'jam_mulai'           => $sesi === 1 ? '08:00' : '13:00',
+                    'jam_selesai'         => $sesi === 1 ? '12:00' : '16:00',
+                    'tipe_tugas'          => 'bertugas',
+                    'status_ketersediaan' => $p->status_kehadiran ?: 'Tersedia',
+                    'is_pengganti'        => false,
+                    'petugas_digantikan'  => null,
+                    'alasan_pengganti'    => null,
+                ];
+            }
+        }
+
+        $totalPetugas = count($result['pst']) + count($result['ppid']) + count($result['satpam_cs']) + count($result['penjaga_kantor']);
+
+        return response()->json([
+            'status'  => 'success',
+            'code'    => 200,
+            'message' => 'Berhasil mengambil data petugas pelayanan hari ini untuk STARLA.',
+            'meta'    => [
+                'tanggal'       => $tanggal,
+                'total_petugas' => $totalPetugas,
+                'timestamp'     => Carbon::now()->toIso8601String(),
+            ],
+            'data'    => $result,
+        ], 200, ['Content-Type' => 'application/json; charset=UTF-8'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * GET /api/starla/ketersediaan
+     * Endpoint status cepat ketersediaan petugas loket antrean PST / layanan
+     */
+    public function getKetersediaanLive(Request $request)
+    {
+        $tanggal = $request->query('tanggal', Carbon::today()->format('Y-m-d'));
+        $sesi    = $request->query('sesi'); // 1, 2, atau null
+
+        $daftarPetugas = collect();
+
+        if (\Illuminate\Support\Facades\Schema::hasTable('jadwal_layanans')) {
+            $jlQuery = \App\JadwalLayanan::where('tanggal', $tanggal);
+            if ($sesi) {
+                $jlQuery->where('sesi', (int)$sesi);
+            }
+            $jlRows = $jlQuery->get();
+            foreach ($jlRows as $jl) {
+                $daftarPetugas->push([
+                    'nama'                => $jl->nama,
+                    'sesi'                => $jl->sesi,
+                    'status_ketersediaan' => $jl->status,
+                    'is_pengganti'        => false,
+                ]);
+            }
+        }
+
+        if (\Illuminate\Support\Facades\Schema::hasTable('jadwal_petugas_pelayanan')) {
+            $query = \App\JadwalPetugasPelayanan::with(['user', 'pengganti', 'kelompok'])
+                ->where('tanggal', $tanggal);
+
+            if ($sesi) {
+                $query->where('sesi', (int)$sesi);
+            }
+
+            $jadwals = $query->get();
+            foreach ($jadwals as $j) {
+                $aktif = ($j->status_ketersediaan === 'berhalangan' && $j->pengganti) ? $j->pengganti : $j->user;
+                $daftarPetugas->push([
+                    'nama'                => $aktif->nama_lengkap ?? '-',
+                    'sesi'                => $j->sesi,
+                    'status_ketersediaan' => $j->status_ketersediaan,
+                    'is_pengganti'        => ($j->status_ketersediaan === 'berhalangan' && !empty($j->pengganti)),
+                ]);
+            }
+        }
+
+        $tersedia = $daftarPetugas->filter(fn($p) => in_array(strtolower($p['status_ketersediaan']), ['tersedia', 'hadir']))->count();
+        $berhalangan = $daftarPetugas->filter(fn($p) => strtolower($p['status_ketersediaan']) === 'berhalangan')->count();
+
+        return response()->json([
+            'status'             => 'success',
+            'tanggal'            => $tanggal,
+            'sesi_aktif'         => $sesi ? (int)$sesi : null,
+            'layanan_buka'       => $tersedia > 0,
+            'petugas_tersedia'   => $tersedia,
+            'petugas_berhalangan'=> $berhalangan,
+            'total_terjadwal'    => $daftarPetugas->count(),
+            'daftar_petugas'     => $daftarPetugas->values(),
+        ]);
+    }
 }
