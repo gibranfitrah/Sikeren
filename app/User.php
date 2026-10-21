@@ -150,6 +150,48 @@ class User extends Authenticatable
         return $this->nipbaru ?: ($this->niplama ?: '-');
     }
 
+    public function isPimpinan()
+    {
+        $role = strtolower($this->role_label ?? '');
+        $nip = $this->niplama;
+        $isGroupKepala = \DB::table('groups')
+            ->where('niplama', $nip)
+            ->where(function($q) {
+                $q->where('grup', 'like', '%Kepala%')
+                  ->orWhere('grup', 'like', '%Pimpinan%');
+            })
+            ->exists();
+
+        return $isGroupKepala ||
+               str_contains($role, 'kepala') ||
+               str_contains($role, 'pimpinan');
+    }
+
+    public function isAdminPst()
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        $nip = $this->niplama;
+        return \DB::table('groups')
+            ->where('niplama', $nip)
+            ->where('grup', 'like', '%Admin PST%')
+            ->exists() || stripos($this->role_label ?? '', 'Admin PST') !== false;
+    }
+
+    public static function getEligiblePstOfficers()
+    {
+        return self::whereNotNull('niplama')
+            ->where('niplama', '!=', '-')
+            ->where('niplama', '!=', '')
+            ->get()
+            ->filter(function ($u) {
+                return !$u->isAdmin() && !$u->isPimpinan();
+            })
+            ->values();
+    }
+
     public function isAdmin()
     {
         $username = strtolower(trim($this->username ?? ''));

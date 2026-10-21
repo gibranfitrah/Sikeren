@@ -542,6 +542,7 @@ class DashboardController extends Controller
                 ]);
             }
         }
+        $todayPstOfficers = \App\JadwalPst::where('tanggal', $today)->orderBy('sesi')->get();
 
         return view('dashboard', compact(
             'userArr',
@@ -564,7 +565,8 @@ class DashboardController extends Controller
             'dashboardZoomStatus',
             'ganttDays',
             'todayGanttIndex',
-            'petugasHariIni'
+            'petugasHariIni',
+            'todayPstOfficers'
         ));
     }   
 }

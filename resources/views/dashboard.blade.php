@@ -564,6 +564,82 @@
 
     </div>
 
+    {{-- PETUGAS PST BERTUGAS HARI INI --}}
+    @if(isset($todayPstOfficers) && $todayPstOfficers->isNotEmpty())
+    <div class="w-full bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-xs space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-bold text-gray-900 leading-tight">Petugas Jaga PST Hari Ini</h3>
+                    <p class="text-[11px] text-gray-400">Pelayanan Statistik Terpadu BPS • {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}</p>
+                </div>
+            </div>
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span> PST Aktif
+            </span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {{-- Sesi 1 --}}
+            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <div class="flex items-center justify-between mb-2.5">
+                    <span class="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span> Sesi 1 (Pagi 08:00 - 12:00 WITA)
+                    </span>
+                </div>
+                <div class="space-y-2">
+                    @forelse($todayPstOfficers->where('sesi', 1) as $pst)
+                    <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-gray-200/70 text-xs">
+                        <div class="font-medium text-gray-900">
+                            @if(!empty($pst->pengganti_nama))
+                                <span>{{ $pst->pengganti_nama }}</span>
+                                <span class="text-[10px] text-amber-600 font-semibold block">(Gantikan {{ $pst->nama_petugas }})</span>
+                            @else
+                                <span>{{ $pst->nama_petugas }}</span>
+                            @endif
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold {{ $pst->status_kehadiran === 'Hadir' ? 'bg-emerald-100 text-emerald-800' : ($pst->status_kehadiran === 'Berhalangan' ? 'bg-rose-100 text-rose-800' : 'bg-blue-100 text-blue-800') }}">
+                            {{ $pst->status_kehadiran ?: 'Terjadwal' }}
+                        </span>
+                    </div>
+                    @empty
+                    <p class="text-xs text-gray-400 italic">Belum ada petugas terjadwal.</p>
+                    @endforelse
+                </div>
+            </div>
+            {{-- Sesi 2 --}}
+            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <div class="flex items-center justify-between mb-2.5">
+                    <span class="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-blue-500"></span> Sesi 2 (Siang 13:00 - 16:00 WITA)
+                    </span>
+                </div>
+                <div class="space-y-2">
+                    @forelse($todayPstOfficers->where('sesi', 2) as $pst)
+                    <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-gray-200/70 text-xs">
+                        <div class="font-medium text-gray-900">
+                            @if(!empty($pst->pengganti_nama))
+                                <span>{{ $pst->pengganti_nama }}</span>
+                                <span class="text-[10px] text-amber-600 font-semibold block">(Gantikan {{ $pst->nama_petugas }})</span>
+                            @else
+                                <span>{{ $pst->nama_petugas }}</span>
+                            @endif
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold {{ $pst->status_kehadiran === 'Hadir' ? 'bg-emerald-100 text-emerald-800' : ($pst->status_kehadiran === 'Berhalangan' ? 'bg-rose-100 text-rose-800' : 'bg-blue-100 text-blue-800') }}">
+                            {{ $pst->status_kehadiran ?: 'Terjadwal' }}
+                        </span>
+                    </div>
+                    @empty
+                    <p class="text-xs text-gray-400 italic">Belum ada petugas terjadwal.</p>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     {{-- 3. JADWAL RAPAT (RUANGAN & ZOOM) --}}
     <div class="w-full bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-xs space-y-5">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
