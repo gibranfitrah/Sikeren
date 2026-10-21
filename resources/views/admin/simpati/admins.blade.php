@@ -25,35 +25,38 @@
             </span>
         </div>
 
-        <form method="POST" action="{{ route('simpati.admins.store') }}" class="flex flex-col lg:flex-row gap-3">
+        <form method="POST" action="{{ route('simpati.admins.store') }}" class="flex flex-col gap-3 lg:flex-row lg:items-start">
             @csrf
             <input type="hidden" name="user_id" :value="pickedId">
 
-            <div class="flex-1 min-w-0">
-                <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1.5">Pegawai</label>
-                <input type="text" x-model="search" @input.debounce.300ms="searchPegawai()"
+            <div class="w-full min-w-0 flex-1">
+                <label for="admin-pegawai-search" class="block text-[11px] font-bold text-gray-400 uppercase mb-1.5">Pegawai</label>
+                <input type="text" id="admin-pegawai-search" name="pegawai_search" autocomplete="off"
+                       x-model="search" @input.debounce.300ms="searchPegawai()"
                        placeholder="Ketik nama atau NIP pegawai…"
-                       class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                <div class="mt-2 max-h-52 overflow-y-auto rounded-xl border border-gray-100 divide-y divide-gray-50" x-show="results.length > 0">
-                    <template x-for="p in results" :key="p.id">
-                        <button type="button" @click="pick(p)"
-                                class="w-full text-left px-3.5 py-2.5 text-sm flex items-center justify-between gap-2 transition"
-                                :class="pickedId === p.id ? 'bg-blue-50' : 'hover:bg-gray-50'">
-                            <span class="min-w-0">
-                                <span class="block font-semibold text-gray-800 truncate" x-text="p.nama_lengkap"></span>
-                                <span class="block text-[11px] text-gray-400 truncate" x-text="p.niplama + ' · ' + p.nm_jabatan"></span>
-                            </span>
-                        </button>
-                    </template>
+                       class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400">
+                <div class="relative z-20">
+                    <div class="mt-2 max-h-52 overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-sm divide-y divide-gray-50" x-show="results.length > 0">
+                        <template x-for="p in results" :key="p.id">
+                            <button type="button" @click="pick(p)"
+                                    class="w-full text-left px-3.5 py-2.5 text-sm flex items-center justify-between gap-2 transition"
+                                    :class="pickedId === p.id ? 'bg-blue-50' : 'hover:bg-gray-50'">
+                                <span class="min-w-0">
+                                    <span class="block font-semibold text-gray-800 truncate" x-text="p.nama_lengkap"></span>
+                                    <span class="block text-[11px] text-gray-400 truncate" x-text="p.niplama + ' · ' + p.nm_jabatan"></span>
+                                </span>
+                            </button>
+                        </template>
+                    </div>
                 </div>
                 <p x-show="search.length > 0 && results.length === 0" class="text-xs text-gray-400 mt-2">Pegawai tidak ditemukan.</p>
                 <p class="text-xs text-gray-500 mt-2" x-show="pickedId">Dipilih: <span class="font-bold text-gray-800" x-text="pickedName"></span></p>
             </div>
 
-            <div class="w-full lg:w-64">
-                <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1.5">Role</label>
-                <select name="role" x-model="role" required
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm bg-white outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="w-full shrink-0 lg:w-64">
+                <label for="admin-role-select" class="block text-[11px] font-bold text-gray-400 uppercase mb-1.5">Role</label>
+                <select id="admin-role-select" name="role" x-model="role" required
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm bg-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400">
                     @foreach($roles as $r)
                         <option value="{{ $r }}">{{ $roleLabels[$r] }}</option>
                     @endforeach
@@ -61,7 +64,7 @@
                 <p class="text-[11px] text-gray-400 mt-2 leading-snug" x-text="roleDesc[role] || ''">{{ $roleDesc[$roles[0]] }}</p>
             </div>
 
-            <div class="flex items-end">
+            <div class="w-full shrink-0 lg:pt-[26px]">
                 <button type="submit" class="w-full lg:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm whitespace-nowrap">
                     Tetapkan Role
                 </button>

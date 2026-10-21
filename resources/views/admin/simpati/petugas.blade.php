@@ -383,22 +383,25 @@
 
                 <div x-show="addMode === 'pegawai'" class="space-y-3">
                     <div>
-                        <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1.5">Cari Pegawai</label>
-                        <input type="text" x-model="addSearch" @input.debounce.300ms="searchPegawai()" placeholder="Ketik nama atau NIP…"
-                               class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        <label for="petugas-add-search" class="block text-[11px] font-bold text-gray-400 uppercase mb-1.5">Cari Pegawai</label>
+                        <input type="text" id="petugas-add-search" autocomplete="off"
+                               x-model="addSearch" @input.debounce.300ms="searchPegawai()" placeholder="Ketik nama atau NIP…"
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400">
                         <input type="hidden" name="user_id" :value="addUserId">
-                        <div class="mt-2 max-h-52 overflow-y-auto rounded-xl border border-gray-100 divide-y divide-gray-50" x-show="addResults.length > 0">
-                            <template x-for="p in addResults" :key="p.id">
-                                <button type="button" @click="pickPegawai(p)"
-                                        class="w-full text-left px-3.5 py-2.5 text-sm flex items-center justify-between gap-2 transition"
-                                        :class="addUserId === p.id ? 'bg-blue-50' : 'hover:bg-gray-50'">
-                                    <span class="min-w-0">
-                                        <span class="block font-semibold text-gray-800 truncate" x-text="p.nama_lengkap"></span>
-                                        <span class="block text-[11px] text-gray-400 truncate" x-text="p.niplama + ' · ' + p.nm_jabatan"></span>
-                                    </span>
-                                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 shrink-0" x-show="p.grups.length" x-text="p.grups.length + ' grup'"></span>
-                                </button>
-                            </template>
+                        <div class="relative z-20">
+                            <div class="mt-2 max-h-52 overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-sm divide-y divide-gray-50" x-show="addResults.length > 0">
+                                <template x-for="p in addResults" :key="p.id">
+                                    <button type="button" @click="pickPegawai(p)"
+                                            class="w-full text-left px-3.5 py-2.5 text-sm flex items-center justify-between gap-2 transition"
+                                            :class="addUserId === p.id ? 'bg-blue-50' : 'hover:bg-gray-50'">
+                                        <span class="min-w-0">
+                                            <span class="block font-semibold text-gray-800 truncate" x-text="p.nama_lengkap"></span>
+                                            <span class="block text-[11px] text-gray-400 truncate" x-text="p.niplama + ' · ' + p.nm_jabatan"></span>
+                                        </span>
+                                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 shrink-0" x-show="p.grups.length" x-text="p.grups.length + ' grup'"></span>
+                                    </button>
+                                </template>
+                            </div>
                         </div>
                         <p x-show="addSearch.length > 0 && addResults.length === 0" class="text-xs text-gray-400 mt-2">Pegawai tidak ditemukan.</p>
                     </div>
