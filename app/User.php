@@ -241,7 +241,17 @@ class User extends Authenticatable
 
     public function canAccessSimpati()
     {
-        return $this->isAdmin() || $this->isKetuaTimOrPj();
+        if ($this->isAdmin() || $this->isKetuaTimOrPj()) {
+            return true;
+        }
+
+        // Role admin SIMPATI (Admin SDM / PST / PPID / Satpam & CS / Ruangan / Zoom / Super Admin)
+        return \App\Support\SimpatiRoles::hasAnyRole($this);
+    }
+
+    public function simpatiRoles()
+    {
+        return $this->hasMany(SimpatiAdminRole::class);
     }
 
     /**

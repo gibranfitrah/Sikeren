@@ -162,11 +162,39 @@
             
             <!-- Menu Group: Sistem & Integrasi -->
             @if(Auth::check() && Auth::user()->canAccessSimpati())
+            @php
+                $activeRouteName = request()->route() ? request()->route()->getName() : '';
+                $simpatiOpen = str_starts_with((string) $activeRouteName, 'simpati');
+                $canManageSimpatiAdmins = \App\Support\SimpatiRoles::canManageAdmins(Auth::user());
+                $simpatiSub = [
+                    ['route' => 'simpati.dashboard',     'label' => 'Dashboard'],
+                    ['route' => 'simpati.petugas.index', 'label' => 'Kelola Petugas'],
+                    ['route' => 'simpati.jadwal.index',  'label' => 'Kelola Jadwal'],
+                ];
+                if ($canManageSimpatiAdmins) {
+                    $simpatiSub[] = ['route' => 'simpati.admins.index', 'label' => 'Kelola Admin'];
+                }
+                $simpatiSub[] = ['route' => 'simpati.index', 'label' => 'Integrasi & Sinkronisasi'];
+            @endphp
             <p class="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3 mt-8">Sistem & Integrasi</p>
-            <a href="{{ route('simpati.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ $isSimpati ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50 font-semibold' : 'text-slate-400 hover:bg-slate-800 hover:text-white font-medium' }}">
-                <svg class="w-5 h-5 mr-3 {{ $isSimpati ? 'text-white' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                <span>SIMPATI</span>
-            </a>
+            <div x-data="{ simpatiOpen: {{ $simpatiOpen ? 'true' : 'false' }} }">
+                <button type="button" @click="simpatiOpen = !simpatiOpen"
+                        class="w-full flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ $simpatiOpen ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50 font-semibold' : 'text-slate-400 hover:bg-slate-800 hover:text-white font-medium' }}">
+                    <svg class="w-5 h-5 mr-3 {{ $simpatiOpen ? 'text-white' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <span class="flex-1 text-left">SIMPATI</span>
+                    <svg class="w-4 h-4 transition-transform duration-200" :class="simpatiOpen ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+                <div x-show="simpatiOpen" x-cloak class="mt-1 ml-4 space-y-1 border-l border-slate-800 pl-3">
+                    @foreach($simpatiSub as $sub)
+                        @php $isSubActive = $activeRouteName === $sub['route']; @endphp
+                        <a href="{{ route($sub['route']) }}"
+                           class="flex items-center px-3 py-2.5 rounded-lg text-[13px] transition-all duration-150 {{ $isSubActive ? 'bg-blue-500/20 text-blue-300 font-bold' : 'text-slate-400 hover:bg-slate-800 hover:text-white font-medium' }}">
+                            <span class="w-1.5 h-1.5 rounded-full mr-3 {{ $isSubActive ? 'bg-blue-400' : 'bg-slate-600' }}"></span>
+                            {{ $sub['label'] }}
+                        </a>
+                    @endforeach
+                </div>
+            </div>
             @endif
             <a href="{{ route('actionlogout') }}" class="flex items-center px-4 py-3 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 rounded-xl transition-colors font-medium">
                 <svg class="w-5 h-5 mr-3 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>

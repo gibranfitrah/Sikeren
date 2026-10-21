@@ -223,4 +223,24 @@ Route::post('/kegiatan/{id}/status', [\App\Http\Controllers\KegiatanController::
     Route::get('/admin/simpati/proyek/{proyekid}/anggota', [\App\Http\Controllers\SimpatiController::class, 'getProyekAnggota'])->name('simpati.proyek.anggota');
     Route::post('/admin/simpati/proyek/{id}/pj', [\App\Http\Controllers\SimpatiController::class, 'updateProyekPj'])->name('simpati.proyek.pj');
     Route::post('/admin/simpati/proyek/import-excel', [\App\Http\Controllers\SimpatiController::class, 'importExcel'])->name('simpati.proyek.import');
+
+    // Revisi UI/UX SIMPATI: Dashboard, Kelola Petugas, Kelola Jadwal, Kelola Admin
+    Route::get('/admin/simpati/dashboard', [\App\Http\Controllers\SimpatiDashboardController::class, 'index'])->name('simpati.dashboard');
+
+    Route::get('/admin/simpati/petugas', [\App\Http\Controllers\SimpatiPetugasController::class, 'index'])->name('simpati.petugas.index');
+    Route::get('/admin/simpati/petugas/cari', [\App\Http\Controllers\SimpatiPetugasController::class, 'cariPegawai'])->name('simpati.petugas.cari');
+    Route::post('/admin/simpati/petugas', [\App\Http\Controllers\SimpatiPetugasController::class, 'store'])->name('simpati.petugas.store');
+    Route::post('/admin/simpati/petugas/{id}/update', [\App\Http\Controllers\SimpatiPetugasController::class, 'update'])->name('simpati.petugas.update');
+    Route::delete('/admin/simpati/petugas/{id}', [\App\Http\Controllers\SimpatiPetugasController::class, 'destroy'])->name('simpati.petugas.destroy');
+
+    Route::get('/admin/simpati/jadwal', [\App\Http\Controllers\SimpatiJadwalController::class, 'index'])->name('simpati.jadwal.index');
+    Route::get('/admin/simpati/jadwal/template', [\App\Http\Controllers\SimpatiJadwalController::class, 'template'])->name('simpati.jadwal.template');
+    Route::post('/admin/simpati/jadwal', [\App\Http\Controllers\SimpatiJadwalController::class, 'store'])->name('simpati.jadwal.store');
+    Route::post('/admin/simpati/jadwal/upload', [\App\Http\Controllers\SimpatiJadwalController::class, 'upload'])->name('simpati.jadwal.upload');
+    Route::post('/admin/simpati/jadwal/{id}/status', [\App\Http\Controllers\SimpatiJadwalController::class, 'updateStatus'])->name('simpati.jadwal.status');
+    Route::delete('/admin/simpati/jadwal/{id}', [\App\Http\Controllers\SimpatiJadwalController::class, 'destroy'])->name('simpati.jadwal.destroy');
+
+    Route::get('/admin/simpati/admins', [\App\Http\Controllers\SimpatiAdminController::class, 'index'])->name('simpati.admins.index');
+    Route::post('/admin/simpati/admins', [\App\Http\Controllers\SimpatiAdminController::class, 'store'])->name('simpati.admins.store');
+    Route::delete('/admin/simpati/admins/{id}', [\App\Http\Controllers\SimpatiAdminController::class, 'destroy'])->name('simpati.admins.destroy');
 });
