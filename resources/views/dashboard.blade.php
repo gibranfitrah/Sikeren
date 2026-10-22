@@ -1,155 +1,278 @@
 @extends('layouts.app')
 
+
+
 @section('title', 'Dashboard - Sikeren')
+
 @section('header_title', 'Dashboard')
 
+
+
 @push('styles')
+
 <!-- FullCalendar CSS -->
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
+
 <style>
+
     /* FullCalendar Customizations */
+
     .fc .fc-toolbar-title {
+
         font-size: 1.15rem !important;
+
         font-weight: 700 !important;
+
         color: #0f172a !important;
+
     }
+
     .fc .fc-button-primary {
+
         background-color: #2563eb !important;
+
         border-color: #2563eb !important;
+
         border-radius: 0.75rem !important;
+
         font-size: 0.75rem !important;
+
         font-weight: 600 !important;
+
         padding: 0.45rem 0.9rem !important;
+
         text-transform: capitalize !important;
+
     }
+
     .fc .fc-button-primary:hover {
+
         background-color: #1d4ed8 !important;
+
         border-color: #1d4ed8 !important;
+
     }
+
     .fc .fc-button-primary:disabled {
+
         background-color: #94a3b8 !important;
+
         border-color: #94a3b8 !important;
+
     }
+
     .fc .fc-daygrid-day-number {
+
         font-size: 0.75rem !important;
+
         font-weight: 600 !important;
+
         color: #475569 !important;
+
         padding: 4px 6px !important;
+
     }
+
     .fc .fc-event {
+
         border-radius: 0.375rem !important;
+
         padding: 2px 6px !important;
+
         font-size: 0.72rem !important;
+
         font-weight: 500 !important;
+
         cursor: pointer !important;
+
     }
+
     .fc-theme-standard td, .fc-theme-standard th {
+
         border-color: #e2e8f0 !important;
+
     }
+
     .fc-col-header-cell-cushion {
+
         font-size: 0.75rem !important;
+
         font-weight: 700 !important;
+
         color: #475569 !important;
+
         text-transform: uppercase !important;
+
         padding: 8px 0 !important;
+
     }
+
+
 
     /* Dashboard Layout & Spacing Safeguards */
+
     .dashboard-container {
+
         display: flex;
+
         flex-direction: column;
-        gap: 28px;
-        padding-bottom: 48px;
+
+        gap: 14px;
+
+        padding-bottom: 36px;
+
         max-width: 1440px;
+
         margin: 0 auto;
+
     }
 
-    .dash-header-card {
-        background-color: #ffffff;
-        border-radius: 20px;
-        border: 1px solid #e2e8f0;
-        padding: 24px 28px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        flex-wrap: wrap;
-    }
+
 
     .stat-cards-grid {
+
         display: grid;
+
         grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 20px;
+
+        gap: 12px;
+
     }
+
+
 
     .stat-card-box {
+
         background-color: #ffffff;
-        border-radius: 20px;
+
+        border-radius: 16px;
+
         border: 1px solid #e2e8f0;
-        padding: 20px 22px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+        padding: 12px 16px;
+
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+
         display: flex;
+
         align-items: center;
+
         justify-content: space-between;
+
         transition: transform 0.2s ease, box-shadow 0.2s ease;
+
     }
+
+
 
     .stat-card-box:hover {
+
         transform: translateY(-2px);
+
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+
     }
+
+
 
     .calendar-section-card {
+
         background-color: #ffffff;
+
         border-radius: 20px;
+
         border: 1px solid #e2e8f0;
+
         padding: 28px;
+
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
     }
+
+
 
     .tables-two-cols {
+
         display: grid;
+
         grid-template-columns: repeat(2, minmax(0, 1fr));
+
         gap: 24px;
+
     }
+
+
 
     .table-section-box {
+
         background-color: #ffffff;
+
         border-radius: 20px;
+
         border: 1px solid #e2e8f0;
+
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
         overflow: hidden;
+
         display: flex;
+
         flex-direction: column;
+
     }
+
+
 
     @media (max-width: 1200px) {
+
         .stat-cards-grid {
+
             grid-template-columns: repeat(2, minmax(0, 1fr));
+
             gap: 16px;
+
         }
+
     }
+
+
 
     @media (max-width: 640px) {
+
         .stat-cards-grid {
+
             grid-template-columns: 1fr;
+
             gap: 16px;
+
         }
+
         .tables-two-cols {
+
             grid-template-columns: 1fr;
+
             gap: 20px;
+
         }
+
     }
+
 </style>
+
 @endpush
 
+
+
 @section('content')
+
 <div class="dashboard-container">
 
+
+
     {{-- ========================================================
-        0. WELCOME GREETING BANNER (ADMIN / KETUA TIM / PEGAWAI)
+    {{-- ========================================================
+        0. COMPACT WELCOME HERO & ACTION BAR (CLEAN & SLEEK)
     ========================================================= --}}
     @php
         $hour = (int) \Carbon\Carbon::now()->format('H');
@@ -172,127 +295,65 @@
         $userRole = $currentUser->role_label ?? 'Pegawai BPS';
     @endphp
 
-    <div class="relative overflow-hidden rounded-3xl p-6 sm:p-7 text-white shadow-xl border border-blue-400/30"
+    <div class="relative overflow-hidden rounded-2xl p-4 sm:p-5 text-white shadow-xs border border-blue-400/25"
          style="background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #2563eb 100%);">
-        {{-- Subtle Grid Watermark (Crisp, No Blurry Glows) --}}
-        <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(rgba(255,255,255,0.5) 1px, transparent 1px); background-size: 24px 24px;"></div>
+        {{-- Subtle Grid Pattern --}}
+        <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(rgba(255,255,255,0.5) 1px, transparent 1px); background-size: 20px 20px;"></div>
 
-        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
-            {{-- Left: Avatar & Greeting Text --}}
-            <div class="flex items-start sm:items-center gap-4">
-                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center shadow-sm shrink-0">
-                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></svg>
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {{-- Left: Avatar & Greeting --}}
+            <div class="flex items-center gap-3.5 min-w-0">
+                <div class="w-11 h-11 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center shadow-2xs shrink-0">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></svg>
                 </div>
-                <div class="space-y-1.5">
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <span class="text-[11px] font-semibold px-3 py-1 rounded-full bg-white/20 text-white border border-white/30 flex items-center gap-1.5 shadow-xs">
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap mb-1">
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/30 flex items-center gap-1 shadow-2xs">
                             @if($timeIcon === 'moon')
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0012 21.75a9.753 9.753 0 009.752-6.748z"/></svg>
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0012 21.75a9.753 9.753 0 009.752-6.748z"/></svg>
                             @else
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
                             @endif
                             <span>{{ $timeGreeting }}</span>
                         </span>
-                        @if($userRole === 'Administrator')
-                            <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-rose-500/40 text-rose-100 border border-rose-300/50 shadow-xs inline-flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
-                                Administrator Sistem
-                            </span>
-                        @elseif(str_contains(strtolower($userRole), 'ketua tim') || str_contains(strtolower($userRole), 'pj'))
-                            <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-amber-400/35 text-amber-100 border border-amber-300/50 shadow-xs inline-flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>
-                                {{ $userRole }}
-                            </span>
-                        @elseif(str_contains(strtolower($userRole), 'anggota tim'))
-                            <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-sky-400/35 text-sky-100 border border-sky-300/50 shadow-xs inline-flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
-                                {{ $userRole }}
-                            </span>
-                        @else
-                            <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-400/35 text-emerald-100 border border-emerald-300/50 shadow-xs inline-flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.111 48.111 0 00-7.5 0"/></svg>
-                                {{ $userRole }}
-                            </span>
-                        @endif
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/15 text-blue-100 border border-white/25">
+                            {{ $userRole }}
+                        </span>
                     </div>
 
-                    <h1 class="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight leading-tight">
-                        Hai, Selamat Datang <span class="text-yellow-300 font-black drop-shadow-sm">{{ $userName }}</span>!
+                    <h1 class="text-base sm:text-lg lg:text-xl font-bold text-white tracking-tight leading-tight truncate">
+                        Hai, Selamat Datang <span class="text-yellow-300 font-extrabold">{{ $userName }}</span>!
                     </h1>
-                    
-                    <p class="text-xs sm:text-sm text-blue-100 max-w-2xl font-medium leading-relaxed">
+                    <p class="text-[11px] text-blue-100/90 font-normal leading-snug hidden sm:block truncate mt-0.5">
                         Pantau kalender jadwal kerja, rincian penugasan personal, dan aktivitas tim BPS secara terpadu.
                     </p>
                 </div>
             </div>
 
-            {{-- Right: Date & Quick Action Chips --}}
-            <div class="flex sm:flex-row md:flex-col items-start md:items-end justify-between gap-3 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-white/20">
-                <div class="text-left md:text-right">
-                    <span class="text-[11px] font-semibold text-blue-200 flex items-center gap-1 md:justify-end">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
-                        Hari Ini:
-                    </span>
-                    <span class="text-sm sm:text-base font-extrabold text-white tracking-wide block">
-                        {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}
-                    </span>
-                </div>
-                
-                <div class="flex items-center gap-2 flex-wrap">
-                    <a href="{{ url('/tugas-saya') }}" 
-                       class="px-3.5 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition flex items-center gap-1.5 border border-white/40 shadow-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h3.75M9 15h3.75M9 18h3.75m3.75-13.5H18a2.25 2.25 0 012.25 2.25v13.5A2.25 2.25 0 0118 22.5H6A2.25 2.25 0 013.75 20.25V6.75A2.25 2.25 0 016 4.5h2.25m6 0h-6m6 0a2.25 2.25 0 012.25 2.25v.75m-4.5 0a2.25 2.25 0 01-2.25-2.25v-.75m4.5 0h.008v.008h-.008v-.008z"/></svg>
-                        <span>{{ $jumlah_kegiatan_saya }} Tugas Saya</span>
-                    </a>
-                    <a href="{{ route('time-schedule.index') }}" 
-                       class="px-3.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm border border-sky-300/40">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span>Time Schedule</span>
-                    </a>
-                </div>
+            {{-- Right: Integrated Action Buttons --}}
+            <div class="flex items-center gap-2 flex-wrap shrink-0">
+                <a href="{{ route('ketua-tim.create') }}" 
+                   class="px-3.5 py-2 rounded-xl bg-white hover:bg-blue-50 text-blue-900 text-xs font-bold transition flex items-center gap-1.5 shadow-xs">
+                    <svg class="w-3.5 h-3.5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                    <span>Buat Kegiatan</span>
+                </a>
+                <a href="{{ url('/rapat') }}" 
+                   class="px-3.5 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition flex items-center gap-1.5 border border-white/30 shadow-xs">
+                    <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    <span>Buat Rapat</span>
+                </a>
+                <a href="{{ route('time-schedule.index') }}" 
+                   class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition flex items-center gap-1.5 border border-white/20">
+                    <svg class="w-3.5 h-3.5 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <span class="hidden sm:inline">Time Schedule</span>
+                </a>
             </div>
         </div>
     </div>
 
-    {{-- 1. HEADER & ACTION BUTTONS --}}
-    <div class="dash-header-card">
-        <div>
-            <div class="flex items-center gap-2">
-                <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-100">
-                    Sistem Kegiatan Terencana
-                </span>
-                <span class="text-xs text-gray-400">•</span>
-                <span class="text-xs text-gray-500 font-medium">BPS Provinsi Sulawesi Tenggara</span>
-            </div>
-            <h2 class="text-xl sm:text-2xl font-black text-gray-900 mt-1">Dashboard Utama & Kalender Kerja</h2>
-        </div>
-
-        <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
-            <a href="{{ route('ketua-tim.create') }}" 
-               class="inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs hover:shadow transition-all duration-200">
-                <svg class="w-4 h-4 mr-1.5 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-                <span>Buat Kegiatan</span>
-            </a>
-            <a href="{{ url('/rapat') }}" 
-               class="inline-flex items-center justify-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs hover:shadow transition-all duration-200">
-                <svg class="w-4 h-4 mr-1.5 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-                <span>Buat Rapat</span>
-            </a>
-            <a href="{{ route('time-schedule.index') }}" 
-               class="inline-flex items-center justify-center px-4 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl shadow-xs hover:border-gray-300 transition-all">
-                <svg class="w-4 h-4 mr-1.5 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-                <span>Time Schedule</span>
-            </a>
-        </div>
-    </div>
-
-    {{-- 2. STATS CARDS: 2 DI ATAS & 2 DI BAWAH (DENGAN ANIMASI ANGKA BERJALAN) --}}
+    {{-- ========================================================
+        1. STATS METRICS (4 COMPACT SLEEK CARDS)
+    ========================================================= --}}
     <div class="stat-cards-grid">
         <!-- Card 1: Total Kegiatan -->
         <div class="stat-card-box" 
@@ -316,17 +377,17 @@
                     window.requestAnimationFrame(step);
                 }
              }">
-            <div class="space-y-1.5">
-                <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Total Kegiatan</span>
-                <h3 class="text-3xl sm:text-4xl font-black text-gray-900 tabular-nums">
+            <div class="space-y-0.5">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Kegiatan</span>
+                <h3 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tabular-nums leading-tight">
                     <span x-text="current">{{ $jumlah_kegiatan }}</span>
                 </h3>
-                <p class="text-xs text-blue-600 font-semibold bg-blue-50 px-2.5 py-0.5 rounded-lg inline-block">
+                <p class="text-[10px] text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded-md inline-block">
                     Semua Kegiatan & Rapat
                 </p>
             </div>
-            <div class="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
-                <svg class="w-7 h-7 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                <svg class="w-5 h-5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
                 </svg>
             </div>
@@ -354,17 +415,17 @@
                     window.requestAnimationFrame(step);
                 }
              }">
-            <div class="space-y-1.5">
-                <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Tugas Saya</span>
-                <h3 class="text-3xl sm:text-4xl font-black text-indigo-600 tabular-nums">
+            <div class="space-y-0.5">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tugas Saya</span>
+                <h3 class="text-2xl sm:text-3xl font-extrabold text-indigo-600 tabular-nums leading-tight">
                     <span x-text="current">{{ $jumlah_kegiatan_saya }}</span>
                 </h3>
-                <p class="text-xs text-indigo-600 font-semibold bg-indigo-50 px-2.5 py-0.5 rounded-lg inline-block">
+                <p class="text-[10px] text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded-md inline-block">
                     Personal & Penugasan Anda
                 </p>
             </div>
-            <div class="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
-                <svg class="w-7 h-7 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                <svg class="w-5 h-5 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                 </svg>
             </div>
@@ -392,17 +453,17 @@
                     window.requestAnimationFrame(step);
                 }
              }">
-            <div class="space-y-1.5">
-                <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Sedang Berjalan</span>
-                <h3 class="text-3xl sm:text-4xl font-black text-amber-600 tabular-nums">
+            <div class="space-y-0.5">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Sedang Berjalan</span>
+                <h3 class="text-2xl sm:text-3xl font-extrabold text-amber-600 tabular-nums leading-tight">
                     <span x-text="current">{{ $jumlah_kegiatan_belum }}</span>
                 </h3>
-                <p class="text-xs text-amber-700 font-semibold bg-amber-50 px-2.5 py-0.5 rounded-lg inline-block">
+                <p class="text-[10px] text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded-md inline-block">
                     Dalam Proses Pelaksanaan
                 </p>
             </div>
-            <div class="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
-                <svg class="w-7 h-7 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                <svg class="w-5 h-5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
@@ -430,1255 +491,2490 @@
                     window.requestAnimationFrame(step);
                 }
              }">
-            <div class="space-y-1.5">
-                <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Kegiatan Selesai</span>
-                <h3 class="text-3xl sm:text-4xl font-black text-emerald-600 tabular-nums">
+            <div class="space-y-0.5">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Kegiatan Selesai</span>
+                <h3 class="text-2xl sm:text-3xl font-extrabold text-emerald-600 tabular-nums leading-tight">
                     <span x-text="current">{{ $jumlah_kegiatan_selesai }}</span>
                 </h3>
-                <p class="text-xs text-emerald-700 font-semibold bg-emerald-50 px-2.5 py-0.5 rounded-lg inline-block">
+                <p class="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md inline-block">
                     Tuntas & Notulen Siap
                 </p>
             </div>
-            <div class="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-                <svg class="w-7 h-7 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
         </div>
     </div>
 
+
     {{-- 2. TUGAS SAYA & SUB KEGIATAN & DEADLINE (BERADA TEPAT DI BAWAH 4 STAT CARD) --}}
+
     <div class="tables-two-cols">
+
         
+
         <!-- Kotak 1: Tugas Saya -->
+
         <div class="table-section-box">
+
             <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+
                 <div class="flex items-center gap-2.5">
+
                     <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+
                     <div>
+
                         <h3 class="font-bold text-gray-900 text-sm sm:text-base">Tugas Saya</h3>
+
                     </div>
+
                 </div>
+
                 <a href="{{ url('/tugas-saya') }}" class="text-xs font-bold text-blue-600 hover:text-blue-800 transition">
+
                     Lihat Semua &rarr;
+
                 </a>
+
             </div>
+
             <div class="overflow-x-auto max-h-[380px] overflow-y-auto">
+
                 <table class="min-w-full divide-y divide-gray-100 text-xs text-left">
+
                     <thead class="bg-gray-50/80 sticky top-0">
+
                         <tr>
+
                             <th class="px-6 py-3.5 font-bold text-gray-500 uppercase tracking-wider">Nama Kegiatan</th>
+
                             <th class="px-6 py-3.5 font-bold text-gray-500 uppercase tracking-wider">Jadwal</th>
+
                             <th class="px-6 py-3.5 font-bold text-gray-500 uppercase tracking-wider">Status</th>
+
                         </tr>
+
                     </thead>
+
                     <tbody class="divide-y divide-gray-100 bg-white">
+
                         @forelse($kegiatansSaya->take(6) as $keg)
+
                         <tr class="hover:bg-blue-50/40 transition">
+
                             <td class="px-6 py-4">
+
                                 <a href="{{ url('daftarkegiatan/' . $keg->id) }}" class="font-bold text-gray-900 hover:text-blue-600 truncate block max-w-[200px]">
+
                                     {{ $keg->text }}
+
                                 </a>
+
                                 <span class="text-[11px] text-gray-400 font-medium mt-0.5 block">{{ $keg->jenis }} • PJ: {{ $keg->penanggung_jawab ?: ($keg->pemimpin ?: '-') }}</span>
+
                             </td>
+
                             <td class="px-6 py-4 whitespace-nowrap text-gray-600 font-medium">
+
                                 {{ $keg->start_date }}
+
                             </td>
+
                             <td class="px-6 py-4 whitespace-nowrap">
+
                                 @if($keg->status == 'Selesai' || $keg->notulen_selesai == 1)
+
                                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">SELESAI</span>
+
                                 @elseif($keg->status == 'Disetujui' || $keg->setuju_rapat == 1)
+
                                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">DISETUJUI</span>
+
                                 @else
+
                                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">BERJALAN</span>
+
                                 @endif
+
                             </td>
+
                         </tr>
+
                         @empty
+
                         <tr>
+
                             <td colspan="3" class="px-6 py-10 text-center text-gray-400 text-xs">
+
                                 Belum ada kegiatan yang melibatkan akun Anda.
+
                             </td>
+
                         </tr>
+
                         @endforelse
+
                     </tbody>
+
                 </table>
+
             </div>
+
         </div>
+
+
 
         <!-- Kotak 2: Sub Kegiatan & Deadline -->
+
         <div class="table-section-box">
+
             <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+
                 <div class="flex items-center gap-2.5">
+
                     <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+
                     <div>
+
                         <h3 class="font-bold text-gray-900 text-sm sm:text-base">Sub Kegiatan & Deadline</h3>
+
                     </div>
+
                 </div>
+
                 <a href="{{ route('sub-kegiatan.index') }}" class="text-xs font-bold text-amber-700 hover:text-amber-900 transition">
+
                     Kelola Sub &rarr;
+
                 </a>
+
             </div>
+
             <div class="overflow-x-auto max-h-[380px] overflow-y-auto">
+
                 <table class="min-w-full divide-y divide-gray-100 text-xs text-left">
+
                     <thead class="bg-gray-50/80 sticky top-0">
+
                         <tr>
+
                             <th class="px-6 py-3.5 font-bold text-gray-500 uppercase tracking-wider">Sub Kegiatan</th>
+
                             <th class="px-6 py-3.5 font-bold text-gray-500 uppercase tracking-wider">Deadline</th>
+
                             <th class="px-6 py-3.5 font-bold text-gray-500 uppercase tracking-wider">Progress</th>
+
                         </tr>
+
                     </thead>
+
                     <tbody class="divide-y divide-gray-100 bg-white">
+
                         @forelse($subKegiatansSaya->take(6) as $sub)
+
                         @php $dl = $sub->deadline_status; @endphp
+
                         <tr class="hover:bg-amber-50/40 transition">
+
                             <td class="px-6 py-4">
+
                                 <span class="font-bold text-gray-900 block truncate max-w-[190px]">{{ $sub->nama_sub }}</span>
+
                                 <span class="text-[11px] text-gray-400 truncate block mt-0.5">{{ $sub->task ? $sub->task->text : '-' }}</span>
+
                             </td>
+
                             <td class="px-6 py-4 whitespace-nowrap">
+
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold border {{ $dl['class'] }}">
+
                                     <span>{{ $dl['label'] }}</span>
+
                                 </span>
+
                             </td>
+
                             <td class="px-6 py-4 whitespace-nowrap">
+
                                 <div class="flex items-center gap-2">
+
                                     <div class="w-16 bg-gray-200 rounded-full h-1.5 overflow-hidden">
+
                                         <div class="h-1.5 rounded-full {{ $sub->progress >= 100 ? 'bg-emerald-500' : 'bg-blue-600' }}" style="width: {{ $sub->progress }}%"></div>
+
                                     </div>
+
                                     <span class="font-bold text-gray-700 text-[10px]">{{ $sub->progress }}%</span>
+
                                 </div>
+
                             </td>
+
                         </tr>
+
                         @empty
+
                         <tr>
+
                             <td colspan="3" class="px-6 py-10 text-center text-gray-400 text-xs">
+
                                 Tidak ada sub kegiatan yang sedang ditugaskan.
+
                             </td>
+
                         </tr>
+
                         @endforelse
+
                     </tbody>
+
                 </table>
+
             </div>
+
         </div>
 
+
+
     </div>
+
+
 
     {{-- PETUGAS PST BERTUGAS HARI INI --}}
+
     @if(isset($todayPstOfficers) && $todayPstOfficers->isNotEmpty())
+
     <div class="w-full bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-xs space-y-4">
+
         <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+
             <div class="flex items-center gap-3">
+
                 <div class="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+
                 </div>
+
                 <div>
+
                     <h3 class="text-sm sm:text-base font-bold text-gray-900 leading-tight">Petugas Jaga PST Hari Ini</h3>
+
                     <p class="text-[11px] text-gray-400">Pelayanan Statistik Terpadu BPS • {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}</p>
+
                 </div>
+
             </div>
+
             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+
                 <span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span> PST Aktif
+
             </span>
+
         </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
             {{-- Sesi 1 --}}
+
             <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+
                 <div class="flex items-center justify-between mb-2.5">
+
                     <span class="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
+
                         <span class="w-2 h-2 rounded-full bg-amber-500"></span> Sesi 1 (Pagi 08:00 - 12:00 WITA)
+
                     </span>
+
                 </div>
+
                 <div class="space-y-2">
+
                     @forelse($todayPstOfficers->where('sesi', 1) as $pst)
+
                     <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-gray-200/70 text-xs">
+
                         <div class="font-medium text-gray-900">
+
                             @if(!empty($pst->pengganti_nama))
+
                                 <span>{{ $pst->pengganti_nama }}</span>
+
                                 <span class="text-[10px] text-amber-600 font-semibold block">(Gantikan {{ $pst->nama_petugas }})</span>
+
                             @else
+
                                 <span>{{ $pst->nama_petugas }}</span>
+
                             @endif
+
                         </div>
+
                         <span class="px-2 py-0.5 rounded text-[10px] font-semibold {{ $pst->status_kehadiran === 'Hadir' ? 'bg-emerald-100 text-emerald-800' : ($pst->status_kehadiran === 'Berhalangan' ? 'bg-rose-100 text-rose-800' : 'bg-blue-100 text-blue-800') }}">
+
                             {{ $pst->status_kehadiran ?: 'Terjadwal' }}
+
                         </span>
+
                     </div>
+
                     @empty
+
                     <p class="text-xs text-gray-400 italic">Belum ada petugas terjadwal.</p>
+
                     @endforelse
+
                 </div>
+
             </div>
+
             {{-- Sesi 2 --}}
+
             <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+
                 <div class="flex items-center justify-between mb-2.5">
+
                     <span class="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
+
                         <span class="w-2 h-2 rounded-full bg-blue-500"></span> Sesi 2 (Siang 13:00 - 16:00 WITA)
+
                     </span>
+
                 </div>
+
                 <div class="space-y-2">
+
                     @forelse($todayPstOfficers->where('sesi', 2) as $pst)
+
                     <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-gray-200/70 text-xs">
+
                         <div class="font-medium text-gray-900">
+
                             @if(!empty($pst->pengganti_nama))
+
                                 <span>{{ $pst->pengganti_nama }}</span>
+
                                 <span class="text-[10px] text-amber-600 font-semibold block">(Gantikan {{ $pst->nama_petugas }})</span>
+
                             @else
+
                                 <span>{{ $pst->nama_petugas }}</span>
+
                             @endif
+
                         </div>
+
                         <span class="px-2 py-0.5 rounded text-[10px] font-semibold {{ $pst->status_kehadiran === 'Hadir' ? 'bg-emerald-100 text-emerald-800' : ($pst->status_kehadiran === 'Berhalangan' ? 'bg-rose-100 text-rose-800' : 'bg-blue-100 text-blue-800') }}">
+
                             {{ $pst->status_kehadiran ?: 'Terjadwal' }}
+
                         </span>
+
                     </div>
+
                     @empty
+
                     <p class="text-xs text-gray-400 italic">Belum ada petugas terjadwal.</p>
+
                     @endforelse
+
                 </div>
+
             </div>
+
         </div>
+
     </div>
+
     @endif
 
+
+
     {{-- 3. JADWAL RAPAT (RUANGAN & ZOOM) --}}
+
     <div class="w-full bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-xs space-y-5">
+
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+
                 <div class="flex items-center gap-3">
+
                     <div class="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+
                         <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
+
                     </div>
+
                     <div>
+
                         <h3 class="text-sm sm:text-base font-bold text-gray-900 leading-tight">Jadwal Rapat</h3>
+
                         <p class="text-[11px] text-gray-400">Jadwal dan status real-time ruangan rapat & akun Zoom hari ini</p>
+
                     </div>
+
                 </div>
+
+
 
                 <a href="{{ route('booking-ruangan.index') }}" 
+
                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold rounded-lg shadow-2xs transition shrink-0">
+
                     <span>Jadwal Rapat &rarr;</span>
+
                 </a>
+
             </div>
+
+
 
             {{-- 1. RUANGAN RAPAT FISIK (3 Ruangan) --}}
+
             <div class="space-y-2.5">
+
                 <div class="flex items-center justify-between pb-1.5 border-b border-gray-100">
+
                     <span class="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+
                         <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+
                         </svg>
+
                         Ruangan Rapat Fisik (3 Ruangan)
+
                     </span>
+
                     <span class="text-[10px] font-bold text-gray-400">Offline</span>
+
                 </div>
+
+
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+
                     @foreach($dashboardVenuesStatus as $vId => $vStat)
+
                         @php
+
                             $ven = $vStat['venue'];
+
                             $isUse = $vStat['is_in_use'];
+
                             $activeNow = $vStat['active_now'];
+
                             $nextBook = $vStat['next_booking'];
+
                             $tot = $vStat['total_today'];
+
                         @endphp
+
                         <div class="p-3 rounded-xl border flex flex-col justify-between transition {{ $isUse ? 'bg-rose-50/40 border-rose-200' : ($tot > 0 ? 'bg-amber-50/30 border-amber-200' : 'bg-gray-50/50 hover:bg-white border-gray-200') }}">
+
                             <div>
+
                                 <div class="flex items-start justify-between gap-1 mb-1">
+
                                     <div>
+
                                         <h4 class="text-xs font-bold text-gray-900 truncate" title="{{ $ven->name }}">{{ $ven->name }}</h4>
+
                                         <p class="text-[10px] text-gray-400">Kapasitas: {{ $ven->capacity }} Orang</p>
+
                                     </div>
+
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold shrink-0 {{ $isUse ? 'bg-rose-100 text-rose-700' : ($tot > 0 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700') }}">
+
                                         {{ $isUse ? 'Terpakai' : ($tot > 0 ? 'Ada Jadwal' : 'Kosong') }}
+
                                     </span>
+
                                 </div>
 
+
+
                                 @if($isUse && $activeNow)
+
                                     <div class="mt-1.5 p-1.5 bg-white rounded-lg border border-rose-200 text-[10px] space-y-0.5">
+
                                         <p class="font-bold text-rose-900 truncate">{{ $activeNow->nama_acara }}</p>
+
                                         <p class="text-rose-700">{{ substr($activeNow->start_time, 0, 5) }} - {{ substr($activeNow->end_time, 0, 5) }}</p>
+
                                     </div>
+
                                 @elseif($nextBook)
+
                                     <div class="mt-1 text-[10px] text-amber-800 font-medium">
+
                                         Jadwal berikutnya: {{ substr($nextBook->start_time, 0, 5) }}
+
                                     </div>
+
                                 @else
+
                                     <p class="mt-1 text-[10px] text-emerald-600 font-semibold">Tersedia hari ini</p>
+
                                 @endif
+
                             </div>
 
+
+
                             <div class="mt-2 pt-1.5 border-t border-gray-100 flex items-center justify-between text-[10px]">
+
                                 <span class="text-gray-400">{{ $tot }} Acara</span>
+
                                 <a href="{{ route('booking-ruangan.index', ['date' => $today]) }}" class="font-bold text-blue-600 hover:underline">
+
                                     + Booking
+
                                 </a>
+
                             </div>
+
                         </div>
+
                     @endforeach
+
                 </div>
+
             </div>
+
+
 
             {{-- 2. AKUN ZOOM MEETING DARING (2 Akun) --}}
+
             <div class="space-y-2.5 pt-1">
+
                 <div class="flex items-center justify-between pb-1.5 border-b border-gray-100">
+
                     <span class="text-xs font-bold text-indigo-700 uppercase tracking-wider flex items-center gap-1.5">
+
                         <svg class="w-3.5 h-3.5 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+
                         </svg>
+
                         Zoom Meeting Daring (2 Akun)
+
                     </span>
+
                     <span class="text-[10px] font-bold text-indigo-400">Online</span>
+
                 </div>
+
+
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+
                     @foreach($dashboardZoomStatus as $zKey => $zStat)
+
                         @php
+
                             $zInfo = $zStat['info'];
+
                             $isUse = $zStat['is_in_use'];
+
                             $activeNow = $zStat['active_now'];
+
                         @endphp
+
                         <div class="p-3 rounded-xl border flex flex-col justify-between transition {{ $isUse ? 'bg-rose-50/40 border-rose-200' : 'bg-indigo-50/20 hover:bg-white border-indigo-100' }}">
+
                             <div>
+
                                 <div class="flex items-start justify-between gap-1 mb-1">
+
                                     <h4 class="text-xs font-bold text-indigo-900 truncate" title="{{ $zInfo['name'] }}">{{ $zInfo['name'] }}</h4>
+
                                     <span class="px-1.5 py-0.5 rounded text-[9px] font-bold shrink-0 {{ $isUse ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700' }}">
+
                                         {{ $isUse ? 'Digunakan' : 'Tersedia' }}
+
                                     </span>
+
                                 </div>
+
                                 <p class="text-[10px] text-gray-400 mb-1 truncate">ID: {{ $zInfo['meeting_id'] }}</p>
 
+
+
                                 @if($isUse && $activeNow)
+
                                     <div class="p-1.5 bg-white rounded-lg border border-rose-200 text-[10px]">
+
                                         <p class="font-bold text-rose-900 truncate">{{ $activeNow->nama_acara }}</p>
+
                                         <p class="text-rose-700">{{ substr($activeNow->start_time, 0, 5) }} - {{ substr($activeNow->end_time, 0, 5) }}</p>
+
                                     </div>
+
                                 @else
+
                                     <p class="text-[10px] text-indigo-700 font-semibold">Siap rapat online</p>
+
                                 @endif
+
                             </div>
+
+
 
                             <div class="mt-2 pt-1.5 border-t border-gray-100 flex items-center justify-between text-[10px]">
+
                                 <span class="text-gray-400">Zoom Daring</span>
+
                                 <a href="{{ route('booking-ruangan.index', ['date' => $today]) }}" class="font-bold text-indigo-600 hover:underline">
+
                                     + Pakai Zoom
+
                                 </a>
+
                             </div>
+
                         </div>
+
                     @endforeach
+
                 </div>
+
             </div>
+
+
 
     </div>
 
+
+
     {{-- ========================================================
+
         4. GANTT CHART: KETERSEDIAAN WAKTU LOWONG & JADWAL BPS (TERPISAH)
+
     ========================================================= --}}
+
     <div class="w-full bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-xs space-y-4" 
+
          x-data="{ 
+
              ganttDays: {{ json_encode($ganttDays) }},
+
              activeDayIndex: {{ $todayGanttIndex }},
+
              showDetailAgenda: false,
+
              showProyekTahunan: false,
 
+
+
              get currentDay() {
+
                  return (this.ganttDays && this.ganttDays.length > 0) 
+
                      ? (this.ganttDays[this.activeDayIndex] || this.ganttDays[0]) 
+
                      : null;
+
              },
+
              nextDay() {
+
                  if (this.activeDayIndex < this.ganttDays.length - 1) {
+
                      this.activeDayIndex++;
+
                      this.scrollActivePill();
+
                  }
+
              },
+
              prevDay() {
+
                  if (this.activeDayIndex > 0) {
+
                      this.activeDayIndex--;
+
                      this.scrollActivePill();
+
                  }
+
              },
+
              goToToday() {
+
                  this.activeDayIndex = {{ $todayGanttIndex }};
+
                  this.scrollActivePill();
+
              },
+
              selectDay(idx) {
+
                  this.activeDayIndex = idx;
+
                  this.scrollActivePill();
+
              },
+
              scrollActivePill() {
+
                  $nextTick(() => {
+
                      var el = document.getElementById('ganttDayPill_' + this.activeDayIndex);
+
                      if (el) el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+
                  });
+
              }
+
          }">
+
+
 
         {{-- 1. HEADER CARD TERPADU: Judul, Navigasi Tanggal, & Stat Lowong --}}
+
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+
             <!-- Judul & Info Jam Kerja -->
+
             <div class="flex items-center gap-3">
+
                 <div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 font-bold shadow-2xs">
+
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+
                     </svg>
+
                 </div>
+
                 <div>
+
                     <div class="flex items-center gap-2">
+
                         <h3 class="text-sm sm:text-base font-bold text-gray-900 leading-tight">Gantt Chart: Ketersediaan Waktu Lowong BPS</h3>
+
                         <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider">Jam Lowong</span>
+
                     </div>
+
                     <p class="text-[11px] text-gray-500">Bagan alokasi waktu kerja & deteksi jam bebas (Senin - Kamis: 07:30 - 16:00 | Jumat: 07:30 - 16:30 WITA)</p>
+
                 </div>
+
             </div>
+
+
 
             <!-- Kontrol Navigasi Tanggal & Status Cepat -->
+
             <div class="flex items-center gap-2 flex-wrap" x-show="currentDay">
+
                 <!-- Navigasi Hari (< Tanggal >) -->
+
                 <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1 text-xs shadow-2xs">
+
                     <button type="button" 
+
                             @click="prevDay()" 
+
                             :disabled="activeDayIndex <= 0"
+
                             class="p-1 rounded-lg hover:bg-white text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+
                             title="Hari Sebelumnya">
+
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+
                     </button>
+
                     <div class="px-2.5 font-bold text-slate-800 flex items-center gap-1.5 whitespace-nowrap">
+
                         <span x-text="currentDay.full_date"></span>
+
                         <template x-if="currentDay.is_today">
+
                             <span class="px-1.5 py-0.2 rounded bg-blue-600 text-white text-[9px] font-extrabold uppercase">Hari Ini</span>
+
                         </template>
+
                     </div>
+
                     <button type="button" 
+
                             @click="nextDay()" 
+
                             :disabled="activeDayIndex >= ganttDays.length - 1"
+
                             class="p-1 rounded-lg hover:bg-white text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+
                             title="Hari Berikutnya">
+
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+
                     </button>
+
                 </div>
+
+
 
                 <!-- Badge Lowong & Terisi -->
+
                 <div class="flex items-center gap-1.5 text-xs">
+
                     <span class="px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-extrabold flex items-center gap-1">
+
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+
                         <span x-text="currentDay.total_free_hours + ' Jam Lowong'"></span>
+
                     </span>
+
                     <span class="px-2.5 py-1 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 font-extrabold" x-text="currentDay.total_agendas + ' Agenda'"></span>
+
                 </div>
+
             </div>
+
         </div>
+
+
 
         {{-- 2. STRIP TANGGAL HORIZONTAL (Pills Cepat Pilih Hari) --}}
+
         <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+
             <template x-for="(day, idx) in ganttDays" :key="day.date">
+
                 <button type="button" 
+
                         :id="'ganttDayPill_' + idx"
+
                         @click="selectDay(idx)"
+
                         :class="activeDayIndex === idx 
+
                             ? 'bg-blue-600 text-white shadow-xs font-black ring-2 ring-blue-400/40' 
+
                             : (day.is_today ? 'bg-blue-50 text-blue-800 border-blue-300 font-bold' : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200')"
+
                         class="px-2.5 py-1.5 rounded-xl border text-xs shrink-0 transition flex flex-col items-center min-w-[62px] cursor-pointer">
+
                     <span class="text-[9px] uppercase font-bold opacity-80" x-text="day.day_name.substr(0, 3)"></span>
+
                     <span class="text-sm font-extrabold leading-tight" x-text="day.day_num"></span>
+
                     <div class="flex items-center gap-0.5 mt-0.5">
+
                         <template x-if="day.total_agendas > 0">
+
                             <span class="w-1.5 h-1.5 rounded-full" :class="activeDayIndex === idx ? 'bg-white' : 'bg-blue-500'"></span>
+
                         </template>
+
                         <template x-if="day.total_agendas === 0 && !day.is_weekend">
+
                             <span class="w-1.5 h-1.5 rounded-full" :class="activeDayIndex === idx ? 'bg-emerald-200' : 'bg-emerald-500'"></span>
+
                         </template>
+
                     </div>
+
                 </button>
+
             </template>
+
         </div>
+
+
 
         {{-- 3. BAGAN BALOK GANTT TERPADU (TIDAK BERHAMBURAN) --}}
+
         <template x-if="currentDay">
+
             <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
+
                 {{-- Toolbar Kecil Bagan: Legenda Warna --}}
+
                 <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-[11px]">
+
                     <span class="font-bold text-slate-700 flex items-center gap-1.5">
+
                         <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+
                         <span>Timeline Alokasi Waktu Kerja (<span x-text="currentDay.work_hours_label"></span>)</span>
+
                     </span>
+
                     <div class="flex items-center gap-3">
+
                         <span class="flex items-center gap-1 text-emerald-800 font-bold">
+
                             <span class="w-2.5 h-2.5 rounded bg-emerald-500 inline-block shadow-2xs"></span>
+
                             <span>Waktu Lowong</span>
+
                         </span>
+
                         <span class="flex items-center gap-1 text-indigo-900 font-bold">
+
                             <span class="w-2.5 h-2.5 rounded bg-indigo-600 inline-block"></span>
+
                             <span>Rapat</span>
+
                         </span>
+
                         <span class="flex items-center gap-1 text-sky-900 font-bold">
+
                             <span class="w-2.5 h-2.5 rounded bg-sky-500 inline-block"></span>
+
                             <span>Kegiatan</span>
+
                         </span>
+
                     </div>
+
                 </div>
+
+
 
                 {{-- Canvas Timeline --}}
+
                 <div class="overflow-x-auto p-4 space-y-3">
+
                     <div class="min-w-[780px] space-y-3">
+
                         
+
                         {{-- Skala Waktu (Ruler Dinamis: 07:30 - 16:00 / 16:30 WITA) - Jelas & Kontras Tinggi --}}
+
                         <div class="flex items-center bg-slate-100/90 rounded-xl border border-slate-200/80 py-1.5 px-2 shadow-2xs">
+
                             <div class="w-32 sm:w-36 shrink-0 text-slate-700 font-bold text-xs flex items-center justify-end gap-1.5 pr-4">
+
                                 <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+
                                 <span>Skala Jam:</span>
+
                             </div>
+
                             <div class="flex-1 relative h-6 select-none font-sans">
+
                                 <template x-for="(tick, tIdx) in currentDay.ruler_ticks" :key="tIdx">
+
                                     <span class="absolute top-0 bg-white px-2 py-0.5 rounded-md border border-slate-300 text-slate-900 font-black text-xs shadow-2xs whitespace-nowrap"
+
                                           :class="tIdx === 0 ? 'left-0' : (tIdx === currentDay.ruler_ticks.length - 1 ? 'right-0' : '-translate-x-1/2')"
+
                                           :style="tIdx > 0 && tIdx < currentDay.ruler_ticks.length - 1 ? 'left: ' + tick.pct + '%;' : ''"
+
                                           x-text="tick.time"></span>
+
                                 </template>
+
                             </div>
+
                         </div>
+
+
 
                         {{-- JALUR 1: BALOK WAKTU LOWONG --}}
+
                         <div class="flex items-center">
+
                             <div class="w-32 sm:w-36 shrink-0 text-right pr-4">
+
                                 <span class="inline-flex items-center gap-1 text-xs font-black text-emerald-900 justify-end">
+
                                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+
                                     <span>Waktu Lowong</span>
+
                                 </span>
+
                             </div>
+
                             <div class="flex-1 relative h-10 bg-slate-50 rounded-xl border border-slate-200 p-0.5 flex items-center overflow-hidden">
+
                                 <!-- Garis Grid Background Vertikal Dinamis Sinkron Ticks -->
+
                                 <div class="absolute inset-0 pointer-events-none overflow-hidden">
+
                                     <template x-for="(tick, tIdx) in currentDay.ruler_ticks" :key="tIdx">
+
                                         <template x-if="tIdx > 0 && tIdx < currentDay.ruler_ticks.length - 1">
+
                                             <div class="absolute top-0 bottom-0 border-r border-slate-200/80"
+
                                                  :style="'left: ' + tick.pct + '%;'"></div>
+
                                         </template>
+
                                     </template>
+
                                 </div>
+
+
 
                                 <!-- Balok Full Lowong jika 0 agenda -->
+
                                 <template x-if="currentDay.total_agendas === 0">
+
                                     <a :href="currentDay.url_buat_rapat"
+
                                        class="absolute inset-x-1 h-8 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs shadow-xs flex items-center justify-between gap-4 px-3 transition cursor-pointer border border-emerald-400 z-10 overflow-hidden">
+
                                         <div class="truncate min-w-0 flex items-center gap-2">
+
                                             <span class="w-2 h-2 rounded-full bg-white animate-ping shrink-0"></span>
+
                                             <span class="truncate">FULL LOWONG (<span x-text="currentDay.work_hours_label"></span>) • Bebas Agenda</span>
+
                                         </div>
+
                                         <div class="shrink-0 pl-3">
+
                                             <span class="bg-white text-emerald-800 text-[11px] px-3 py-1 rounded-md font-black shadow-2xs whitespace-nowrap inline-flex items-center gap-1 hover:bg-emerald-50 transition">
+
                                                 + Jadwalkan Rapat
+
                                             </span>
+
                                         </div>
+
                                     </a>
+
                                 </template>
+
+
 
                                 <!-- Balok-Balok Hijau Slot Lowong -->
+
                                 <template x-if="currentDay.total_agendas > 0">
+
                                     <template x-for="(fs, fIdx) in currentDay.free_slots" :key="fIdx">
+
                                         <a :href="currentDay.url_buat_rapat"
+
                                            :style="'left: ' + fs.left_pct + '%; width: ' + fs.width_pct + '%;'"
+
                                            :title="'Slot Lowong: ' + fs.start + ' - ' + fs.end + ' WITA (Klik untuk jadwalkan rapat)'"
+
                                            class="absolute h-8 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-[10px] shadow-xs flex items-center justify-between gap-1.5 px-2 transition z-10 cursor-pointer overflow-hidden border border-emerald-400 group">
+
                                             <span class="truncate min-w-0 flex items-center gap-1 font-mono">
+
                                                 <span class="w-1.5 h-1.5 rounded-full bg-white shrink-0"></span>
+
                                                 <span class="truncate" x-text="fs.start + ' - ' + fs.end"></span>
+
                                             </span>
+
                                             <span class="hidden sm:group-hover:inline text-[9px] bg-white text-emerald-800 px-1.5 py-0.5 rounded font-black shrink-0 whitespace-nowrap ml-1 shadow-2xs">
+
                                                 + Buat
+
                                             </span>
+
                                         </a>
+
                                     </template>
+
                                 </template>
+
                             </div>
+
                         </div>
+
+
 
                         {{-- JALUR 2+: BALOK AGENDA TERJADWAL --}}
+
                         <div class="space-y-1.5 pt-1 border-t border-slate-100">
+
                             <template x-if="currentDay.active_agendas.length === 0">
+
                                 <div class="py-2.5 text-center text-xs text-slate-400 italic bg-slate-50/50 rounded-xl">
+
                                     Tidak ada agenda terjadwal pada hari ini. Seluruh waktu kerja dapat digunakan untuk menjadwalkan rapat baru.
+
                                 </div>
+
                             </template>
+
+
 
                             <template x-for="item in currentDay.active_agendas" :key="item.id">
+
                                 <div class="flex items-center">
+
                                     <!-- Label Kiri Ringkas -->
+
                                     <div class="w-32 sm:w-36 shrink-0 text-right pr-4">
+
                                         <div class="flex items-center gap-1 justify-end">
+
                                             <span :class="item.is_rapat ? 'bg-indigo-100 text-indigo-700' : 'bg-sky-100 text-sky-700'" 
+
                                                   class="px-1.5 py-0.2 rounded text-[9px] font-black uppercase shrink-0" 
+
                                                   x-text="item.jenis"></span>
+
                                             <span class="text-xs font-bold text-slate-800 truncate" x-text="item.text" :title="item.text"></span>
+
                                         </div>
+
                                     </div>
+
+
 
                                     <!-- Balok di Kanvas Timeline -->
+
                                     <div class="flex-1 relative h-9 bg-slate-50/50 rounded-xl border border-slate-200/60 p-0.5 flex items-center overflow-hidden">
+
                                         <!-- Garis Grid Background Vertikal Dinamis Sinkron Ticks -->
+
                                         <div class="absolute inset-0 pointer-events-none overflow-hidden">
+
                                             <template x-for="(tick, tIdx) in currentDay.ruler_ticks" :key="tIdx">
+
                                                 <template x-if="tIdx > 0 && tIdx < currentDay.ruler_ticks.length - 1">
+
                                                     <div class="absolute top-0 bottom-0 border-r border-slate-200/60"
+
                                                          :style="'left: ' + tick.pct + '%;'"></div>
+
                                                 </template>
+
                                             </template>
+
                                         </div>
 
+
+
                                         <!-- BALOK AGENDA -->
+
                                         <a :href="item.url"
+
                                            :style="'left: ' + item.left_pct + '%; width: ' + item.width_pct + '%;'"
+
                                            :title="item.text + ' (' + item.start_jam + ' - ' + item.end_jam + ' WITA)\nTempat: ' + item.tempat + '\nPJ: ' + item.pj"
+
                                            :class="item.is_rapat 
+
                                                ? 'bg-indigo-600 hover:bg-indigo-700 border-indigo-400 text-white shadow-xs' 
+
                                                : 'bg-sky-600 hover:bg-sky-700 border-sky-400 text-white shadow-xs'"
+
                                            class="absolute h-7.5 rounded-lg text-white font-bold text-[10px] shadow-xs flex items-center justify-between gap-2 px-2 transition hover:scale-[1.01] hover:shadow-md z-10 cursor-pointer overflow-hidden border">
+
                                             <span class="truncate min-w-0 font-extrabold flex items-center gap-1.5">
+
                                                 <span class="w-1.5 h-1.5 rounded-full bg-white shrink-0"></span>
+
                                                 <span class="truncate" x-text="item.text"></span>
+
                                             </span>
+
                                             <span class="ml-2 font-mono font-bold text-[9px] bg-black/25 px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap" x-text="item.start_jam + ' - ' + item.end_jam"></span>
+
                                         </a>
+
                                     </div>
+
                                 </div>
+
                             </template>
+
                         </div>
 
+
+
                     </div>
+
                 </div>
+
+
 
                 {{-- 4. FOOTER TERPADU: Slot Lowong & Tombol Aksi (TIDAK BERHAMBURAN) --}}
+
                 <div class="px-4 py-3 bg-slate-50/90 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+
                     <!-- Slot Lowong Tersedia -->
+
                     <div class="flex items-center gap-2 flex-wrap">
+
                         <span class="font-bold text-slate-700 text-[11px] flex items-center gap-1 shrink-0">
+
                             <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+
                             <span>Jam Lowong Tersedia:</span>
+
                         </span>
+
+
 
                         <template x-if="currentDay.total_agendas === 0">
+
                             <span class="text-emerald-800 font-bold text-[11px]" x-text="'Full ' + currentDay.work_hours_label.replace(' WITA', '') + ' (' + currentDay.total_work_hours + ' Jam Bebas)'"></span>
+
                         </template>
+
+
 
                         <template x-if="currentDay.total_agendas > 0 && currentDay.free_slots.length > 0">
+
                             <div class="flex items-center gap-1.5 flex-wrap">
+
                                 <template x-for="(fs, fIdx) in currentDay.free_slots" :key="fIdx">
+
                                     <a :href="currentDay.url_buat_rapat" 
+
                                        class="px-2 py-0.5 rounded-lg bg-white border border-emerald-300 hover:border-emerald-500 text-emerald-900 font-mono font-bold text-[11px] flex items-center gap-1 shadow-2xs transition">
+
                                         <span x-text="fs.start + ' - ' + fs.end"></span>
+
                                         <span class="text-[9px] text-emerald-600 font-sans font-extrabold">+ Jadwalkan</span>
+
                                     </a>
+
                                 </template>
+
                             </div>
+
                         </template>
+
+
 
                         <template x-if="currentDay.total_agendas > 0 && currentDay.free_slots.length === 0">
+
                             <span class="text-slate-400 italic text-[11px]">Seluruh jam kerja telah terisi agenda.</span>
+
                         </template>
+
                     </div>
+
+
 
                     <!-- Tombol Buat Rapat & Toggle Rincian Agenda -->
+
                     <div class="flex items-center gap-2 shrink-0">
+
                         <template x-if="currentDay.total_agendas > 0">
+
                             <button type="button" 
+
                                     @click="showDetailAgenda = !showDetailAgenda"
+
                                     class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs transition cursor-pointer">
+
                                 <span x-text="showDetailAgenda ? 'Tutup Daftar Agenda ▲' : 'Lihat ' + currentDay.total_agendas + ' Agenda ▼'"></span>
+
                             </button>
+
                         </template>
+
+
 
                         <a :href="currentDay.url_buat_rapat" 
+
                            class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1 shadow-2xs transition cursor-pointer">
+
                             <span>+ Buat Rapat</span>
+
                         </a>
+
                     </div>
+
                 </div>
+
+
 
                 {{-- 5. PANEL DETAIL AGENDA TERJADWAL (Collapsible Rapi, tidak berhamburan) --}}
+
                 <div x-show="showDetailAgenda" x-cloak class="p-4 bg-white border-t border-slate-200 space-y-2">
+
                     <h4 class="font-extrabold text-xs text-slate-800 flex items-center gap-1.5">
+
                         <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+
                         <span>Daftar Agenda Hari <span x-text="currentDay.full_date"></span></span>
+
                     </h4>
+
                     <div class="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden text-xs">
+
                         <template x-for="ag in currentDay.active_agendas" :key="ag.id">
+
                             <div class="p-2.5 bg-slate-50/50 hover:bg-slate-50 flex items-center justify-between gap-3">
+
                                 <div class="min-w-0 space-y-0.5">
+
                                     <div class="flex items-center gap-2">
+
                                         <span :class="ag.is_rapat ? 'bg-indigo-100 text-indigo-700' : 'bg-sky-100 text-sky-700'" class="px-1.5 py-0.2 rounded text-[9px] font-black uppercase" x-text="ag.jenis"></span>
+
                                         <span class="font-bold text-slate-900 truncate" x-text="ag.text"></span>
+
                                     </div>
+
                                     <p class="text-[11px] text-slate-500">
+
                                         <span class="font-mono font-bold text-slate-700" x-text="ag.start_jam + ' - ' + ag.end_jam + ' WITA'"></span>
+
                                         <span> • Tempat: </span><span x-text="ag.tempat"></span>
+
                                         <span> • PJ: </span><span x-text="ag.pj"></span>
+
                                     </p>
+
                                 </div>
+
                                 <a :href="ag.url" class="text-blue-600 hover:underline font-bold text-xs shrink-0">Detail &rarr;</a>
+
                             </div>
+
                         </template>
+
                     </div>
+
                 </div>
 
+
+
             </div>
+
         </template>
+
+
 
         {{-- Accordion Proyek Tim Berjalan Tahun 2026 (Ringkas di bagian bawah) --}}
+
         <template x-if="currentDay && currentDay.total_proyek_tahunan > 0">
+
             <div class="pt-1">
+
                 <button type="button" 
+
                         @click="showProyekTahunan = !showProyekTahunan" 
+
                         class="text-[11px] font-bold text-slate-500 hover:text-slate-800 flex items-center justify-between w-full p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition cursor-pointer">
+
                     <span class="flex items-center gap-1.5">
+
                         <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+
                         <span>Proyek Tim Berjalan Tahun 2026 (<span x-text="currentDay.total_proyek_tahunan"></span> Proyek)</span>
+
                     </span>
+
                     <span class="text-[10px] text-blue-600 underline font-semibold" x-text="showProyekTahunan ? 'Tutup Proyek ▲' : 'Lihat Proyek ▼'"></span>
+
                 </button>
+
+
 
                 <div x-show="showProyekTahunan" class="mt-2 space-y-1.5 max-h-40 overflow-y-auto pr-1">
+
                     <template x-for="p in currentDay.proyek_tahunan" :key="p.id">
+
                         <div class="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 flex items-center justify-between text-[11px]">
+
                             <div class="flex items-center gap-2 truncate">
+
                                 <span class="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+
                                 <span class="truncate font-medium" x-text="p.text"></span>
+
                             </div>
+
                             <a :href="p.url" class="text-blue-600 hover:text-blue-800 font-semibold text-[10px] shrink-0 ml-2">Detail</a>
+
                         </div>
+
                     </template>
+
                 </div>
+
             </div>
+
         </template>
+
     </div>
 
+
+
     {{-- ========================================================
+
         5. KALENDER BULANAN AGENDA BPS (TERPISAH SEBAGAI CARD SENDIRI)
+
     ========================================================= --}}
+
     <div class="w-full calendar-section-card bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-xs space-y-4"
+
          x-data="{ 
+
              calFilter: 'spesifik',
+
              setCalFilter(f) {
+
                  this.calFilter = f;
+
                  if (window.setCalendarFilter) {
+
                      window.setCalendarFilter(f);
+
                  }
+
              }
+
          }">
 
+
+
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+
             <div class="flex items-center gap-3">
+
                 <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold shadow-2xs">
+
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+
                     </svg>
+
                 </div>
+
                 <div>
+
                     <h3 class="text-sm sm:text-base font-bold text-gray-900 leading-tight">Kalender Bulanan Agenda BPS</h3>
+
                     <p class="text-[11px] text-gray-400">Pantau seluruh agenda rapat dan kegiatan bulanan BPS Provinsi Sulawesi Tenggara</p>
+
                 </div>
+
             </div>
+
+
 
             {{-- Filter Toolbar untuk Kalender Bulanan --}}
+
             <div class="flex flex-wrap items-center gap-2">
+
                 <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-xl border border-gray-200 text-xs">
+
                     <button type="button" 
+
                             @click="setCalFilter('spesifik')"
+
                             :class="calFilter === 'spesifik' ? 'bg-white text-blue-700 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+
                             class="px-2.5 py-1 rounded-lg text-xs transition cursor-pointer">
+
                         Agenda Terjadwal
+
                     </button>
+
                     <button type="button" 
+
                             @click="setCalFilter('rapat')"
+
                             :class="calFilter === 'rapat' ? 'bg-white text-indigo-700 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+
                             class="px-2.5 py-1 rounded-lg text-xs transition cursor-pointer">
+
                         Hanya Rapat
+
                     </button>
+
                     <button type="button" 
+
                             @click="setCalFilter('all')"
+
                             :class="calFilter === 'all' ? 'bg-white text-emerald-700 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+
                             class="px-2.5 py-1 rounded-lg text-xs transition cursor-pointer">
+
                         Termasuk Proyek 2026
+
                     </button>
+
                 </div>
+
+
 
                 <div class="hidden sm:flex items-center gap-3 text-[11px] font-semibold text-slate-500 pl-2">
+
                     <div class="flex items-center gap-1.5">
+
                         <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 inline-block"></span>
+
                         <span>Rapat</span>
+
                     </div>
+
                     <div class="flex items-center gap-1.5">
+
                         <span class="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span>
+
                         <span>Kegiatan</span>
+
                     </div>
+
                 </div>
+
             </div>
+
         </div>
+
+
 
         {{-- FullCalendar Element --}}
+
         <div id="dashboardCalendar" class="min-h-[600px] bg-white rounded-xl p-1"></div>
+
     </div>
+
+
 
     {{-- ========================================================
+
         5. PETUGAS BERTUGAS HARI INI (SIMPATI & PELAYANAN BPS)
+
     ========================================================= --}}
+
     <div class="w-full bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-xs space-y-6">
+
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-gray-100">
+
             <div class="flex items-center gap-3">
+
                 <div class="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+
                     </svg>
+
                 </div>
+
                 <div>
+
                     <div class="flex items-center gap-2">
+
                         <h3 class="text-base sm:text-lg font-bold text-gray-900 leading-tight">Petugas Bertugas Hari Ini</h3>
+
                         <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+
                             {{ \Carbon\Carbon::parse($today)->translatedFormat('l, d F Y') }}
+
                         </span>
+
                     </div>
+
                     <p class="text-xs text-gray-400 mt-0.5">Daftar petugas PST, PPID, Penjaga Kantor, serta Satpam & Cleaning Service yang bertugas</p>
+
                 </div>
+
             </div>
+
+
 
             <div class="flex items-center gap-2">
+
                 @if(Auth::check() && Auth::user()->canAccessSimpati())
+
                     <a href="{{ route('simpati.jadwal.index') }}" 
+
                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-xl border border-blue-200 transition">
+
                         <span>Kelola Jadwal SIMPATI &rarr;</span>
+
                     </a>
+
                 @endif
+
             </div>
+
         </div>
+
+
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
             {{-- 1. PELAYANAN STATISTIK TERPADU (PST) --}}
+
             <div class="rounded-2xl border border-blue-200/80 bg-blue-50/20 p-4 sm:p-5 space-y-4">
+
                 <div class="flex items-center justify-between pb-3 border-b border-blue-100">
+
                     <div class="flex items-center gap-2">
+
                         <div class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+
                             PST
+
                         </div>
+
                         <div>
+
                             <h4 class="text-sm font-bold text-gray-900">Pelayanan Statistik Terpadu (PST)</h4>
+
                             <p class="text-[11px] text-gray-500">4 Petugas / Hari &bull; Sesi Pagi & Siang</p>
+
                         </div>
+
                     </div>
+
                     <span class="text-[11px] font-bold text-blue-700 bg-blue-100 px-2.5 py-1 rounded-lg">
+
                         {{ count($petugasHariIni['pst'] ?? []) }} Terjadwal
+
                     </span>
+
                 </div>
+
+
 
                 {{-- Sesi 1 & Sesi 2 --}}
+
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
                     {{-- Sesi 1 --}}
+
                     <div class="bg-white rounded-xl p-3 border border-gray-100 shadow-2xs space-y-2">
+
                         <div class="flex items-center justify-between border-b border-gray-100 pb-1.5">
+
                             <span class="text-[11px] font-bold text-blue-700 uppercase">Sesi 1 (Pagi)</span>
+
                             <span class="text-[10px] font-mono text-gray-400">08:00 - 12:00</span>
+
                         </div>
+
                         @php
+
                             $pstSesi1 = collect($petugasHariIni['pst'] ?? [])->filter(fn($p) => ($p->sesi ?? 1) == 1);
+
                         @endphp
+
                         @forelse($pstSesi1 as $p)
+
                             @php
+
                                 $u = $p->petugas_bertugas ?? $p->user ?? null;
+
                                 $status = $p->status_ketersediaan ?? 'Tersedia';
+
                                 $isBerhalangan = (strtolower($status) === 'berhalangan');
+
                             @endphp
+
                             <div class="p-2 rounded-lg {{ $isBerhalangan ? 'bg-rose-50/60 border border-rose-100' : 'bg-gray-50/70' }} space-y-1">
+
                                 <div class="flex items-start justify-between gap-1">
+
                                     <div class="truncate">
+
                                         <p class="text-xs font-bold text-gray-900 truncate {{ $isBerhalangan && !empty($p->pengganti) ? 'line-through text-gray-400' : '' }}">
+
                                             {{ $u->nama_lengkap ?? ($p->nama ?? 'Petugas') }}
+
                                         </p>
+
                                         <p class="text-[10px] text-gray-400 truncate">{{ $u->role_label ?? 'Petugas PST' }}</p>
+
                                     </div>
+
                                     <span class="px-1.5 py-0.5 rounded text-[9px] font-bold shrink-0 {{ $isBerhalangan ? 'bg-rose-100 text-rose-700' : (strtolower($status) === 'hadir' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700') }}">
+
                                         {{ ucfirst($status) }}
+
                                     </span>
+
                                 </div>
+
                                 @if(!empty($p->pengganti))
+
                                     <div class="text-[10px] text-amber-800 font-semibold bg-amber-50 p-1 rounded border border-amber-200">
+
                                         &bull; Digantikan: {{ $p->pengganti->nama_lengkap ?? 'Pengganti' }}
+
                                     </div>
+
                                 @endif
+
                             </div>
+
                         @empty
+
                             <p class="text-xs text-gray-400 italic py-2 text-center">Belum ada petugas Sesi 1</p>
+
                         @endforelse
+
                     </div>
+
+
 
                     {{-- Sesi 2 --}}
+
                     <div class="bg-white rounded-xl p-3 border border-gray-100 shadow-2xs space-y-2">
+
                         <div class="flex items-center justify-between border-b border-gray-100 pb-1.5">
+
                             <span class="text-[11px] font-bold text-blue-700 uppercase">Sesi 2 (Siang)</span>
+
                             <span class="text-[10px] font-mono text-gray-400">13:00 - 16:00</span>
+
                         </div>
+
                         @php
+
                             $pstSesi2 = collect($petugasHariIni['pst'] ?? [])->filter(fn($p) => ($p->sesi ?? 1) == 2);
+
                         @endphp
+
                         @forelse($pstSesi2 as $p)
+
                             @php
+
                                 $u = $p->petugas_bertugas ?? $p->user ?? null;
+
                                 $status = $p->status_ketersediaan ?? 'Tersedia';
+
                                 $isBerhalangan = (strtolower($status) === 'berhalangan');
+
                             @endphp
+
                             <div class="p-2 rounded-lg {{ $isBerhalangan ? 'bg-rose-50/60 border border-rose-100' : 'bg-gray-50/70' }} space-y-1">
+
                                 <div class="flex items-start justify-between gap-1">
+
                                     <div class="truncate">
+
                                         <p class="text-xs font-bold text-gray-900 truncate {{ $isBerhalangan && !empty($p->pengganti) ? 'line-through text-gray-400' : '' }}">
+
                                             {{ $u->nama_lengkap ?? ($p->nama ?? 'Petugas') }}
+
                                         </p>
+
                                         <p class="text-[10px] text-gray-400 truncate">{{ $u->role_label ?? 'Petugas PST' }}</p>
+
                                     </div>
+
                                     <span class="px-1.5 py-0.5 rounded text-[9px] font-bold shrink-0 {{ $isBerhalangan ? 'bg-rose-100 text-rose-700' : (strtolower($status) === 'hadir' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700') }}">
+
                                         {{ ucfirst($status) }}
+
                                     </span>
+
                                 </div>
+
                                 @if(!empty($p->pengganti))
+
                                     <div class="text-[10px] text-amber-800 font-semibold bg-amber-50 p-1 rounded border border-amber-200">
+
                                         &bull; Digantikan: {{ $p->pengganti->nama_lengkap ?? 'Pengganti' }}
+
                                     </div>
+
                                 @endif
+
                             </div>
+
                         @empty
+
                             <p class="text-xs text-gray-400 italic py-2 text-center">Belum ada petugas Sesi 2</p>
+
                         @endforelse
+
                     </div>
+
                 </div>
+
             </div>
+
+
 
             {{-- 2. PETUGAS PPID --}}
+
             <div class="rounded-2xl border border-indigo-200/80 bg-indigo-50/20 p-4 sm:p-5 space-y-4">
+
                 <div class="flex items-center justify-between pb-3 border-b border-indigo-100">
+
                     <div class="flex items-center gap-2">
+
                         <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
+
                             PPID
+
                         </div>
+
                         <div>
+
                             <h4 class="text-sm font-bold text-gray-900">Petugas Layanan PPID</h4>
+
                             <p class="text-[11px] text-gray-500">Pejabat Pengelola Informasi & Dokumentasi</p>
+
                         </div>
+
                     </div>
+
                     <span class="text-[11px] font-bold text-indigo-700 bg-indigo-100 px-2.5 py-1 rounded-lg">
+
                         {{ count($petugasHariIni['ppid'] ?? []) }} Bertugas
+
                     </span>
+
                 </div>
 
+
+
                 <div class="space-y-2">
+
                     @forelse($petugasHariIni['ppid'] ?? [] as $p)
+
                         @php
+
                             $u = $p->petugas_bertugas ?? $p->user ?? null;
+
                             $status = $p->status_ketersediaan ?? 'Tersedia';
+
                         @endphp
+
                         <div class="p-3 bg-white rounded-xl border border-gray-100 shadow-2xs flex items-center justify-between gap-3">
+
                             <div>
+
                                 <h5 class="text-xs font-bold text-gray-900">{{ $u->nama_lengkap ?? ($p->nama ?? 'Petugas PPID') }}</h5>
+
                                 <p class="text-[10px] text-gray-400">{{ $u->role_label ?? 'Layanan Informasi Publik' }}</p>
+
                             </div>
+
                             <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ strtolower($status) === 'berhalangan' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700' }}">
+
                                 {{ ucfirst($status) }}
+
                             </span>
+
                         </div>
+
                     @empty
+
                         <div class="bg-white rounded-xl p-4 text-center border border-gray-100 text-xs text-gray-400 italic">
+
                             Jadwal PPID mengikuti jam operasional kantor atau penugasan berkala.
+
                         </div>
+
                     @endforelse
+
                 </div>
+
             </div>
+
+
 
             {{-- 3. PETUGAS PENJAGA KANTOR --}}
+
             <div class="rounded-2xl border border-amber-200/80 bg-amber-50/20 p-4 sm:p-5 space-y-4">
+
                 <div class="flex items-center justify-between pb-3 border-b border-amber-100">
+
                     <div class="flex items-center gap-2">
+
                         <div class="w-7 h-7 rounded-lg bg-amber-600 text-white flex items-center justify-center font-bold text-xs">
+
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+
                             </svg>
+
                         </div>
+
                         <div>
+
                             <h4 class="text-sm font-bold text-gray-900">Petugas Penjaga Kantor</h4>
+
                             <p class="text-[11px] text-gray-500">Piket keamanan & operasional gedung kantor BPS</p>
+
                         </div>
+
                     </div>
+
                     <span class="text-[11px] font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-lg">
+
                         {{ count($petugasHariIni['penjaga_kantor'] ?? []) }} Petugas
+
                     </span>
+
                 </div>
 
+
+
                 <div class="space-y-2">
+
                     @forelse($petugasHariIni['penjaga_kantor'] ?? [] as $p)
+
                         @php
+
                             $u = $p->petugas_bertugas ?? $p->user ?? null;
+
                             $status = $p->status_ketersediaan ?? 'Tersedia';
+
                         @endphp
+
                         <div class="p-3 bg-white rounded-xl border border-gray-100 shadow-2xs flex items-center justify-between gap-3">
+
                             <div>
+
                                 <h5 class="text-xs font-bold text-gray-900">{{ $u->nama_lengkap ?? ($p->nama ?? 'Petugas Penjaga') }}</h5>
+
                                 <p class="text-[10px] text-gray-400">Piket Penjagaan Kantor Hari Ini</p>
+
                             </div>
+
                             <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ strtolower($status) === 'berhalangan' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700' }}">
+
                                 {{ ucfirst($status) }}
+
                             </span>
+
                         </div>
+
                     @empty
+
                         <div class="bg-white rounded-xl p-4 text-center border border-gray-100 text-xs text-gray-400 italic">
+
                             Jadwal piket penjaga kantor diatur sesuai giliran dinas mingguan.
+
                         </div>
+
                     @endforelse
+
                 </div>
+
             </div>
+
+
 
             {{-- 4. SATPAM & CLEANING SERVICE --}}
+
             <div class="rounded-2xl border border-teal-200/80 bg-teal-50/20 p-4 sm:p-5 space-y-4">
+
                 <div class="flex items-center justify-between pb-3 border-b border-teal-100">
+
                     <div class="flex items-center gap-2">
+
                         <div class="w-7 h-7 rounded-lg bg-teal-600 text-white flex items-center justify-center font-bold text-xs">
+
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+
                             </svg>
+
                         </div>
+
                         <div>
+
                             <h4 class="text-sm font-bold text-gray-900">Satpam & Cleaning Service</h4>
+
                             <p class="text-[11px] text-gray-500">Status Tugas: Bertugas Aktif / Standby Sesuai Shift</p>
+
                         </div>
+
                     </div>
+
                     <span class="text-[11px] font-bold text-teal-800 bg-teal-100 px-2.5 py-1 rounded-lg">
+
                         {{ count($petugasHariIni['satpam_cs'] ?? []) }} Personel
+
                     </span>
+
                 </div>
+
+
 
                 <div class="space-y-2">
+
                     @forelse($petugasHariIni['satpam_cs'] ?? [] as $p)
+
                         @php
+
                             $u = $p->petugas_bertugas ?? $p->user ?? null;
+
                             $tipe = $p->tipe_tugas ?? 'bertugas';
+
                         @endphp
+
                         <div class="p-3 bg-white rounded-xl border border-gray-100 shadow-2xs flex items-center justify-between gap-3">
+
                             <div>
+
                                 <h5 class="text-xs font-bold text-gray-900">{{ $u->nama_lengkap ?? ($p->nama ?? 'Personel Satpam/CS') }}</h5>
+
                                 <p class="text-[10px] text-gray-400">{{ $u->role_label ?? 'Keamanan & Kebersihan' }}</p>
+
                             </div>
+
                             <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ $tipe === 'standby' ? 'bg-gray-100 text-gray-600' : 'bg-teal-100 text-teal-800' }}">
+
                                 {{ $tipe === 'standby' ? 'STANDBY' : 'BERTUGAS' }}
+
                             </span>
+
                         </div>
+
                     @empty
+
                         <div class="bg-white rounded-xl p-4 text-center border border-gray-100 text-xs text-gray-400 italic">
+
                             Personel Satpam dan CS aktif bertugas sesuai shift kerja harian.
+
                         </div>
+
                     @endforelse
+
                 </div>
+
             </div>
+
         </div>
-    </div>
 
     </div>
+
+
+
+    </div>
+
+
 
 {{-- POP-UP MODAL DETAIL EVENT KALENDER --}}
+
 <div id="calendarEventModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+
     <!-- Backdrop Blur -->
+
     <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-xs transition-opacity" onclick="closeCalendarModal()"></div>
 
+
+
     <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+
         <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-gray-100">
+
             <!-- Header Modal -->
+
             <div id="modalHeaderBg" class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between text-white">
+
                 <div class="flex items-center gap-2.5">
+
                     <div id="modalEventIcon" class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+
                         <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+
                     </div>
+
                     <div>
+
                         <span id="modalEventBadge" class="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-white/20 text-white">Kegiatan</span>
+
                         <h3 class="text-sm font-bold leading-6 text-white truncate max-w-[280px] sm:max-w-[340px]" id="modalEventTitle">Detail Agenda</h3>
+
                     </div>
+
                 </div>
+
                 <button type="button" onclick="closeCalendarModal()" class="text-white/80 hover:text-white rounded-lg p-1 transition focus:outline-none">
+
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+
                 </button>
+
             </div>
+
+
 
             <!-- Body Modal -->
+
             <div class="p-6 space-y-4 text-xs">
+
                 <!-- Agenda / Nama Acara Lengkap -->
+
                 <div class="bg-gray-50 rounded-xl p-3.5 border border-gray-100">
+
                     <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Nama Agenda / Acara</p>
+
                     <p class="text-sm font-bold text-gray-900 leading-snug" id="modalEventAgenda">-</p>
+
                 </div>
+
+
 
                 <!-- Info Grid: Waktu, Lokasi, PJ, Tim, Status -->
+
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
                     <div class="bg-gray-50/70 p-3 rounded-xl border border-gray-100">
+
                         <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Tanggal & Jadwal</p>
+
                         <p class="font-bold text-gray-800" id="modalEventDate">-</p>
+
                         <p class="text-gray-500 font-medium mt-0.5" id="modalEventTime">-</p>
+
                     </div>
 
+
+
                     <div class="bg-gray-50/70 p-3 rounded-xl border border-gray-100">
+
                         <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Tempat / Ruangan</p>
+
                         <p class="font-bold text-gray-800 truncate" id="modalEventPlace">-</p>
+
                     </div>
 
+
+
                     <div class="bg-gray-50/70 p-3 rounded-xl border border-gray-100">
+
                         <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Penanggung Jawab (PJ)</p>
+
                         <p class="font-bold text-gray-800 truncate" id="modalEventPj">-</p>
+
                     </div>
 
+
+
                     <div class="bg-gray-50/70 p-3 rounded-xl border border-gray-100">
+
                         <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Tim / Fungsi</p>
+
                         <p class="font-bold text-gray-800 truncate" id="modalEventTim">-</p>
+
                     </div>
+
                 </div>
+
+
 
                 <!-- Status Pelaksanaan -->
+
                 <div class="flex items-center justify-between px-3.5 py-2.5 bg-blue-50/60 rounded-xl border border-blue-100">
+
                     <span class="font-medium text-blue-900">Status Pelaksanaan</span>
+
                     <span id="modalEventStatus" class="font-bold text-blue-700 bg-white px-2.5 py-0.5 rounded-lg border border-blue-200 shadow-2xs">-</span>
+
                 </div>
+
             </div>
+
+
 
             <!-- Footer Modal -->
+
             <div class="bg-gray-50 px-6 py-3.5 flex items-center justify-end gap-2.5 border-t border-gray-100">
+
                 <button type="button" onclick="closeCalendarModal()" class="px-4 py-2 bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 text-xs font-semibold rounded-xl transition">
+
                     Tutup
+
                 </button>
+
                 <a id="modalEventLink" href="#" class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
+
                     <span>Buka Detail Kegiatan</span>
+
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+
                 </a>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
+
 @endsection
 
+
+
 @push('scripts')
+
 <!-- FullCalendar JS -->
+
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/id.js"></script>
+
 <script>
+
 function openCalendarModal(event) {
+
     var props = event.extendedProps || {};
+
     var isRapat = props.jenis === 'Rapat';
 
+
+
     // Header styling based on jenis
+
     var headerBg = document.getElementById('modalHeaderBg');
+
     if (isRapat) {
+
         headerBg.className = 'bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 flex items-center justify-between text-white';
+
     } else {
+
         headerBg.className = 'bg-gradient-to-r from-blue-600 to-sky-600 px-6 py-4 flex items-center justify-between text-white';
+
     }
+
+
 
     document.getElementById('modalEventBadge').textContent = props.jenis || (isRapat ? 'Rapat' : 'Kegiatan');
+
     document.getElementById('modalEventTitle').textContent = props.raw_title || event.title;
+
     document.getElementById('modalEventAgenda').textContent = props.agenda || props.raw_title || event.title;
+
     
+
     var dateStr = props.start_formatted || '-';
+
     if (props.end_formatted && props.end_formatted !== props.start_formatted && props.end_formatted !== '-') {
+
         dateStr += ' s.d. ' + props.end_formatted;
-    }
-    document.getElementById('modalEventDate').textContent = dateStr;
-    document.getElementById('modalEventTime').textContent = props.jam || '-';
-    document.getElementById('modalEventPlace').textContent = props.tempat || '-';
-    document.getElementById('modalEventPj').textContent = props.pj || '-';
-    document.getElementById('modalEventTim').textContent = props.tim || '-';
-    document.getElementById('modalEventStatus').textContent = props.status || 'Terjadwal';
-    
-    var linkBtn = document.getElementById('modalEventLink');
-    if (event.url) {
-        linkBtn.href = event.url;
-        linkBtn.style.display = 'inline-flex';
-    } else {
-        linkBtn.style.display = 'none';
+
     }
 
+    document.getElementById('modalEventDate').textContent = dateStr;
+
+    document.getElementById('modalEventTime').textContent = props.jam || '-';
+
+    document.getElementById('modalEventPlace').textContent = props.tempat || '-';
+
+    document.getElementById('modalEventPj').textContent = props.pj || '-';
+
+    document.getElementById('modalEventTim').textContent = props.tim || '-';
+
+    document.getElementById('modalEventStatus').textContent = props.status || 'Terjadwal';
+
+    
+
+    var linkBtn = document.getElementById('modalEventLink');
+
+    if (event.url) {
+
+        linkBtn.href = event.url;
+
+        linkBtn.style.display = 'inline-flex';
+
+    } else {
+
+        linkBtn.style.display = 'none';
+
+    }
+
+
+
     var modal = document.getElementById('calendarEventModal');
+
     modal.classList.remove('hidden');
+
 }
+
+
 
 function closeCalendarModal() {
+
     var modal = document.getElementById('calendarEventModal');
+
     if (modal) modal.classList.add('hidden');
+
 }
 
+
+
 document.addEventListener('keydown', function(e) {
+
     if (e.key === 'Escape') closeCalendarModal();
+
 });
+
+
 
 window.calendarRawEvents = {!! json_encode($calendarEvents) !!};
+
 window.currentCalendarFilter = 'spesifik';
 
+
+
 document.addEventListener("DOMContentLoaded", function() {
+
     var calendarEl = document.getElementById('dashboardCalendar');
+
     if (!calendarEl) return;
 
+
+
     var calendar = new FullCalendar.Calendar(calendarEl, {
+
         locale: 'id',
+
         initialView: 'dayGridMonth',
+
         headerToolbar: {
+
             left: 'prev,next today',
+
             center: 'title',
+
             right: 'dayGridMonth,timeGridWeek,listMonth'
+
         },
+
         buttonText: {
+
             today: 'Hari Ini',
+
             month: 'Bulan',
+
             week: 'Minggu',
+
             list: 'Daftar'
+
         },
+
         dayMaxEvents: 2,
+
         dayMaxEventRows: 2,
+
         moreLinkClick: 'popover',
+
         moreLinkText: function(num) {
+
             return '+' + num + ' lainnya';
+
         },
+
         height: 680,
+
         aspectRatio: 1.6,
+
         events: function(fetchInfo, successCallback, failureCallback) {
+
             var all = window.calendarRawEvents || [];
+
             var filter = window.currentCalendarFilter || 'spesifik';
+
             var filtered = all.filter(function(ev) {
+
                 var props = ev.extendedProps || {};
+
                 if (filter === 'rapat') {
+
                     return props.jenis === 'Rapat';
+
                 } else if (filter === 'spesifik') {
+
                     // Sembunyikan proyek tahunan 2026 agar kalender tidak penuh/meluber
+
                     return !props.is_tahunan;
+
                 } else {
+
                     // Tampilkan semua termasuk proyek tahunan
+
                     return true;
+
                 }
+
             });
+
             successCallback(filtered);
+
         },
+
         eventClick: function(info) {
+
             info.jsEvent.preventDefault();
+
             openCalendarModal(info.event);
+
         },
+
         eventMouseEnter: function(info) {
+
             var props = info.event.extendedProps;
+
             var tip = info.event.title + '\nPJ: ' + (props.pj || '-') + '\nTim: ' + (props.tim || '-') + '\nStatus: ' + (props.status || '-');
+
             info.el.setAttribute('title', tip);
+
         }
+
     });
+
+
 
     window.calendar = calendar;
+
     calendar.render();
 
+
+
     window.setCalendarFilter = function(filter) {
+
         window.currentCalendarFilter = filter;
+
         if (window.calendar) {
+
             window.calendar.refetchEvents();
+
         }
+
     };
 
+
+
     setTimeout(function() {
+
         calendar.updateSize();
+
     }, 150);
 
+
+
     window.addEventListener('resize', function() {
+
         calendar.updateSize();
+
     });
+
 });
+
 </script>
+
 @endpush
