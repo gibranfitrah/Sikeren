@@ -418,8 +418,8 @@ class StarlaApiController extends Controller
             }
         }
 
-        // 2. Cek dari tabel jadwal_petugas_pelayanan jika ada
-        if (\Illuminate\Support\Facades\Schema::hasTable('jadwal_petugas_pelayanan')) {
+        // 2. Cek dari tabel jadwal_petugas_pelayanan jika ada dan model tersedia
+        if (class_exists('App\JadwalPetugasPelayanan') && \Illuminate\Support\Facades\Schema::hasTable('jadwal_petugas_pelayanan')) {
             $jadwals = \App\JadwalPetugasPelayanan::with(['kelompok', 'user', 'pengganti'])
                 ->where('tanggal', $tanggal)
                 ->get();
@@ -536,7 +536,7 @@ class StarlaApiController extends Controller
             }
         }
 
-        if (\Illuminate\Support\Facades\Schema::hasTable('jadwal_petugas_pelayanan')) {
+        if (class_exists('App\JadwalPetugasPelayanan') && \Illuminate\Support\Facades\Schema::hasTable('jadwal_petugas_pelayanan')) {
             $query = \App\JadwalPetugasPelayanan::with(['user', 'pengganti', 'kelompok'])
                 ->where('tanggal', $tanggal);
 

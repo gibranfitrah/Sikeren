@@ -496,8 +496,8 @@ class DashboardController extends Controller
             }
         }
 
-        // Sumber 2: jadwal_petugas_pelayanan
-        if (\Illuminate\Support\Facades\Schema::hasTable('jadwal_petugas_pelayanan')) {
+        // Sumber 2: jadwal_petugas_pelayanan (jika model tersedia)
+        if (class_exists('App\JadwalPetugasPelayanan') && \Illuminate\Support\Facades\Schema::hasTable('jadwal_petugas_pelayanan')) {
             $jadwalsToday = \App\JadwalPetugasPelayanan::with(['kelompok', 'user', 'pengganti'])
                 ->where('tanggal', $today)
                 ->get();
