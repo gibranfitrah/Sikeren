@@ -34,6 +34,20 @@ class KetuaTimController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
+        $agendaKetuaTim = $kegiatans->map(function($task) {
+            $sub = $task->subKegiatans->first();
+            return (object)[
+                'id'           => $task->id,
+                'agenda'       => $task->agenda ?: ($task->text ?: 'Kegiatan'),
+                'sub_kegiatan' => $sub ? $sub->nama_sub : ($task->sub_kegiatan ?? null),
+                'pj'           => $task->penanggung_jawab ?: ($task->pemimpin ?: null),
+                'tanggal'      => $task->start_date ? Carbon::parse($task->start_date)->translatedFormat('d M Y') : ($task->tanggal ?? '-'),
+                'jam'          => $task->start_jam ? substr($task->start_jam, 0, 5) . ($task->end_jam ? ' - ' . substr($task->end_jam, 0, 5) : '') : ($task->jam ?? null),
+                'tempat'       => $task->tempat ?: 'Kantor BPS Sultra',
+                'status'       => (strtolower($task->status ?? '') === 'selesai') ? 'selesai' : 'terjadwal',
+            ];
+        });
+
         $notifications = Auth::user()->notifications()->latest()->take(5)->get();
         $jumlah_notif  = Auth::user()->unreadNotifications()->count();
 
@@ -41,6 +55,7 @@ class KetuaTimController extends Controller
             'totalAgenda',
             'agendaTerjadwal',
             'agendaSelesai',
+            'agendaKetuaTim',
             'kegiatans',
             'notifications',
             'jumlah_notif'

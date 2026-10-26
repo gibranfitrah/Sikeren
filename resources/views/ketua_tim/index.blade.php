@@ -300,7 +300,7 @@
             {{-- Body --}}
             <tbody id="tabelKegiatan" class="divide-y divide-gray-100">
 
-                @forelse($agendaKetuaTim as $index => $agenda)
+                @forelse(($agendaKetuaTim ?? $kegiatans ?? []) as $index => $agenda)
 
                     <tr class="hover:bg-gray-50/70 transition-colors">
 
