@@ -41,8 +41,11 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path></svg>
                     </div>
                     <input type="text" id="admin-pegawai-search" name="pegawai_search" autocomplete="off"
-                           x-model="search" @input.debounce.300ms="searchPegawai()"
-                           placeholder="Ketik nama atau NIP pegawai…"
+                           x-model="search"
+                           @focus="if(!pickedId) searchPegawai()"
+                           @click="if(!pickedId) searchPegawai()"
+                           @input.debounce.300ms="searchPegawai()"
+                           placeholder="Ketik nama / NIP atau klik untuk daftar…"
                            class="w-full pl-10 pr-8 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 bg-white">
                     <button type="button" x-show="search || pickedId" @click="clearPick()"
                             class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
@@ -50,6 +53,10 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
+
+                <p x-show="!pickedId && results.length === 0 && search.length <= 1" class="text-[11px] text-gray-400 mt-1.5">
+                    💡 Klik kolom di atas untuk menampilkan daftar pegawai, atau ketik nama/NIP untuk memfilter.
+                </p>
 
                 {{-- Dropdown Hasil Pencarian (Floating absolute agar tidak menimpa elemen lain) --}}
                 <div class="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border border-gray-200 shadow-xl max-h-56 overflow-y-auto divide-y divide-gray-100"
@@ -179,10 +186,6 @@
 
             searchPegawai() {
                 const q = (this.search || '').trim();
-                if (q.length < 2) {
-                    this.results = [];
-                    return;
-                }
                 fetch('{{ route('simpati.petugas.cari') }}?q=' + encodeURIComponent(q))
                     .then(r => r.json())
                     .then(res => { this.results = res.data || []; })

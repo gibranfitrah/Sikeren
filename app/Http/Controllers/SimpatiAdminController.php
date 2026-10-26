@@ -19,6 +19,16 @@ class SimpatiAdminController extends Controller
     {
         $user = $this->authorizeManageAdmins();
 
+        // Auto-seed Admin Roles jika tabel masih kosong
+        if (Schema::hasTable('simpati_admin_roles') && \DB::table('simpati_admin_roles')->count() === 0) {
+            $seederFile = database_path('seeds/SimpatiAdminRoleSeeder.php');
+            if (file_exists($seederFile)) {
+                require_once $seederFile;
+                $seeder = new \SimpatiAdminRoleSeeder();
+                $seeder->run();
+            }
+        }
+
         $holders = [];
         if (Schema::hasTable('simpati_admin_roles')) {
             $rows = \DB::table('simpati_admin_roles')
