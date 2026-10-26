@@ -177,15 +177,8 @@
             var jam = $(this).data('jam');
             
             // Set form action dynamically
-            // Assuming route is defined as '/update-jam/{id}'
-            // The original blade had: {{ route('update.jam', $status->id) }}
-            // We'll replace the ID part
-            var actionUrl = "{{ url('update-jam') }}/" + id; // You might need to adjust this depending on the exact route definition
-            
-            // Since we might not know the exact route structure if it's named, we can do this instead:
-            // Find a way to construct the route or replace a dummy ID
-            var baseUrl = "{{ route('update.jam', 'DUMMY_ID') }}";
-            actionUrl = baseUrl.replace('DUMMY_ID', id);
+            var baseUrl = "{{ route('update.jam', ':id') }}";
+            var actionUrl = baseUrl.replace(':id', id);
 
             $('#formEditJam').attr('action', actionUrl);
             $('#modalTitle').text('Edit Jam for ' + niplama);
