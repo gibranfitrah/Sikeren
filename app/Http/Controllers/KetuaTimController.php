@@ -23,40 +23,79 @@ class KetuaTimController extends Controller
     {
         Task::updateExpiredKegiatanStatus();
 
-        $totalAgenda     = Task::where('jenis', 'Kegiatan')->count();
-        $agendaTerjadwal = Task::where('jenis', 'Kegiatan')->where(function($q) {
-            $q->where('status', '!=', 'Selesai')->orWhereNull('status');
-        })->count();
-        $agendaSelesai   = Task::where('jenis', 'Kegiatan')->where('status', 'Selesai')->count();
-        
-        $kegiatans = Task::with('subKegiatans')
-            ->where('jenis', 'Kegiatan')
-            ->orderBy('id', 'desc')
+        $allKegiatans = Task::with(['subKegiatans', 'penugasans'])
+            ->where('tasks.jenis', 'Kegiatan')
+            ->orderBy('tasks.id', 'desc')
             ->get();
 
-        $agendaKetuaTim = $kegiatans->map(function($task) {
-            $sub = $task->subKegiatans->first();
-            return (object)[
-                'id'           => $task->id,
-                'agenda'       => $task->agenda ?: ($task->text ?: 'Kegiatan'),
-                'sub_kegiatan' => $sub ? $sub->nama_sub : ($task->sub_kegiatan ?? null),
-                'pj'           => $task->penanggung_jawab ?: ($task->pemimpin ?: null),
-                'tanggal'      => $task->start_date ? Carbon::parse($task->start_date)->translatedFormat('d M Y') : ($task->tanggal ?? '-'),
-                'jam'          => $task->start_jam ? substr($task->start_jam, 0, 5) . ($task->end_jam ? ' - ' . substr($task->end_jam, 0, 5) : '') : ($task->jam ?? null),
-                'tempat'       => $task->tempat ?: 'Kantor BPS Sultra',
-                'status'       => (strtolower($task->status ?? '') === 'selesai') ? 'selesai' : 'terjadwal',
-            ];
-        });
+        $pstTasks = $allKegiatans->filter(function($k) {
+            return $k->is_pst;
+        })->values();
 
+        $nonPstTasks = $allKegiatans->reject(function($k) {
+            return $k->is_pst;
+        })->values();
+
+        // Auto-seed PST tasks & penugasans jika belum ada di database lokal
+        if ($pstTasks->isEmpty() && file_exists(database_path('seeds/PstKegiatanSeeder.php'))) {
+            require_once database_path('seeds/PstKegiatanSeeder.php');
+            $seeder = new \PstKegiatanSeeder();
+            $seeder->run();
+
+            $allKegiatans = Task::with(['subKegiatans', 'penugasans'])
+                ->where('tasks.jenis', 'Kegiatan')
+                ->orderBy('tasks.id', 'desc')
+                ->get();
+
+            $pstTasks = $allKegiatans->filter(function($k) {
+                return $k->is_pst;
+            })->values();
+
+            $nonPstTasks = $allKegiatans->reject(function($k) {
+                return $k->is_pst;
+            })->values();
+        }
+
+        $totalKegiatan = $allKegiatans->count();
+        $berjalan = 0;
+        $selesai = 0;
+        $menungguApprove = 0;
+
+        foreach ($allKegiatans as $item) {
+            $st = strtolower(trim($item->status ?? ''));
+            if ($st === 'selesai' || (!empty($item->notulen) && ($item->notulen_selesai ?? 0) == 1)) {
+                $selesai++;
+            } elseif ($st === 'sedang berjalan' || $st === 'disetujui' || $item->setuju_rapat == 1) {
+                $berjalan++;
+            } else {
+                $menungguApprove++;
+            }
+        }
+
+        $currentUser = Auth::user();
         $notifications = Auth::user()->notifications()->latest()->take(5)->get();
         $jumlah_notif  = Auth::user()->unreadNotifications()->count();
 
+        // Kompatibilitas dengan variabel view
+        $kegiatans2 = $nonPstTasks;
+        $kegiatans = $allKegiatans;
+        $totalAgenda = $totalKegiatan;
+        $agendaTerjadwal = $berjalan + $menungguApprove;
+        $agendaSelesai = $selesai;
+
         return view('ketua_tim.index', compact(
+            'totalKegiatan',
+            'berjalan',
+            'menungguApprove',
+            'selesai',
             'totalAgenda',
             'agendaTerjadwal',
             'agendaSelesai',
-            'agendaKetuaTim',
+            'pstTasks',
+            'nonPstTasks',
+            'kegiatans2',
             'kegiatans',
+            'currentUser',
             'notifications',
             'jumlah_notif'
         ));
