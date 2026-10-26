@@ -167,10 +167,10 @@
                         <p class="text-xs text-slate-500 font-mono">{{ $user->nipbaru ?? ($user->niplama ?? '-') }}</p>
                         @if(!$isLewatWaktu)
                             <p class="text-[11px] text-slate-500 leading-relaxed pt-1">
-                                Tunjukkan kode QR ini kepada <strong>Petugas / Penanggung Jawab (PJ)</strong> di ruangan rapat untuk memverifikasi kehadiran fisik Anda.
+                                Tunjukkan kode QR ini kepada <strong>Petugas / Penanggung Jawab (PJ)</strong> di ruangan rapat, atau pindai langsung dengan kamera HP untuk memverifikasi kehadiran Anda.
                             </p>
                             <p class="text-[10px] text-amber-700 bg-amber-50 border border-amber-200/80 rounded-xl px-2.5 py-1.5 mt-2 font-medium">
-                                💡 <strong>Tips:</strong> Tingkatkan kecerahan layar HP Anda agar kode QR lebih cepat terbaca oleh kamera.
+                                💡 <strong>Tips:</strong> Jika memindai dengan kamera HP, pastikan HP dan laptop terhubung ke jaringan Wi-Fi yang sama.
                             </p>
                         @endif
                     </div>
@@ -178,6 +178,14 @@
 
                 {{-- Action / Ruangan Alternative --}}
                 <div class="pt-4 border-t border-slate-100 space-y-2.5">
+                    @if(!$isLewatWaktu && $statusKehadiran !== 'Hadir')
+                        <a href="{{ $verifyUrl }}"
+                           class="w-full py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                            <span>Konfirmasi / Verifikasi Kehadiran Saya Langsung</span>
+                        </a>
+                    @endif
+
                     @if(!$isLewatWaktu)
                         <a href="{{ $urlPresensiRuangan }}" target="_blank"
                            class="w-full py-3 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm">

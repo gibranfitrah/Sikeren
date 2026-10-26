@@ -1444,10 +1444,10 @@ class KegiatanController extends Controller
         $identifier = $user->niplama ?: ($user->nipbaru ?: $user->id);
         $verifyUrl = self::getQrUrl('rapat/verifikasi-kehadiran/' . $task->id . '?nip=' . urlencode($identifier));
 
-        // Gunakan payload ringkas dengan error correction 'L' agar menghasilkan modul (titik) QR yang jauh lebih besar
-        // dan kontras, sehingga kamera laptop/webcam dapat langsung memindai layar HP dalam sekejap tanpa lag.
-        $qrPayload = 'SIKEREN:PRESENSI:' . $task->id . ':' . $identifier;
-        $qrSvg = QrCode::size(280)->margin(1)->errorCorrection('L')->generate($qrPayload);
+        // Gunakan URL verifikasi penuh agar dapat dipindai langsung oleh kamera bawaan HP (iPhone & Android)
+        // maupun scanner barcode/webcam tanpa memunculkan 'Data yang dapat digunakan tidak ditemukan'
+        $qrPayload = $verifyUrl;
+        $qrSvg = QrCode::size(280)->margin(1)->errorCorrection('M')->generate($qrPayload);
         $urlPresensiRuangan = self::getQrUrl('daftarhadir/' . $task->id);
 
         return view('rapat.tiket_qr', compact(
