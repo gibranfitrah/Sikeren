@@ -382,10 +382,10 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
 
                 {{-- Timeline Table Grid Seragam --}}
                 <div class="overflow-x-auto">
-                    <table class="w-full text-xs border-collapse table-fixed min-w-[840px] max-w-6xl">
+                    <table class="w-full text-xs border-collapse table-fixed min-w-[760px] max-w-6xl">
                         <thead>
                             <tr class="bg-gray-50/80 border-b border-gray-200 text-gray-700">
-                                <th class="py-2.5 px-3 text-left w-32 sm:w-36 font-bold text-gray-700">Waktu (WITA)</th>
+                                <th class="py-2.5 px-3 text-left w-20 font-bold">Jam</th>
                                 <th class="py-2.5 px-3 text-left font-bold border-l border-gray-200 w-[23.5%]">Aula Lantai 1</th>
                                 <th class="py-2.5 px-3 text-left font-bold border-l border-gray-200 w-[23.5%]">Vicon Lantai 3</th>
                                 <th class="py-2.5 px-3 text-left font-bold border-l border-gray-200 w-[23.5%]">Aula Lantai 4</th>
@@ -436,11 +436,33 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                 }
 
                                 // Hitung berapa slot jam yang dicakup (rowspan)
+                                // Booking 09:00 - 11:00 akan memblok baris 09:00, 10:00, dan 11:00
+                                // Booking 10:00 - 12:00 akan memblok baris 10:00, 11:00, dan 12:00
                                 $span = 1;
                                 $totalSlots = count($timeSlots);
                                 for ($i = $slotIdx + 1; $i < $totalSlots; $i++) {
-                                    $nextSlotStart = $timeSlots[$i] . ':00';
-                                    if ($booking->end_time > $nextSlotStart) {
+                                    $nextSlot = $timeSlots[$i];
+                                    $nextSlotStart = $nextSlot . ':00';
+
+                                    // Jika ada booking lain yang mulai tepat pada slot ini, hentikan perpanjangan
+                                    $hasConflictNext = $dailyBookings->contains(function($b) use ($venueKey, $nextSlot, $booking) {
+                                        if ($b->id == $booking->id) return false;
+                                        $matches = false;
+                                        if ($venueKey === 'aula1') $matches = ($b->venue_id == 1);
+                                        elseif ($venueKey === 'vicon') $matches = ($b->venue_id == 2);
+                                        elseif ($venueKey === 'aula4') $matches = ($b->venue_id == 3);
+                                        elseif ($venueKey === 'zoom') $matches = in_array($b->zoom_account, ['zoom_1', 'zoom_2', 'eksternal']);
+                                        if (!$matches) return false;
+
+                                        return substr($b->start_time, 0, 5) === $nextSlot;
+                                    });
+
+                                    if ($hasConflictNext) {
+                                        break;
+                                    }
+
+                                    // Blok baris slot jika jam selesai mencapai atau melewati jam slot ini
+                                    if ($booking->end_time >= $nextSlotStart) {
                                         $span++;
                                         $skippedSlots[$venueKey][] = $i;
                                     } else {
@@ -459,10 +481,9 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
 
                             @foreach($timeSlots as $slotIdx => $slot)
                             <tr class="hover:bg-gray-50/40 transition">
-                                {{-- Kolom Waktu (Rentang Slot Jam Jelas & Tidak Ambigu) --}}
-                                <td class="py-2.5 px-3 font-mono align-top pt-3 bg-gray-50/50 border-r border-gray-100">
-                                    <div class="text-xs font-bold text-gray-800 tracking-tight whitespace-nowrap">{{ $slot }} - {{ date('H:i', strtotime($slot . ' +1 hour')) }}</div>
-                                    <div class="text-[10px] text-gray-400 font-sans font-medium">Slot 1 Jam</div>
+                                {{-- Kolom Jam --}}
+                                <td class="py-2.5 px-3 font-mono font-bold text-gray-500 align-top pt-3">
+                                    {{ $slot }}
                                 </td>
 
                                 {{-- Aula Lantai 1 --}}
@@ -504,26 +525,28 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                                         <span class="px-1.5 py-0.5 bg-blue-200 text-blue-800 rounded text-[9px] font-bold shrink-0">Hybrid</span>
                                                     @endif
                                                 </div>
-                                                <div class="flex items-center gap-1.5 text-[10.5px] text-blue-900 font-bold">
-                                                    <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div class="flex items-center gap-1 text-[10px] text-blue-700 font-medium">
+                                                    <svg class="w-3 h-3 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
-                                                    <span>{{ substr($bookingAula1->start_time, 0, 5) }} - {{ substr($bookingAula1->end_time, 0, 5) }} WITA</span>
+                                                    <span>{{ substr($bookingAula1->start_time, 0, 5) }} - {{ substr($bookingAula1->end_time, 0, 5) }}</span>
                                                 </div>
                                                 <p class="text-[10px] text-blue-800/80 truncate">
                                                     {{ $bookingAula1->penyelenggara }}
-                                                    @if($span1 > 1 && $bookingAula1->jumlah_peserta)
+                                                    @if($bookingAula1->jumlah_peserta)
                                                         • {{ $bookingAula1->jumlah_peserta }} Peserta
                                                     @endif
                                                 </p>
                                             </div>
-                                            <div class="flex items-center justify-between gap-1 text-[9px] text-blue-800 pt-1 mt-auto border-t border-blue-200/50">
+                                            <div class="flex items-center gap-1 text-[9px] text-blue-800 pt-1 mt-auto">
                                                 <span class="px-1.5 py-0.5 bg-white/90 rounded border border-blue-200 font-medium truncate">
                                                     {{ $bookingAula1->layout_meja ?: 'Classroom' }}
                                                 </span>
-                                                <span class="px-1.5 py-0.5 bg-blue-100 text-blue-900 rounded font-bold shrink-0">
-                                                    s.d {{ substr($bookingAula1->end_time, 0, 5) }} WITA
-                                                </span>
+                                                @if(!empty($bookingAula1->setup_podium_data['tipe']) && $bookingAula1->setup_podium_data['tipe'] !== 'Tanpa Podium')
+                                                    <span class="px-1.5 py-0.5 bg-white/90 rounded border border-blue-200 font-medium truncate">
+                                                        Podium
+                                                    </span>
+                                                @endif
                                             </div>
                                         </div>
                                     </td>
@@ -576,26 +599,28 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                                         <span class="px-1.5 py-0.5 bg-purple-200 text-purple-800 rounded text-[9px] font-bold shrink-0">Hybrid</span>
                                                     @endif
                                                 </div>
-                                                <div class="flex items-center gap-1.5 text-[10.5px] text-purple-900 font-bold">
-                                                    <svg class="w-3.5 h-3.5 text-purple-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div class="flex items-center gap-1 text-[10px] text-purple-700 font-medium">
+                                                    <svg class="w-3 h-3 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
-                                                    <span>{{ substr($bookingVicon->start_time, 0, 5) }} - {{ substr($bookingVicon->end_time, 0, 5) }} WITA</span>
+                                                    <span>{{ substr($bookingVicon->start_time, 0, 5) }} - {{ substr($bookingVicon->end_time, 0, 5) }}</span>
                                                 </div>
                                                 <p class="text-[10px] text-purple-800/80 truncate">
                                                     {{ $bookingVicon->penyelenggara }}
-                                                    @if($span2 > 1 && $bookingVicon->jumlah_peserta)
+                                                    @if($bookingVicon->jumlah_peserta)
                                                         • {{ $bookingVicon->jumlah_peserta }} Peserta
                                                     @endif
                                                 </p>
                                             </div>
-                                            <div class="flex items-center justify-between gap-1 text-[9px] text-purple-800 pt-1 mt-auto border-t border-purple-200/50">
+                                            <div class="flex items-center gap-1 text-[9px] text-purple-800 pt-1 mt-auto">
                                                 <span class="px-1.5 py-0.5 bg-white/90 rounded border border-purple-200 font-medium truncate">
                                                     {{ $bookingVicon->layout_meja ?: 'Classroom' }}
                                                 </span>
-                                                <span class="px-1.5 py-0.5 bg-purple-100 text-purple-900 rounded font-bold shrink-0">
-                                                    s.d {{ substr($bookingVicon->end_time, 0, 5) }} WITA
-                                                </span>
+                                                @if(!empty($bookingVicon->setup_podium_data['tipe']) && $bookingVicon->setup_podium_data['tipe'] !== 'Tanpa Podium')
+                                                    <span class="px-1.5 py-0.5 bg-white/90 rounded border border-purple-200 font-medium truncate">
+                                                        Podium
+                                                    </span>
+                                                @endif
                                             </div>
                                         </div>
                                     </td>
@@ -648,26 +673,28 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                                         <span class="px-1.5 py-0.5 bg-emerald-200 text-emerald-800 rounded text-[9px] font-bold shrink-0">Hybrid</span>
                                                     @endif
                                                 </div>
-                                                <div class="flex items-center gap-1.5 text-[10.5px] text-emerald-900 font-bold">
-                                                    <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div class="flex items-center gap-1 text-[10px] text-emerald-700 font-medium">
+                                                    <svg class="w-3 h-3 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
-                                                    <span>{{ substr($bookingAula4->start_time, 0, 5) }} - {{ substr($bookingAula4->end_time, 0, 5) }} WITA</span>
+                                                    <span>{{ substr($bookingAula4->start_time, 0, 5) }} - {{ substr($bookingAula4->end_time, 0, 5) }}</span>
                                                 </div>
                                                 <p class="text-[10px] text-emerald-800/80 truncate">
                                                     {{ $bookingAula4->penyelenggara }}
-                                                    @if($span3 > 1 && $bookingAula4->jumlah_peserta)
+                                                    @if($bookingAula4->jumlah_peserta)
                                                         • {{ $bookingAula4->jumlah_peserta }} Peserta
                                                     @endif
                                                 </p>
                                             </div>
-                                            <div class="flex items-center justify-between gap-1 text-[9px] text-emerald-800 pt-1 mt-auto border-t border-emerald-200/50">
+                                            <div class="flex items-center gap-1 text-[9px] text-emerald-800 pt-1 mt-auto">
                                                 <span class="px-1.5 py-0.5 bg-white/90 rounded border border-emerald-200 font-medium truncate">
                                                     {{ $bookingAula4->layout_meja ?: 'Classroom' }}
                                                 </span>
-                                                <span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-900 rounded font-bold shrink-0">
-                                                    s.d {{ substr($bookingAula4->end_time, 0, 5) }} WITA
-                                                </span>
+                                                @if(!empty($bookingAula4->setup_podium_data['tipe']) && $bookingAula4->setup_podium_data['tipe'] !== 'Tanpa Podium')
+                                                    <span class="px-1.5 py-0.5 bg-white/90 rounded border border-emerald-200 font-medium truncate">
+                                                        Podium
+                                                    </span>
+                                                @endif
                                             </div>
                                         </div>
                                     </td>
@@ -720,21 +747,19 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                                         {{ $bookingZoom->zoom_account === 'zoom_1' ? 'Zoom 1' : ($bookingZoom->zoom_account === 'zoom_2' ? 'Zoom 2' : 'Eksternal') }}
                                                     </span>
                                                 </div>
-                                                <div class="flex items-center gap-1.5 text-[10.5px] text-sky-900 font-bold">
-                                                    <svg class="w-3.5 h-3.5 text-sky-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div class="flex items-center gap-1 text-[10px] text-sky-700 font-medium">
+                                                    <svg class="w-3 h-3 text-sky-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
-                                                    <span>{{ substr($bookingZoom->start_time, 0, 5) }} - {{ substr($bookingZoom->end_time, 0, 5) }} WITA</span>
+                                                    <span>{{ substr($bookingZoom->start_time, 0, 5) }} - {{ substr($bookingZoom->end_time, 0, 5) }}</span>
                                                 </div>
                                                 <p class="text-[10px] text-sky-800/80 truncate">
                                                     {{ $bookingZoom->penyelenggara }}
                                                 </p>
                                             </div>
-                                            <div class="flex items-center justify-between gap-1 text-[9px] text-sky-800 pt-1 mt-auto border-t border-sky-200/50">
+                                            <div class="flex items-center justify-between text-[9px] text-sky-800 pt-1 mt-auto">
                                                 <span class="truncate">Online Meeting</span>
-                                                <span class="px-1.5 py-0.5 bg-sky-100 text-sky-900 rounded font-bold shrink-0">
-                                                    s.d {{ substr($bookingZoom->end_time, 0, 5) }} WITA
-                                                </span>
+                                                <span class="text-blue-600 font-semibold underline">Detail &rarr;</span>
                                             </div>
                                         </div>
                                     </td>
