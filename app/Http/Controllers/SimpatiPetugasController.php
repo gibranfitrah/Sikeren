@@ -34,6 +34,16 @@ class SimpatiPetugasController extends Controller
         $grups       = SimpatiRoles::GRUPS;
         $manageable  = SimpatiRoles::manageableGrups($user);
 
+        // Auto-seed Petugas PST & Layanan jika tabel masih kosong (memastikan siapa pun yang clone/pull repo langsung terisi data)
+        if (Schema::hasTable('petugas_layanans') && PetugasLayanan::where('grup', 'pst')->count() === 0) {
+            $seederFile = database_path('seeds/SimpatiPetugasLayananSeeder.php');
+            if (file_exists($seederFile)) {
+                require_once $seederFile;
+                $seeder = new \SimpatiPetugasLayananSeeder();
+                $seeder->run();
+            }
+        }
+
         $tabCounts = $this->tabCounts();
         $timList   = Schema::hasTable('master_groups')
             ? DB::table('master_groups')->orderBy('grup')->pluck('grup')->all()

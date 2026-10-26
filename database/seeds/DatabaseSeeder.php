@@ -10,5 +10,6 @@ class DatabaseSeeder extends Seeder
         $this->call(TasksTableSeeder::class);
         $this->call(LinksTableSeeder::class);
         $this->call(RoomCapacitiesSeeder::class);
+        $this->call(SimpatiPetugasLayananSeeder::class);
     }
 }
