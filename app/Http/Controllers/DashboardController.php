@@ -542,7 +542,9 @@ class DashboardController extends Controller
                 ]);
             }
         }
-        $todayPstOfficers = \App\JadwalPst::where('tanggal', $today)->orderBy('sesi')->get();
+        $todayPstOfficers = \Illuminate\Support\Facades\Schema::hasTable('jadwal_psts')
+            ? \App\JadwalPst::where('tanggal', $today)->orderBy('sesi')->get()
+            : collect();
 
         return view('dashboard', compact(
             'userArr',

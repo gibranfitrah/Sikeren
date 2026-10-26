@@ -301,32 +301,37 @@ class KegiatanApiController extends Controller
             ->count();
 
         // Jadwal Petugas PST Hari Ini
-        $todayPst = \App\JadwalPst::where('tanggal', $today)
-            ->orderBy('sesi')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'id'               => $item->id,
-                    'sesi'             => $item->sesi,
-                    'sesi_label'       => $item->sesi_label,
-                    'jam'              => "{$item->jam_mulai} - {$item->jam_selesai}",
-                    'nama_petugas'     => $item->nama_petugas,
-                    'status_kehadiran' => $item->status_kehadiran,
-                    'status_tukar'     => $item->status_tukar,
-                    'pengganti_nama'   => $item->pengganti_nama,
-                    'display_nama'     => !empty($item->pengganti_nama) 
-                                          ? "{$item->pengganti_nama} (Gantikan {$item->nama_petugas})" 
-                                          : $item->nama_petugas
-                ];
-            });
+        $hasJadwalPsts = \Illuminate\Support\Facades\Schema::hasTable('jadwal_psts');
+        $todayPst = $hasJadwalPsts
+            ? \App\JadwalPst::where('tanggal', $today)
+                ->orderBy('sesi')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'id'               => $item->id,
+                        'sesi'             => $item->sesi,
+                        'sesi_label'       => $item->sesi_label,
+                        'jam'              => "{$item->jam_mulai} - {$item->jam_selesai}",
+                        'nama_petugas'     => $item->nama_petugas,
+                        'status_kehadiran' => $item->status_kehadiran,
+                        'status_tukar'     => $item->status_tukar,
+                        'pengganti_nama'   => $item->pengganti_nama,
+                        'display_nama'     => !empty($item->pengganti_nama) 
+                                              ? "{$item->pengganti_nama} (Gantikan {$item->nama_petugas})" 
+                                              : $item->nama_petugas
+                    ];
+                })
+            : collect();
 
         // Cek apakah user bertugas PST hari ini
-        $myPst = \App\JadwalPst::where('tanggal', $today)
-            ->where(function ($q) use ($user) {
-                $q->where('niplama', $user->niplama)
-                  ->orWhere('pengganti_niplama', $user->niplama);
-            })
-            ->first();
+        $myPst = $hasJadwalPsts
+            ? \App\JadwalPst::where('tanggal', $today)
+                ->where(function ($q) use ($user) {
+                    $q->where('niplama', $user->niplama)
+                      ->orWhere('pengganti_niplama', $user->niplama);
+                })
+                ->first()
+            : null;
 
         $myPstData = null;
         if ($myPst) {
