@@ -33,7 +33,7 @@
     </div>
 
     {{-- ERROR VALIDATION --}}
-    @if($errors->any())
+    @if(isset($errors) && $errors->any())
         <div class="mb-8 bg-red-50 border border-red-100 rounded-3xl p-5">
             <div class="flex items-start gap-3">
                 <div class="w-10 h-10 bg-red-100 rounded-2xl flex items-center justify-center text-red-600 flex-shrink-0">
@@ -182,10 +182,14 @@
 
                 {{-- TEMPAT --}}
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Opsi Tempat <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Tempat / Lokasi <span class="text-red-500">*</span></label>
                     <select name="tempat"
                             required
                             class="w-full px-4 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:bg-white transition">
+                        @if(!in_array($agenda->tempat, ['Kantor Pusat', 'Daring (Zoom)', 'Luar Kantor', 'Ruang PST BPS Provinsi Sulawesi Tenggara']) && !empty($agenda->tempat))
+                            <option value="{{ $agenda->tempat }}" selected>{{ $agenda->tempat }}</option>
+                        @endif
+                        <option value="Ruang PST BPS Provinsi Sulawesi Tenggara" {{ old('tempat', $agenda->tempat) == 'Ruang PST BPS Provinsi Sulawesi Tenggara' ? 'selected' : '' }}>Ruang PST BPS Prov. Sultra</option>
                         <option value="Kantor Pusat" {{ old('tempat', $agenda->tempat) == 'Kantor Pusat' ? 'selected' : '' }}>Kantor Pusat</option>
                         <option value="Daring (Zoom)" {{ old('tempat', $agenda->tempat) == 'Daring (Zoom)' ? 'selected' : '' }}>Daring (Zoom)</option>
                         <option value="Luar Kantor" {{ old('tempat', $agenda->tempat) == 'Luar Kantor' ? 'selected' : '' }}>Luar Kantor</option>

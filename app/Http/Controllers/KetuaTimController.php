@@ -259,6 +259,129 @@ class KetuaTimController extends Controller
     }
 
     /**
+     * Menampilkan form edit kegiatan
+     */
+    public function edit($id)
+    {
+        $task = Task::with(['penugasans', 'subKegiatans'])->find($id);
+
+        if (!$task) {
+            abort(404, 'Kegiatan tidak ditemukan');
+        }
+
+        // Siapkan properti alias agar kompatibel dengan view ketua_tim/edit.blade.php
+        $agenda = (object)[
+            'id'           => $task->id,
+            'perihal'      => $task->surat ?: $task->agenda,
+            'agenda'       => $task->agenda ?: $task->text,
+            'sub_kegiatan' => $task->subKegiatans->first() ? $task->subKegiatans->first()->nama_sub : '',
+            'dasar'        => $task->materi_link ?: '',
+            'tanggal'      => $task->start_date ? Carbon::parse($task->start_date)->format('Y-m-d') : date('Y-m-d'),
+            'jam'          => $task->start_jam ? substr($task->start_jam, 0, 5) : '08:00',
+            'tempat'       => $task->tempat ?: 'Ruang PST BPS Provinsi Sulawesi Tenggara',
+            'status'       => strtolower($task->status) === 'selesai' ? 'selesai' : 'terjadwal',
+            'pj'           => $task->penanggung_jawab ?: ($task->pemimpin ?: 'Ketua Tim PST'),
+            'tujuan'       => $task->tujuan ?: '',
+        ];
+
+        // Anggota list dari tabel penugasans
+        $anggotaList = $task->penugasans->pluck('peserta')->filter()->unique()->values()->all();
+        if (empty($anggotaList) && !empty($task->petugas_list)) {
+            $anggotaList = $task->petugas_list;
+        }
+
+        $notifications = Auth::check() ? Auth::user()->notifications()->latest()->take(5)->get() : collect();
+        $jumlah_notif  = Auth::check() ? Auth::user()->unreadNotifications()->count() : 0;
+
+        return view('ketua_tim.edit', compact('agenda', 'anggotaList', 'notifications', 'jumlah_notif'));
+    }
+
+    /**
+     * Menyimpan perubahan edit kegiatan
+     */
+    public function update(Request $request, $id)
+    {
+        $task = Task::find($id);
+        if (!$task) {
+            abort(404, 'Kegiatan tidak ditemukan');
+        }
+
+        $request->validate([
+            'agenda'       => 'required|string|max:255',
+            'tanggal'      => 'required|date',
+            'jam'          => 'required|string',
+            'tempat'       => 'required|string',
+            'status'       => 'required|string',
+            'pj'           => 'required|string',
+            'tujuan'       => 'nullable|string',
+            'anggota'      => 'nullable|array',
+        ]);
+
+        $statusStr = (strtolower($request->status) === 'selesai') ? 'Selesai' : 'Sedang Berjalan';
+        $progressVal = (strtolower($request->status) === 'selesai') ? 100 : 0;
+
+        $task->update([
+            'agenda'           => $request->agenda,
+            'text'             => $request->agenda,
+            'start_date'       => $request->tanggal,
+            'date_akhir'       => $request->tanggal,
+            'start_jam'        => strlen($request->jam) === 5 ? $request->jam . ':00' : $request->jam,
+            'tempat'           => $request->tempat,
+            'status'           => $statusStr,
+            'progress'         => $progressVal,
+            'penanggung_jawab' => $request->pj,
+            'tujuan'           => $request->tujuan,
+        ]);
+
+        // Perbarui sub kegiatan jika ada
+        if ($request->filled('sub_kegiatan')) {
+            $sub = SubKegiatan::where('task_id', $task->id)->first();
+            if ($sub) {
+                $sub->update(['nama_sub' => $request->sub_kegiatan]);
+            } else {
+                SubKegiatan::create([
+                    'task_id'  => $task->id,
+                    'nama_sub' => $request->sub_kegiatan,
+                    'tanggal'  => $request->tanggal,
+                ]);
+            }
+        }
+
+        // Perbarui anggota penugasan jika ada input anggota
+        if ($request->has('anggota')) {
+            $currentAnggota = (array)$request->anggota;
+
+            // Hapus anggota lama yang sudah tidak ada di input baru
+            \App\penugasan::where('id_kegiatan', $task->id)
+                ->whereNotIn('peserta', $currentAnggota)
+                ->delete();
+
+            // Tambahkan anggota baru jika belum ada
+            foreach ($currentAnggota as $namaPeserta) {
+                $namaPeserta = trim($namaPeserta);
+                if (empty($namaPeserta)) continue;
+
+                $exist = \App\penugasan::where('id_kegiatan', $task->id)
+                    ->where('peserta', $namaPeserta)
+                    ->first();
+
+                if (!$exist) {
+                    $userObj = User::where('nama_lengkap', $namaPeserta)->first();
+                    \App\penugasan::create([
+                        'id_kegiatan'      => $task->id,
+                        'peserta'          => $namaPeserta,
+                        'niplama'          => $userObj ? $userObj->niplama : '-',
+                        'keterangan'       => 'Anggota Tim Kegiatan',
+                        'status_kehadiran' => 'Belum Konfirmasi',
+                    ]);
+                }
+            }
+        }
+
+        return redirect()->route('kegiatan.daftar')->with('success', 'Kegiatan berhasil diperbarui!');
+    }
+
+    /**
      * Import Jadwal Petugas PST dari Template Starla (.xlsx)
      */
     public function uploadTemplatePst(Request $request)
