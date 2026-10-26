@@ -248,6 +248,22 @@ class KegiatanController extends Controller
             return $k->is_pst;
         })->values();
 
+        // Auto-seed PST tasks & penugasans jika belum ada di database local device lain
+        if ($pstTasks->isEmpty() && file_exists(database_path('seeds/PstKegiatanSeeder.php'))) {
+            require_once database_path('seeds/PstKegiatanSeeder.php');
+            $seeder = new \PstKegiatanSeeder();
+            $seeder->run();
+
+            $allKegiatans2 = Task::with(['subKegiatans', 'penugasans'])
+                ->where('tasks.jenis', 'Kegiatan')
+                ->orderBy('tasks.id', 'desc')
+                ->get();
+
+            $pstTasks = $allKegiatans2->filter(function($k) {
+                return $k->is_pst;
+            })->values();
+        }
+
         $nonPstTasks = $allKegiatans2->reject(function($k) {
             return $k->is_pst;
         })->values();
