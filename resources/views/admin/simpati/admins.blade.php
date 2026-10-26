@@ -25,48 +25,80 @@
             </span>
         </div>
 
-        <form method="POST" action="{{ route('simpati.admins.store') }}" class="flex flex-col gap-3 lg:flex-row lg:items-start">
+        <form method="POST" action="{{ route('simpati.admins.store') }}"
+              @submit="if(!pickedId) { $event.preventDefault(); alert('Silakan cari dan pilih pegawai dari daftar pencarian terlebih dahulu.'); }"
+              class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
             @csrf
             <input type="hidden" name="user_id" :value="pickedId">
 
-            <div class="w-full min-w-0 flex-1">
-                <label for="admin-pegawai-search" class="block text-[11px] font-bold text-gray-400 uppercase mb-1.5">Pegawai</label>
-                <input type="text" id="admin-pegawai-search" name="pegawai_search" autocomplete="off"
-                       x-model="search" @input.debounce.300ms="searchPegawai()"
-                       placeholder="Ketik nama atau NIP pegawai…"
-                       class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400">
-                <div class="relative z-20">
-                    <div class="mt-2 max-h-52 overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-sm divide-y divide-gray-50" x-show="results.length > 0">
-                        <template x-for="p in results" :key="p.id">
-                            <button type="button" @click="pick(p)"
-                                    class="w-full text-left px-3.5 py-2.5 text-sm flex items-center justify-between gap-2 transition"
-                                    :class="pickedId === p.id ? 'bg-blue-50' : 'hover:bg-gray-50'">
-                                <span class="min-w-0">
-                                    <span class="block font-semibold text-gray-800 truncate" x-text="p.nama_lengkap"></span>
-                                    <span class="block text-[11px] text-gray-400 truncate" x-text="p.niplama + ' · ' + p.nm_jabatan"></span>
-                                </span>
-                            </button>
-                        </template>
+            {{-- Kolom 1: Cari Pegawai --}}
+            <div class="md:col-span-5 relative">
+                <label for="admin-pegawai-search" class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                    Pegawai <span class="text-rose-500">*</span>
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path></svg>
                     </div>
+                    <input type="text" id="admin-pegawai-search" name="pegawai_search" autocomplete="off"
+                           x-model="search" @input.debounce.300ms="searchPegawai()"
+                           placeholder="Ketik nama atau NIP pegawai…"
+                           class="w-full pl-10 pr-8 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 bg-white">
+                    <button type="button" x-show="search || pickedId" @click="clearPick()"
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                            title="Reset pilihan">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
                 </div>
-                <p x-show="search.length > 0 && results.length === 0" class="text-xs text-gray-400 mt-2">Pegawai tidak ditemukan.</p>
-                <p class="text-xs text-gray-500 mt-2" x-show="pickedId">Dipilih: <span class="font-bold text-gray-800" x-text="pickedName"></span></p>
+
+                {{-- Dropdown Hasil Pencarian (Floating absolute agar tidak menimpa elemen lain) --}}
+                <div class="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border border-gray-200 shadow-xl max-h-56 overflow-y-auto divide-y divide-gray-100"
+                     x-show="results.length > 0"
+                     x-cloak
+                     @click.away="results = []">
+                    <template x-for="p in results" :key="p.id">
+                        <button type="button" @click="pick(p)"
+                                class="w-full text-left px-3.5 py-2.5 text-sm flex items-center justify-between gap-2 hover:bg-blue-50/70 transition"
+                                :class="pickedId === p.id ? 'bg-blue-50 text-blue-900 font-semibold' : ''">
+                            <span class="min-w-0">
+                                <span class="block font-semibold text-gray-800 truncate" x-text="p.nama_lengkap"></span>
+                                <span class="block text-[11px] text-gray-400 truncate" x-text="(p.niplama || '-') + ' · ' + (p.nm_jabatan || 'Pegawai')"></span>
+                            </span>
+                            <span class="text-xs text-blue-600 shrink-0 font-bold">Pilih &rarr;</span>
+                        </button>
+                    </template>
+                </div>
+
+                <p x-show="search.length > 1 && results.length === 0 && !pickedId" class="text-xs text-rose-500 mt-1.5" x-cloak>
+                    Pegawai tidak ditemukan. Pastikan ejaan nama atau NIP sesuai.
+                </p>
+                <div class="mt-2 flex items-center gap-2 p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800"
+                     x-show="pickedId" x-cloak>
+                    <svg class="w-4 h-4 shrink-0 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <span class="truncate">Dipilih: <strong x-text="pickedName"></strong></span>
+                </div>
             </div>
 
-            <div class="w-full shrink-0 lg:w-64">
-                <label for="admin-role-select" class="block text-[11px] font-bold text-gray-400 uppercase mb-1.5">Role</label>
+            {{-- Kolom 2: Pilihan Role --}}
+            <div class="md:col-span-4">
+                <label for="admin-role-select" class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                    Role Admin <span class="text-rose-500">*</span>
+                </label>
                 <select id="admin-role-select" name="role" x-model="role" required
                         class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm bg-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400">
                     @foreach($roles as $r)
                         <option value="{{ $r }}">{{ $roleLabels[$r] }}</option>
                     @endforeach
                 </select>
-                <p class="text-[11px] text-gray-400 mt-2 leading-snug" x-text="roleDesc[role] || ''">{{ $roleDesc[$roles[0]] }}</p>
+                <p class="text-xs text-gray-400 mt-2 leading-relaxed" x-text="roleDesc[role] || ''">{{ $roleDesc[$roles[0]] }}</p>
             </div>
 
-            <div class="w-full shrink-0 lg:pt-[26px]">
-                <button type="submit" class="w-full lg:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm whitespace-nowrap">
-                    Tetapkan Role
+            {{-- Kolom 3: Tombol Tetapkan Role --}}
+            <div class="md:col-span-3 md:pt-6">
+                <button type="submit"
+                        class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold transition shadow-sm">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                    <span>Tetapkan Role</span>
                 </button>
             </div>
         </form>
@@ -146,7 +178,12 @@
             roleDesc: @json($roleDesc),
 
             searchPegawai() {
-                fetch('{{ route('simpati.petugas.cari') }}?q=' + encodeURIComponent(this.search || ''))
+                const q = (this.search || '').trim();
+                if (q.length < 2) {
+                    this.results = [];
+                    return;
+                }
+                fetch('{{ route('simpati.petugas.cari') }}?q=' + encodeURIComponent(q))
                     .then(r => r.json())
                     .then(res => { this.results = res.data || []; })
                     .catch(() => { this.results = []; });
@@ -154,10 +191,17 @@
 
             pick(p) {
                 this.pickedId = p.id;
-                this.pickedName = p.nama_lengkap + ' (' + p.niplama + ')';
+                this.pickedName = p.nama_lengkap + (p.niplama ? ' (' + p.niplama + ')' : '');
                 this.results = [];
-                this.search = '';
+                this.search = p.nama_lengkap;
             },
+
+            clearPick() {
+                this.pickedId = null;
+                this.pickedName = '';
+                this.search = '';
+                this.results = [];
+            }
         };
     }
 </script>
