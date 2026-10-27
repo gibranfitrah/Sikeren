@@ -247,9 +247,9 @@ class SimpatiPetugasLayananSeeder extends Seeder
 
             $tglStr = $date->toDateString();
 
-            // Sesuai ketentuan: Petugas PST 4 orang per hari (2 Sesi 1, 2 Sesi 2)
+            // Sesuai ketentuan: Petugas PST 8 orang per hari (4 Sesi 1, 4 Sesi 2)
             // Sesi 1: 08:00 - 12:00 WITA
-            for ($s = 1; $s <= 2; $s++) {
+            for ($s = 1; $s <= 4; $s++) {
                 $officer = $pstOfficers[$officerIdx % $totalOfficers];
                 $officerIdx++;
 
@@ -284,7 +284,7 @@ class SimpatiPetugasLayananSeeder extends Seeder
             }
 
             // Sesi 2: 13:00 - 16:00 WITA
-            for ($s = 1; $s <= 2; $s++) {
+            for ($s = 1; $s <= 4; $s++) {
                 $officer = $pstOfficers[$officerIdx % $totalOfficers];
                 $officerIdx++;
 

@@ -28,6 +28,22 @@
 
     }
 
+    .fc .fc-toolbar-chunk {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.375rem !important;
+    }
+
+    .fc .fc-button-group {
+        display: inline-flex !important;
+        gap: 0.375rem !important;
+    }
+
+    .fc .fc-button-group > .fc-button {
+        margin: 0 !important;
+        border-radius: 0.75rem !important;
+    }
+
     .fc .fc-button-primary {
 
         background-color: #2563eb !important;
@@ -1978,7 +1994,7 @@
 
                             <h4 class="text-sm font-bold text-gray-900">Pelayanan Statistik Terpadu (PST)</h4>
 
-                            <p class="text-[11px] text-gray-500">4 Petugas / Hari &bull; Sesi Pagi & Siang</p>
+                            <p class="text-[11px] text-gray-500">8 Petugas / Hari &bull; Sesi Pagi & Siang</p>
 
                         </div>
 

@@ -356,60 +356,44 @@ class PstApiController extends Controller
         $count = JadwalPst::where('tanggal', $today)->count();
 
         if ($count === 0) {
-            // Ambil dari master petugas_pst atau pegawai eligible
+            // Ambil dari master petugas_pst atau pegawai eligible (8 petugas: 4 sesi 1, 4 sesi 2)
             $sampleOfficers = DB::table('petugas_pst')
                 ->where('id', '!=', 123456789)
-                ->take(4)
+                ->take(8)
                 ->get();
 
             if ($sampleOfficers->isEmpty()) {
-                $sampleOfficers = User::getEligiblePstOfficers()->take(4);
+                $sampleOfficers = User::getEligiblePstOfficers()->take(8);
             }
 
             $officerArray = $sampleOfficers->values()->all();
 
-            // Sesi 1
-            if (isset($officerArray[0])) {
-                JadwalPst::create([
-                    'tanggal'          => $today,
-                    'sesi'             => 1,
-                    'niplama'          => $officerArray[0]->id ?? $officerArray[0]->niplama,
-                    'nama_petugas'     => $officerArray[0]->nama ?? $officerArray[0]->nama_lengkap,
-                    'status_kehadiran' => 'Hadir',
-                    'status_tukar'     => 'none',
-                ]);
-            }
-            if (isset($officerArray[1])) {
-                JadwalPst::create([
-                    'tanggal'          => $today,
-                    'sesi'             => 1,
-                    'niplama'          => $officerArray[1]->id ?? $officerArray[1]->niplama,
-                    'nama_petugas'     => $officerArray[1]->nama ?? $officerArray[1]->nama_lengkap,
-                    'status_kehadiran' => 'Terjadwal',
-                    'status_tukar'     => 'none',
-                ]);
+            // Sesi 1 (4 petugas)
+            for ($i = 0; $i < 4; $i++) {
+                if (isset($officerArray[$i])) {
+                    JadwalPst::create([
+                        'tanggal'          => $today,
+                        'sesi'             => 1,
+                        'niplama'          => $officerArray[$i]->id ?? $officerArray[$i]->niplama,
+                        'nama_petugas'     => $officerArray[$i]->nama ?? $officerArray[$i]->nama_lengkap,
+                        'status_kehadiran' => ($i === 0 ? 'Hadir' : 'Terjadwal'),
+                        'status_tukar'     => 'none',
+                    ]);
+                }
             }
 
-            // Sesi 2
-            if (isset($officerArray[2])) {
-                JadwalPst::create([
-                    'tanggal'          => $today,
-                    'sesi'             => 2,
-                    'niplama'          => $officerArray[2]->id ?? $officerArray[2]->niplama,
-                    'nama_petugas'     => $officerArray[2]->nama ?? $officerArray[2]->nama_lengkap,
-                    'status_kehadiran' => 'Terjadwal',
-                    'status_tukar'     => 'none',
-                ]);
-            }
-            if (isset($officerArray[3])) {
-                JadwalPst::create([
-                    'tanggal'          => $today,
-                    'sesi'             => 2,
-                    'niplama'          => $officerArray[3]->id ?? $officerArray[3]->niplama,
-                    'nama_petugas'     => $officerArray[3]->nama ?? $officerArray[3]->nama_lengkap,
-                    'status_kehadiran' => 'Terjadwal',
-                    'status_tukar'     => 'none',
-                ]);
+            // Sesi 2 (4 petugas)
+            for ($i = 4; $i < 8; $i++) {
+                if (isset($officerArray[$i])) {
+                    JadwalPst::create([
+                        'tanggal'          => $today,
+                        'sesi'             => 2,
+                        'niplama'          => $officerArray[$i]->id ?? $officerArray[$i]->niplama,
+                        'nama_petugas'     => $officerArray[$i]->nama ?? $officerArray[$i]->nama_lengkap,
+                        'status_kehadiran' => 'Terjadwal',
+                        'status_tukar'     => 'none',
+                    ]);
+                }
             }
         }
     }

@@ -6,7 +6,7 @@
 @section('content')
 @php
     $pageTitle = 'Kelola Admin SIMPATI';
-    $pageSubtitle = 'Tetapkan dan cabut role admin SIMPATI. Setiap role memiliki cakupan grup petugas yang berbeda (lihat rincian di tiap kartu).';
+    $pageSubtitle = 'Tetapkan dan kelola role admin SIMPATI. Setiap role memiliki cakupan grup petugas yang berbeda (lihat rincian di tiap kartu).';
 @endphp
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" x-data="adminsUi()">
@@ -55,7 +55,7 @@
                 </div>
 
                 <p x-show="!pickedId && results.length === 0 && search.length <= 1" class="text-[11px] text-gray-400 mt-1.5">
-                    💡 Klik kolom di atas untuk menampilkan daftar pegawai, atau ketik nama/NIP untuk memfilter.
+                    Klik kolom di atas untuk menampilkan daftar pegawai, atau ketik nama/NIP untuk memfilter.
                 </p>
 
                 {{-- Dropdown Hasil Pencarian (Floating absolute agar tidak menimpa elemen lain) --}}
@@ -103,7 +103,7 @@
             {{-- Kolom 3: Tombol Tetapkan Role --}}
             <div class="md:col-span-3 md:pt-6">
                 <button type="submit"
-                        class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold transition shadow-sm">
+                        class="w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold transition shadow-sm whitespace-nowrap">
                     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
                     <span>Tetapkan Role</span>
                 </button>
@@ -154,11 +154,11 @@
                                         </div>
                                     </div>
                                     <form method="POST" action="{{ route('simpati.admins.destroy', $h->role_row_id) }}"
-                                          onsubmit="return confirm('Cabut role {{ $roleLabels[$r] }} dari {{ addslashes($h->nama_lengkap) }}?')">
+                                          onsubmit="return confirm('Batalkan role {{ $roleLabels[$r] }} dari {{ addslashes($h->nama_lengkap) }}?')">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" title="Cabut role"
-                                                class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition">Cabut</button>
+                                        <button type="submit" title="Batalkan role"
+                                                class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition">Batal</button>
                                     </form>
                                 </li>
                             @endforeach

@@ -531,41 +531,55 @@ class SimpatiJadwalController extends Controller
                 continue;
             }
 
+            $officersPerSession = ($grup === 'pst') ? 4 : 1;
+
             // Sesi 1: Pagi (08:00 - 12:00)
-            $p1 = $petugas->get($rotIndex % $totalPetugas);
-            $rotIndex++;
+            for ($s = 1; $s <= $officersPerSession; $s++) {
+                $p1 = $petugas->get($rotIndex % $totalPetugas);
+                $rotIndex++;
 
-            // Sesi 2: Siang (13:00 - 15:30)
-            $p2 = $petugas->get($rotIndex % $totalPetugas);
-            $rotIndex++;
+                JadwalLayanan::updateOrCreate(
+                    [
+                        'grup'    => $grup,
+                        'tanggal' => $dateStr,
+                        'sesi'    => 1,
+                        'user_id' => $p1->user_id,
+                    ],
+                    [
+                        'jam_mulai'   => '08:00:00',
+                        'jam_selesai' => '12:00:00',
+                        'niplama'     => $p1->niplama,
+                        'nama'        => $p1->nama,
+                        'status'      => 'Terjadwal',
+                        'sumber'      => 'auto',
+                    ]
+                );
+                $totalCreated++;
+            }
 
-            JadwalLayanan::updateOrCreate(
-                ['grup' => $grup, 'tanggal' => $dateStr, 'sesi' => 1],
-                [
-                    'jam_mulai'   => '08:00:00',
-                    'jam_selesai' => '12:00:00',
-                    'user_id'     => $p1->user_id,
-                    'niplama'     => $p1->niplama,
-                    'nama'        => $p1->nama,
-                    'status'      => 'Terjadwal',
-                    'sumber'      => 'auto',
-                ]
-            );
+            // Sesi 2: Siang (13:00 - 16:00)
+            for ($s = 1; $s <= $officersPerSession; $s++) {
+                $p2 = $petugas->get($rotIndex % $totalPetugas);
+                $rotIndex++;
 
-            JadwalLayanan::updateOrCreate(
-                ['grup' => $grup, 'tanggal' => $dateStr, 'sesi' => 2],
-                [
-                    'jam_mulai'   => '13:00:00',
-                    'jam_selesai' => '15:30:00',
-                    'user_id'     => $p2->user_id,
-                    'niplama'     => $p2->niplama,
-                    'nama'        => $p2->nama,
-                    'status'      => 'Terjadwal',
-                    'sumber'      => 'auto',
-                ]
-            );
-
-            $totalCreated += 2;
+                JadwalLayanan::updateOrCreate(
+                    [
+                        'grup'    => $grup,
+                        'tanggal' => $dateStr,
+                        'sesi'    => 2,
+                        'user_id' => $p2->user_id,
+                    ],
+                    [
+                        'jam_mulai'   => '13:00:00',
+                        'jam_selesai' => ($grup === 'pst' ? '16:00:00' : '15:30:00'),
+                        'niplama'     => $p2->niplama,
+                        'nama'        => $p2->nama,
+                        'status'      => 'Terjadwal',
+                        'sumber'      => 'auto',
+                    ]
+                );
+                $totalCreated++;
+            }
         }
 
         return $this->backWithSuccess($request, "Berhasil membuat {$totalCreated} jadwal penugasan " . SimpatiRoles::grupLabel($grup) . " untuk bulan " . $targetMonth->translatedFormat('F Y') . " secara merata bergiliran alfabetis.");

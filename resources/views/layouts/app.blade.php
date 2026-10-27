@@ -38,6 +38,21 @@
     <style>
         [x-cloak] { display: none !important; }
         
+        /* Spacing for FullCalendar Navigation and View Buttons */
+        .fc .fc-toolbar-chunk {
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.375rem !important;
+        }
+        .fc .fc-button-group {
+            display: inline-flex !important;
+            gap: 0.375rem !important;
+        }
+        .fc .fc-button-group > .fc-button {
+            margin: 0 !important;
+            border-radius: 0.75rem !important;
+        }
+        
         /* Modern System Font Fallback to prevent font shift */
         body { 
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
