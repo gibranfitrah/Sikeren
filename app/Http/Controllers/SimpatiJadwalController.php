@@ -468,6 +468,168 @@ class SimpatiJadwalController extends Controller
         return null;
     }
 
+    public function generateOtomatis(Request $request)
+    {
+        $user = $this->authorizeSimpati();
+
+        $grup = $request->input('grup', 'pst');
+        $this->authorizeGrup($user, $grup);
+
+        $bulanInput = $request->input('bulan', now()->format('Y-m'));
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulanInput)) {
+            $bulanInput = now()->format('Y-m');
+        }
+        [$tahun, $bulan] = array_map('intval', explode('-', $bulanInput));
+
+        $petugas = \App\PetugasLayanan::grup($grup)->aktif()->orderBy('nama', 'asc')->get();
+        if ($petugas->isEmpty()) {
+            return $this->backWithError($request, 'Tidak ada petugas aktif pada grup ' . SimpatiRoles::grupLabel($grup) . '. Tambahkan petugas terlebih dahulu.');
+        }
+
+        $totalPetugas = $petugas->count();
+        $targetMonth  = Carbon::create($tahun, $bulan, 1);
+        $prevMonth    = $targetMonth->copy()->subMonthNoOverflow();
+
+        // Menggunakan data 1 bulan sebelumnya untuk rotasi bergiliran secara adil
+        $lastAssigned = JadwalLayanan::where('grup', $grup)
+            ->whereYear('tanggal', $prevMonth->year)
+            ->whereMonth('tanggal', $prevMonth->month)
+            ->orderByDesc('tanggal')
+            ->orderByDesc('sesi')
+            ->first();
+
+        $startIndex = 0;
+        if ($lastAssigned) {
+            $idx = $petugas->search(function ($p) use ($lastAssigned) {
+                return ($lastAssigned->user_id && $p->user_id === $lastAssigned->user_id)
+                    || (strcasecmp($p->nama, $lastAssigned->nama) === 0);
+            });
+            if ($idx !== false) {
+                $startIndex = ($idx + 1) % $totalPetugas;
+            }
+        }
+
+        $rotIndex     = $startIndex;
+        $totalCreated = 0;
+        $daysInMonth  = $targetMonth->daysInMonth;
+
+        $holidays = Schema::hasTable('holidays')
+            ? DB::table('holidays')->whereYear('holiday_date', $tahun)->whereMonth('holiday_date', $bulan)->pluck('holiday_date')->all()
+            : [];
+
+        for ($day = 1; $day <= $daysInMonth; $day++) {
+            $currentDate = Carbon::create($tahun, $bulan, $day);
+            $dateStr     = $currentDate->toDateString();
+
+            // Lewati akhir pekan (Sabtu & Minggu)
+            if ($currentDate->isWeekend()) {
+                continue;
+            }
+
+            // Lewati hari libur nasional
+            if (in_array($dateStr, $holidays, true)) {
+                continue;
+            }
+
+            // Sesi 1: Pagi (08:00 - 12:00)
+            $p1 = $petugas->get($rotIndex % $totalPetugas);
+            $rotIndex++;
+
+            // Sesi 2: Siang (13:00 - 15:30)
+            $p2 = $petugas->get($rotIndex % $totalPetugas);
+            $rotIndex++;
+
+            JadwalLayanan::updateOrCreate(
+                ['grup' => $grup, 'tanggal' => $dateStr, 'sesi' => 1],
+                [
+                    'jam_mulai'   => '08:00:00',
+                    'jam_selesai' => '12:00:00',
+                    'user_id'     => $p1->user_id,
+                    'niplama'     => $p1->niplama,
+                    'nama'        => $p1->nama,
+                    'status'      => 'Terjadwal',
+                    'sumber'      => 'auto',
+                ]
+            );
+
+            JadwalLayanan::updateOrCreate(
+                ['grup' => $grup, 'tanggal' => $dateStr, 'sesi' => 2],
+                [
+                    'jam_mulai'   => '13:00:00',
+                    'jam_selesai' => '15:30:00',
+                    'user_id'     => $p2->user_id,
+                    'niplama'     => $p2->niplama,
+                    'nama'        => $p2->nama,
+                    'status'      => 'Terjadwal',
+                    'sumber'      => 'auto',
+                ]
+            );
+
+            $totalCreated += 2;
+        }
+
+        return $this->backWithSuccess($request, "Berhasil membuat {$totalCreated} jadwal penugasan " . SimpatiRoles::grupLabel($grup) . " untuk bulan " . $targetMonth->translatedFormat('F Y') . " secara merata bergiliran alfabetis.");
+    }
+
+    public function rekap(Request $request)
+    {
+        $user = $this->authorizeSimpati();
+
+        $bulanInput = $request->query('bulan', now()->format('Y-m'));
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulanInput)) {
+            $bulanInput = now()->format('Y-m');
+        }
+        [$tahun, $bulan] = array_map('intval', explode('-', $bulanInput));
+        $firstDay = Carbon::create($tahun, $bulan, 1);
+
+        $grupFilter = $request->query('grup', 'semua');
+
+        $query = JadwalLayanan::whereYear('tanggal', $tahun)
+            ->whereMonth('tanggal', $bulan);
+
+        if ($grupFilter !== 'semua' && in_array($grupFilter, array_keys(SimpatiRoles::GRUPS), true)) {
+            $query->where('grup', $grupFilter);
+        }
+
+        $records = $query->get();
+
+        $rekapPerPetugas = $records->groupBy(function ($item) {
+            return ($item->user_id ? ('uid_' . $item->user_id) : ('nama_' . $item->nama)) . '___' . $item->grup;
+        })->map(function ($items) {
+            $first = $items->first();
+            $total = $items->count();
+            $hadir = $items->where('status', 'Hadir')->count();
+            $izin = $items->whereIn('status', ['Izin', 'Cuti', 'Sakit', 'Tugas Luar'])->count();
+            $diganti = $items->where('status', 'Diganti')->count();
+            $terjadwal = $items->where('status', 'Terjadwal')->count();
+            $persentase = $total > 0 ? round(($hadir / $total) * 100, 1) : 0;
+
+            return [
+                'nama'       => $first->nama,
+                'niplama'    => $first->niplama,
+                'user_id'    => $first->user_id,
+                'grup'       => $first->grup,
+                'grup_label' => SimpatiRoles::grupLabel($first->grup),
+                'total'      => $total,
+                'hadir'      => $hadir,
+                'izin'       => $izin,
+                'diganti'    => $diganti,
+                'terjadwal'  => $terjadwal,
+                'persentase' => $persentase,
+            ];
+        })->sortBy('nama')->values();
+
+        return view('admin.simpati.rekap', [
+            'rekap'       => $rekapPerPetugas,
+            'bulanInput'  => $bulanInput,
+            'bulanLabel'  => $firstDay->translatedFormat('F Y'),
+            'grupFilter'  => $grupFilter,
+            'grups'       => SimpatiRoles::GRUPS,
+            'prevBulan'   => $firstDay->copy()->subMonthNoOverflow()->format('Y-m'),
+            'nextBulan'   => $firstDay->copy()->addMonthNoOverflow()->format('Y-m'),
+        ]);
+    }
+
     protected function formatJam($mulai, $selesai): string
     {
         $mulai   = $mulai ? substr((string) $mulai, 0, 5) : null;

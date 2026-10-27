@@ -150,6 +150,7 @@ class SimpatiPetugasController extends Controller
             'user_id' => 'required_without:nama|nullable|integer|exists:users,id',
             'nama'    => 'required_without:user_id|nullable|string|max:200',
             'niplama' => 'nullable|string|max:15',
+            'no_wa'   => 'nullable|string|max:30',
             'catatan' => 'nullable|string|max:500',
         ]);
 
@@ -182,6 +183,7 @@ class SimpatiPetugasController extends Controller
         }
 
         $model->is_aktif = true;
+        $model->no_wa    = $request->input('no_wa');
         $model->catatan  = $request->input('catatan');
         $model->save();
 
@@ -198,6 +200,7 @@ class SimpatiPetugasController extends Controller
         $request->validate([
             'grup'     => 'sometimes|in:' . implode(',', array_keys(SimpatiRoles::GRUPS)),
             'is_aktif' => 'nullable|in:0,1',
+            'no_wa'    => 'nullable|string|max:30',
             'catatan'  => 'nullable|string|max:500',
         ]);
 
@@ -211,6 +214,10 @@ class SimpatiPetugasController extends Controller
 
         if ($request->has('is_aktif')) {
             $model->is_aktif = $request->input('is_aktif') == '1';
+        }
+
+        if ($request->has('no_wa')) {
+            $model->no_wa = $request->input('no_wa');
         }
 
         if ($request->filled('catatan') || $request->has('catatan')) {

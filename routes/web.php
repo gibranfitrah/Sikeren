@@ -94,6 +94,8 @@ Route::get('/notification/{id}', [NotificationController::class, 'read'])
     ->name('notification.read');
 Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])
     ->name('notification.markAllRead');
+Route::post('/notifications/broadcast', [NotificationController::class, 'broadcast'])
+    ->name('notification.broadcast');
 
 Route::get('kegiatan', [KegiatanController::class, 'index'])->name('kegiatan');
 Route::get('/penugasan', [KegiatanController::class, 'index_penugasan'])->name('penugasan');
@@ -235,6 +237,8 @@ Route::post('/kegiatan/{id}/status', [\App\Http\Controllers\KegiatanController::
 
     Route::get('/admin/simpati/jadwal', [\App\Http\Controllers\SimpatiJadwalController::class, 'index'])->name('simpati.jadwal.index');
     Route::get('/admin/simpati/jadwal/template', [\App\Http\Controllers\SimpatiJadwalController::class, 'template'])->name('simpati.jadwal.template');
+    Route::get('/admin/simpati/jadwal/rekap', [\App\Http\Controllers\SimpatiJadwalController::class, 'rekap'])->name('simpati.jadwal.rekap');
+    Route::post('/admin/simpati/jadwal/generate-otomatis', [\App\Http\Controllers\SimpatiJadwalController::class, 'generateOtomatis'])->name('simpati.jadwal.generate_otomatis');
     Route::post('/admin/simpati/jadwal', [\App\Http\Controllers\SimpatiJadwalController::class, 'store'])->name('simpati.jadwal.store');
     Route::post('/admin/simpati/jadwal/upload', [\App\Http\Controllers\SimpatiJadwalController::class, 'upload'])->name('simpati.jadwal.upload');
     Route::post('/admin/simpati/jadwal/{id}/status', [\App\Http\Controllers\SimpatiJadwalController::class, 'updateStatus'])->name('simpati.jadwal.status');

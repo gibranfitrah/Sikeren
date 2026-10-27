@@ -51,6 +51,18 @@
 
             <div class="flex flex-wrap items-center gap-2">
                 @if($canManage)
+                    <form method="POST" action="{{ route('simpati.jadwal.generate_otomatis') }}" class="inline"
+                          onsubmit="return confirm('Generate jadwal otomatis untuk grup {{ $grupLabel }} pada bulan {{ $bulanLabel }} secara merata bergiliran alfabetis?')">
+                        @csrf
+                        <input type="hidden" name="grup" value="{{ $grup }}">
+                        <input type="hidden" name="bulan" value="{{ $bulanInput }}">
+                        <button type="submit"
+                                class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition shadow-sm"
+                                title="Buat jadwal otomatis 1 bulan penuh secara merata bergiliran">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            Generate Otomatis
+                        </button>
+                    </form>
                     <a href="{{ route('simpati.jadwal.template', ['grup' => $grup]) }}"
                        class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-600 text-xs font-bold hover:border-emerald-300 hover:text-emerald-600 transition">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>

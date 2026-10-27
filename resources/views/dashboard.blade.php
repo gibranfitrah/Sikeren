@@ -352,6 +352,47 @@
     </div>
 
     {{-- ========================================================
+        0.1 INFORMASI KETENTUAN PAKAIAN DINAS HARI INI
+    ========================================================= --}}
+    @php
+        $infoPakaian = \App\Services\PakaianDinasService::getInfoPakaian();
+    @endphp
+    <div class="rounded-2xl p-4 sm:p-5 border shadow-2xs transition-all relative overflow-hidden {{ $infoPakaian['is_korpri'] ? 'bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white border-blue-700' : 'bg-white text-slate-800 border-slate-200/90' }}">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+            <div class="flex items-start sm:items-center gap-3.5 min-w-0">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs {{ $infoPakaian['is_korpri'] ? 'bg-blue-600 text-white border border-blue-400/50' : 'bg-blue-50 text-blue-700 border border-blue-100' }}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                </div>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap mb-0.5">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full {{ $infoPakaian['is_korpri'] ? 'bg-amber-400 text-slate-950' : 'bg-blue-100 text-blue-800' }}">
+                            {{ $infoPakaian['badge'] }}
+                        </span>
+                        <span class="text-xs font-bold {{ $infoPakaian['is_korpri'] ? 'text-blue-100' : 'text-slate-500' }}">
+                            Ketentuan Pakaian Dinas BPS Hari Ini
+                        </span>
+                    </div>
+                    <h3 class="text-sm sm:text-base font-extrabold tracking-tight truncate {{ $infoPakaian['is_korpri'] ? 'text-white' : 'text-slate-900' }}">
+                        {{ $infoPakaian['judul'] }}
+                    </h3>
+                    <p class="text-xs leading-relaxed mt-0.5 {{ $infoPakaian['is_korpri'] ? 'text-blue-100/90' : 'text-slate-600' }}">
+                        {{ $infoPakaian['deskripsi'] }}
+                    </p>
+                </div>
+            </div>
+
+            @if(!empty($infoPakaian['besok_korpri']))
+                <div class="p-2.5 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs flex items-center gap-2 shrink-0">
+                    <span class="font-extrabold">🔔 Pengingat:</span>
+                    <span>Besok tanggal 17, wajib seragam KORPRI lengkap!</span>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    {{-- ========================================================
         1. STATS METRICS (4 COMPACT SLEEK CARDS)
     ========================================================= --}}
     <div class="stat-cards-grid">
@@ -505,6 +546,47 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
+        </div>
+    </div>
+
+    {{-- ========================================================
+        0.1 INFORMASI KETENTUAN PAKAIAN DINAS HARI INI
+    ========================================================= --}}
+    @php
+        $infoPakaian = \App\Services\PakaianDinasService::getInfoPakaian();
+    @endphp
+    <div class="rounded-2xl p-4 sm:p-5 border shadow-2xs transition-all relative overflow-hidden {{ $infoPakaian['is_korpri'] ? 'bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white border-blue-700' : 'bg-white text-slate-800 border-slate-200/90' }}">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+            <div class="flex items-start sm:items-center gap-3.5 min-w-0">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs {{ $infoPakaian['is_korpri'] ? 'bg-blue-600 text-white border border-blue-400/50' : 'bg-blue-50 text-blue-700 border border-blue-100' }}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                </div>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap mb-0.5">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full {{ $infoPakaian['is_korpri'] ? 'bg-amber-400 text-slate-950' : 'bg-blue-100 text-blue-800' }}">
+                            {{ $infoPakaian['badge'] }}
+                        </span>
+                        <span class="text-xs font-bold {{ $infoPakaian['is_korpri'] ? 'text-blue-100' : 'text-slate-500' }}">
+                            Ketentuan Pakaian Dinas BPS Hari Ini
+                        </span>
+                    </div>
+                    <h3 class="text-sm sm:text-base font-extrabold tracking-tight truncate {{ $infoPakaian['is_korpri'] ? 'text-white' : 'text-slate-900' }}">
+                        {{ $infoPakaian['judul'] }}
+                    </h3>
+                    <p class="text-xs leading-relaxed mt-0.5 {{ $infoPakaian['is_korpri'] ? 'text-blue-100/90' : 'text-slate-600' }}">
+                        {{ $infoPakaian['deskripsi'] }}
+                    </p>
+                </div>
+            </div>
+
+            @if(!empty($infoPakaian['besok_korpri']))
+                <div class="p-2.5 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs flex items-center gap-2 shrink-0">
+                    <span class="font-extrabold">🔔 Pengingat:</span>
+                    <span>Besok tanggal 17, wajib seragam KORPRI lengkap!</span>
+                </div>
+            @endif
         </div>
     </div>
 

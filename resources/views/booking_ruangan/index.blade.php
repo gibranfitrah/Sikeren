@@ -53,6 +53,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                      'Classroom': { tanpaSofa: 18, denganSofa: 14, hasSofaOption: true, desc: 'Barisan meja dan kursi menghadap depan panggung. Ideal untuk pelatihan, bimtek, dan rapat teknis.' },
                      'U-Shape': { tanpaSofa: 8, denganSofa: null, hasSofaOption: false, desc: 'Susunan meja berbentuk U / tapal kuda. Sangat baik untuk diskusi dua arah dan rapat pimpinan.' },
                      'Boardroom': { tanpaSofa: 12, denganSofa: null, hasSofaOption: false, desc: 'Satu meja rapat besar di tengah. Efektif untuk rapat tertutup dan koordinasi tim inti.' },
+                     'Pelantikan': { tanpaSofa: 24, denganSofa: 20, hasSofaOption: true, desc: 'Formasi pelantikan khusus: area tengah dikosongkan/disesuaikan khusus acara pelantikan dan panggung utama.' },
                      'Custom Layout': { tanpaSofa: 24, denganSofa: 20, hasSofaOption: true, desc: 'Tata letak khusus disesuaikan kebutuhan acara.' }
                  }
              },
@@ -65,6 +66,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                      'Classroom': { tanpaSofa: 48, denganSofa: 40, hasSofaOption: true, desc: 'Meja kelas dengan akses langsung ke Smart TV Display dan Kamera Vicon 360°.' },
                      'U-Shape': { tanpaSofa: 23, denganSofa: null, hasSofaOption: false, desc: 'Susunan meja U-Shape dengan jangkauan optimal Mic Conference Polycom dan kamera.' },
                      'Boardroom': { tanpaSofa: 26, denganSofa: null, hasSofaOption: false, desc: 'Meja eksekutif panjang dengan fasilitas vicon dan audio terintegrasi.' },
+                     'Pelantikan': { tanpaSofa: 50, denganSofa: 40, hasSofaOption: true, desc: 'Formasi pelantikan vicon/hybrid: area tengah dikosongkan untuk prosesi sumpah jabatan & kamera display.' },
                      'Custom Layout': { tanpaSofa: 58, denganSofa: 48, hasSofaOption: true, desc: 'Tata letak custom disesuaikan kebutuhan zoom/vicon.' }
                  }
              },
@@ -77,6 +79,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                      'Classroom': { tanpaSofa: 62, denganSofa: 52, hasSofaOption: true, desc: 'Susunan meja & kursi berkapasitas besar untuk pelatihan regional, bimtek, dan rapat dinas.' },
                      'U-Shape': { tanpaSofa: 58, denganSofa: null, hasSofaOption: false, desc: 'Susunan meja U-Shape megah menghadap panggung utama dan videotron.' },
                      'Boardroom': { tanpaSofa: 66, denganSofa: null, hasSofaOption: false, desc: 'Format meja gabungan konferensi besar untuk forum lintas instansi.' },
+                     'Pelantikan': { tanpaSofa: 100, denganSofa: 80, hasSofaOption: true, desc: 'Formasi pelantikan aula utama: area tengah dikosongkan untuk barisan pejabat yang dilantik & rohaniawan, barisan kursi saksi/undangan di belakang.' },
                      'Custom Layout': { tanpaSofa: 100, denganSofa: 80, hasSofaOption: true, desc: 'Tata letak aula disesuaikan khusus untuk acara seremonial.' }
                  }
              }
@@ -1282,9 +1285,23 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                         <input type="radio" name="layout_meja" value="Boardroom" x-model="layoutMeja" @change="setLayout('Boardroom')" class="text-blue-600">
                                         <span class="text-[11px] font-bold">Boardroom</span>
                                     </div>
-                                    <span class="text-[9px] px-1 bg-slate-100 rounded text-slate-600" x-text="(roomCapacities[selectedVenueId]?.layouts['Boardroom'].tanpaSofa || 0) + ' Org'"></span>
+                                    <span class="text-[9px] px-1 bg-slate-100 rounded text-slate-600" x-text="(roomCapacities[selectedVenueId]?.layouts['Boardroom']?.tanpaSofa || 0) + ' Org'"></span>
                                 </div>
                                 <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Satu meja rapat oval / panjang</span>
+                            </label>
+
+                            {{-- Pelantikan --}}
+                            <label class="p-2.5 rounded-xl border text-xs cursor-pointer transition flex flex-col justify-between"
+                                   :class="layoutMeja === 'Pelantikan' ? 'bg-blue-50/90 border-blue-500 ring-1 ring-blue-500 text-blue-900 font-bold shadow-2xs' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'"
+                                   @click="setLayout('Pelantikan')">
+                                <div class="flex items-center justify-between mb-1">
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="radio" name="layout_meja" value="Pelantikan" x-model="layoutMeja" @change="setLayout('Pelantikan')" class="text-blue-600">
+                                        <span class="text-[11px] font-bold">Pelantikan</span>
+                                    </div>
+                                    <span class="text-[9px] px-1 bg-slate-100 rounded text-slate-600" x-text="(roomCapacities[selectedVenueId]?.layouts['Pelantikan']?.tanpaSofa || 0) + ' Org'"></span>
+                                </div>
+                                <span class="text-[9.5px] text-slate-500 font-normal leading-tight">Area tengah dikosongkan untuk prosesi sumpah</span>
                             </label>
 
                             {{-- Custom Layout --}}
@@ -1550,6 +1567,35 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                             </svg>
                                         </template>
 
+                                        {{-- 6. SVG PREVIEW: PELANTIKAN --}}
+                                        <template x-if="layoutMeja === 'Pelantikan'">
+                                            <svg viewBox="0 0 400 240" class="w-full h-full drop-shadow-xs select-none">
+                                                <rect width="400" height="240" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+                                                {{-- Panggung Utama --}}
+                                                <rect x="70" y="12" width="260" height="26" rx="6" fill="#1e293b"/>
+                                                <text x="200" y="29" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="bold">PANGGUNG PELANTIKAN & SUMPAH</text>
+
+                                                {{-- Meja Tanda Tangan BA Sumpah --}}
+                                                <rect x="140" y="48" width="120" height="18" rx="4" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+                                                <text x="200" y="60" text-anchor="middle" fill="#1e40af" font-size="8" font-weight="bold">Meja Penandatanganan BA</text>
+
+                                                {{-- Area Tengah Dikosongkan Khusus Prosesi --}}
+                                                <g>
+                                                    <rect x="70" y="74" width="260" height="68" rx="8" fill="#fef9c3" stroke="#eab308" stroke-width="1.5" stroke-dasharray="5 3"/>
+                                                    <text x="200" y="105" text-anchor="middle" fill="#854d0e" font-size="9.5" font-weight="bold">AREA PROSESI PELANTIKAN (DIKOSONGKAN)</text>
+                                                    <text x="200" y="122" text-anchor="middle" fill="#a16207" font-size="8">Posisi Pejabat Yang Dilantik & Rohaniawan</text>
+                                                </g>
+
+                                                {{-- Kursi Tamu & Saksi di Belakang --}}
+                                                <rect x="60" y="152" width="280" height="15" rx="3" fill="#cbd5e1"/>
+                                                <text x="200" y="163" text-anchor="middle" fill="#334155" font-size="7.5" font-weight="bold">Barisan Kursi Saksi & Tamu Undangan</text>
+                                                <rect x="60" y="174" width="280" height="15" rx="3" fill="#cbd5e1"/>
+                                                <text x="200" y="185" text-anchor="middle" fill="#334155" font-size="7.5" font-weight="bold">Barisan Kursi Saksi & Tamu Undangan</text>
+
+                                                <text x="345" y="226" text-anchor="middle" fill="#64748b" font-size="9" font-weight="600">Pintu Masuk</text>
+                                            </svg>
+                                        </template>
+
                                     </div>
 
                                     {{-- Legend Floorplan --}}
@@ -1710,6 +1756,9 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                     <input type="checkbox" name="pasang_spanduk" value="1" x-model="pasangSpanduk" class="rounded text-blue-600 focus:ring-blue-500">
                                     <span>Pasang Spanduk / Backdrop</span>
                                 </label>
+                                <p x-show="pasangSpanduk" class="text-[10px] text-blue-600 font-semibold">
+                                    🧹 Penugasan persiapan spanduk otomatis diteruskan ke Cleaning Service (CS).
+                                </p>
                                 <div x-show="pasangSpanduk">
                                     <input type="text"
                                            name="keterangan_spanduk"

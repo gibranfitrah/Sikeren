@@ -388,6 +388,64 @@ class BookingRuanganController extends Controller
             }
         }
 
+        // Notifikasi Persiapan Spanduk ke Petugas Cleaning Service (CS)
+        if (!empty($setupPodium['pasang_spanduk'])) {
+            try {
+                $csOfficers = \App\PetugasLayanan::grup('cs')->aktif()->get();
+                $csUserIds = $csOfficers->pluck('user_id')->filter()->unique()->all();
+
+                $adminCsIds = DB::table('simpati_admin_roles')
+                    ->where('role', 'admin_satpam_cs')
+                    ->pluck('user_id')
+                    ->all();
+
+                $targetNotifyIds = array_values(array_unique(array_merge($csUserIds, $adminCsIds)));
+                if (!empty($targetNotifyIds)) {
+                    $ketSpanduk = !empty($setupPodium['keterangan_spanduk']) ? (' (' . $setupPodium['keterangan_spanduk'] . ')') : '';
+                    $notifMsg = "Penugasan Spanduk: Mohon siapkan & pasang spanduk untuk acara '{$request->nama_acara}'{$ketSpanduk} pada tanggal {$request->booking_date} di {$namaRuangan}.";
+
+                    foreach ($targetNotifyIds as $tId) {
+                        DB::table('notifications')->insert([
+                            'id'             => (string) \Illuminate\Support\Str::uuid(),
+                            'type'           => 'App\Notifications\TugasSpandukNotification',
+                            'notifiable_type'=> 'App\User',
+                            'notifiable_id'  => $tId,
+                            'data'           => json_encode([
+                                'title'       => 'Penugasan Persiapan Spanduk',
+                                'message'     => $notifMsg,
+                                'booking_id'  => $booking->id,
+                                'nama_acara'  => $request->nama_acara,
+                                'tanggal'     => $request->booking_date,
+                                'tempat'      => $namaRuangan,
+                                'url'         => route('booking-ruangan.index', ['date' => $request->booking_date]),
+                            ]),
+                            'created_at'     => now(),
+                            'updated_at'     => now(),
+                        ]);
+                    }
+                }
+            } catch (\Exception $e) {}
+        }
+
+        // Notifikasi ke pemohon pemesanan ruangan
+        if (Auth::check()) {
+            try {
+                DB::table('notifications')->insert([
+                    'id'              => (string) \Illuminate\Support\Str::uuid(),
+                    'type'            => 'App\Notifications\BookingRuanganSuccessNotification',
+                    'notifiable_type' => 'App\User',
+                    'notifiable_id'   => Auth::id(),
+                    'data'            => json_encode([
+                        'judul' => 'Pemesanan Ruangan Berhasil',
+                        'pesan' => 'Reservasi ruangan "' . $namaRuangan . '" untuk acara "' . $request->nama_acara . '" pada tanggal ' . date('d M Y', strtotime($request->booking_date)) . ' (pukul ' . $request->start_time . ' - ' . $request->end_time . ' WITA) telah berhasil dikonfirmasi.',
+                        'url'   => route('booking-ruangan.index', ['date' => $request->booking_date]),
+                    ]),
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ]);
+            } catch (\Exception $e) {}
+        }
+
         return redirect()->route('booking-ruangan.index', ['date' => $request->booking_date])
             ->with('success', 'Reservasi ruangan & akun Zoom untuk "' . $request->nama_acara . '" berhasil dikonfirmasi!');
     }

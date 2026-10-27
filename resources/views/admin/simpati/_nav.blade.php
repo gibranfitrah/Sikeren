@@ -3,6 +3,7 @@
         ['route' => 'simpati.dashboard', 'label' => 'Dashboard'],
         ['route' => 'simpati.petugas.index', 'label' => 'Kelola Petugas'],
         ['route' => 'simpati.jadwal.index', 'label' => 'Kelola Jadwal'],
+        ['route' => 'simpati.jadwal.rekap', 'label' => 'Rekap Kehadiran'],
     ];
     if (Auth::check() && \App\Support\SimpatiRoles::canManageAdmins(Auth::user())) {
         $simpatiNav[] = ['route' => 'simpati.admins.index', 'label' => 'Kelola Admin'];

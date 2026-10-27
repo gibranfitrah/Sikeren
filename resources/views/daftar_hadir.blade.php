@@ -190,6 +190,12 @@
                     <span class="text-slate-500">Asal Instansi:</span>
                     <span class="font-bold text-slate-900">{{ session('eksternal_instansi') }}</span>
                 </div>
+                @if(session('eksternal_wa'))
+                <div class="flex justify-between py-1 border-b border-slate-100">
+                    <span class="text-slate-500">No. WhatsApp:</span>
+                    <span class="font-bold text-slate-900 font-mono">{{ session('eksternal_wa') }}</span>
+                </div>
+                @endif
                 <div class="flex justify-between py-1">
                     <span class="text-slate-500">Waktu Presensi:</span>
                     <span class="font-bold text-slate-900 font-mono">{{ now()->format('H:i') }} WITA</span>
@@ -321,12 +327,42 @@
 
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">
+                            Nomor WhatsApp <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="tel" 
+                               name="no_wa_eksternal" 
+                               required
+                               placeholder="Contoh: 081234567890" 
+                               class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">
                             Keterangan / Jabatan (Opsional)
                         </label>
                         <input type="text" 
                                name="keterangan_eksternal" 
                                placeholder="Contoh: Kepala Bidang Perencanaan" 
                                class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+
+                    {{-- Tanda Tangan Digital --}}
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs font-bold text-slate-700">
+                                Tanda Tangan Digital <span class="text-rose-500">*</span>
+                            </label>
+                            <button type="button" onclick="clearSignatureCanvas()" class="text-[11px] font-bold text-rose-600 hover:text-rose-700 transition">
+                                Bersihkan TTD
+                            </button>
+                        </div>
+                        <div class="border-2 border-dashed border-slate-300 rounded-2xl bg-white p-1 relative overflow-hidden">
+                            <canvas id="signatureCanvas" width="360" height="140" class="w-full h-32 rounded-xl touch-none bg-slate-50 cursor-crosshair"></canvas>
+                            <div id="sigPlaceholder" class="absolute inset-0 flex items-center justify-center pointer-events-none text-slate-400 text-xs font-medium">
+                                Goreskan tanda tangan di sini
+                            </div>
+                        </div>
+                        <input type="hidden" name="tanda_tangan" id="inputTandaTangan">
                     </div>
 
                     <button type="submit" 
@@ -870,6 +906,68 @@
                 }, 3000);
             });
         });
+        // Signature Canvas Logic
+        const sigCanvas = document.getElementById('signatureCanvas');
+        const sigInput = document.getElementById('inputTandaTangan');
+        const sigPlaceholder = document.getElementById('sigPlaceholder');
+        let sigCtx = null;
+        let isDrawing = false;
+
+        if (sigCanvas) {
+            sigCtx = sigCanvas.getContext('2d');
+            sigCtx.lineWidth = 2.5;
+            sigCtx.lineCap = 'round';
+            sigCtx.strokeStyle = '#1e3a8a';
+
+            function getPos(e) {
+                const rect = sigCanvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return {
+                    x: (clientX - rect.left) * (sigCanvas.width / rect.width),
+                    y: (clientY - rect.top) * (sigCanvas.height / rect.height)
+                };
+            }
+
+            function startDraw(e) {
+                isDrawing = true;
+                if (sigPlaceholder) sigPlaceholder.style.display = 'none';
+                const pos = getPos(e);
+                sigCtx.beginPath();
+                sigCtx.moveTo(pos.x, pos.y);
+                e.preventDefault();
+            }
+
+            function draw(e) {
+                if (!isDrawing) return;
+                const pos = getPos(e);
+                sigCtx.lineTo(pos.x, pos.y);
+                sigCtx.stroke();
+                if (sigInput) sigInput.value = sigCanvas.toDataURL();
+                e.preventDefault();
+            }
+
+            function stopDraw() {
+                isDrawing = false;
+                if (sigInput) sigInput.value = sigCanvas.toDataURL();
+            }
+
+            sigCanvas.addEventListener('mousedown', startDraw);
+            sigCanvas.addEventListener('mousemove', draw);
+            window.addEventListener('mouseup', stopDraw);
+
+            sigCanvas.addEventListener('touchstart', startDraw, { passive: false });
+            sigCanvas.addEventListener('touchmove', draw, { passive: false });
+            window.addEventListener('touchend', stopDraw);
+        }
+
+        function clearSignatureCanvas() {
+            if (sigCanvas && sigCtx) {
+                sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+                if (sigInput) sigInput.value = '';
+                if (sigPlaceholder) sigPlaceholder.style.display = 'flex';
+            }
+        }
     </script>
 </body>
 </html>

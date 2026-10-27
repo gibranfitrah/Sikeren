@@ -98,7 +98,26 @@
                 @endif
 
                 {{-- Status Banner --}}
-                @if($isLewatWaktu && $statusKehadiran !== 'Hadir')
+                @if(!empty($isBelumMulai) && $statusKehadiran !== 'Hadir')
+                    <div class="p-3.5 rounded-2xl flex items-center justify-between gap-3 bg-amber-50 border border-amber-200 text-amber-900">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold shrink-0 bg-amber-500 text-white">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider block opacity-75">Status Presensi</span>
+                                <span class="text-sm font-extrabold block">
+                                    Presensi Belum Dibuka
+                                </span>
+                            </div>
+                        </div>
+
+                        <span class="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 text-[10px] font-extrabold">Aktif Pukul {{ $activeFromText ?? '08:00' }} WITA</span>
+                    </div>
+                    <div class="p-3 bg-amber-50/60 border border-amber-200 rounded-2xl text-[11px] text-amber-800 leading-relaxed text-center">
+                        Kode QR presensi otomatis aktif <strong>15 menit sebelum rapat</strong> dimulai (pukul {{ $activeFromText ?? '-' }} WITA).
+                    </div>
+                @elseif($isLewatWaktu && $statusKehadiran !== 'Hadir')
                     <div class="p-3.5 rounded-2xl flex items-center justify-between gap-3 bg-rose-50 border border-rose-200 text-rose-900">
                         <div class="flex items-center gap-3">
                             <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold shrink-0 bg-rose-500 text-white">
@@ -115,7 +134,7 @@
                         <span class="px-2.5 py-1 rounded-lg bg-rose-100 text-rose-800 text-[10px] font-extrabold">Kedaluwarsa</span>
                     </div>
                     <div class="p-3 bg-rose-50/60 border border-rose-200 rounded-2xl text-[11px] text-rose-700 leading-relaxed text-center">
-                        Jadwal rapat ini telah berakhir. Presensi fisik dan kode QR tidak dapat lagi digunakan untuk verifikasi kehadiran.
+                        Jadwal rapat ini telah berakhir lebih dari 15 menit. Presensi QR telah dikunci. Hubungi PJ untuk verifikasi kehadiran manual.
                     </div>
                 @else
                     <div class="p-3.5 rounded-2xl flex items-center justify-between gap-3 {{ $statusKehadiran === 'Hadir' ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-amber-50 border border-amber-200 text-amber-900' }}">

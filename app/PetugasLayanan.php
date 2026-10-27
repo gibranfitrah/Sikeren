@@ -9,7 +9,7 @@ class PetugasLayanan extends Model
     protected $table = 'petugas_layanans';
 
     protected $fillable = [
-        'user_id', 'niplama', 'nipbaru', 'nama', 'jabatan', 'grup', 'is_aktif', 'catatan',
+        'user_id', 'niplama', 'nipbaru', 'nama', 'jabatan', 'grup', 'is_aktif', 'catatan', 'no_wa',
     ];
 
     protected $casts = [

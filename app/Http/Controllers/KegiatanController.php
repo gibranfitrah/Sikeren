@@ -705,28 +705,52 @@ class KegiatanController extends Controller
         $idKegiatan  = $request->input('id_kegiatan');
         $tipePeserta = $request->input('tipe_peserta', 'bps');
 
-        // Cek apakah jadwal pelaksanaan rapat telah lewat batas waktu
+        // Cek apakah jadwal pelaksanaan rapat telah lewat batas waktu atau belum dibuka (toleransi 15 menit)
         $task = is_numeric($idKegiatan) ? Task::find($idKegiatan) : Task::where('id', $idKegiatan)->orWhere('text', $idKegiatan)->first();
         if ($task) {
             $isSelesai = (!empty($task->notulen) || $task->notulen_selesai == 1);
-            $rapatEnd = $task->date_akhir ?: ($task->start_date ?: date('Y-m-d'));
-            $jamAkhirClean = trim($task->end_jam ?: '23:59:59');
-            if (strlen($jamAkhirClean) === 5) {
-                $jamAkhirClean .= ':00';
-            }
-            $isLewatWaktu = false;
+            $startDate = $task->start_date ?: date('Y-m-d');
+            $jamMulai  = $task->start_jam ?: '08:00';
+            $rapatEnd  = $task->date_akhir ?: ($task->end_date ?: $startDate);
+            $jamAkhir  = $task->end_jam ?: '23:59';
+
+            $isBelumMulai   = false;
+            $isLewatWaktu   = false;
+            $activeFromText = '';
+
             try {
-                $waktuAkhirRapat = \Carbon\Carbon::parse($rapatEnd . ' ' . $jamAkhirClean);
-                $isLewatWaktu = \Carbon\Carbon::now()->greaterThan($waktuAkhirRapat) && !$isSelesai;
-            } catch (\Exception $e) {
-                $isLewatWaktu = false;
+                $startDateTimeStr = date('Y-m-d', strtotime($startDate)) . ' ' . (strlen($jamMulai) <= 5 ? ($jamMulai . ':00') : $jamMulai);
+                $startCarbon      = \Carbon\Carbon::parse($startDateTimeStr, 'Asia/Makassar');
+                $activeFrom       = $startCarbon->copy()->subMinutes(15);
+                $activeFromText   = $activeFrom->format('H:i');
+
+                $endDateTimeStr = date('Y-m-d', strtotime($rapatEnd)) . ' ' . (strlen($jamAkhir) <= 5 ? ($jamAkhir . ':00') : $jamAkhir);
+                $endCarbon      = \Carbon\Carbon::parse($endDateTimeStr, 'Asia/Makassar');
+                $activeUntil    = $endCarbon->copy()->addMinutes(15);
+
+                $now = now('Asia/Makassar');
+                if ($now->lt($activeFrom)) {
+                    $isBelumMulai = true;
+                }
+                if ($now->gt($activeUntil) && !$isSelesai && ($task->status ?? '') !== 'Selesai') {
+                    $isLewatWaktu = true;
+                }
+            } catch (\Exception $e) {}
+
+            if ($isBelumMulai) {
+                $msg = 'Presensi belum dibuka. Presensi dibuka mulai 15 menit sebelum rapat (pukul ' . $activeFromText . ' WITA).';
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json(['success' => false, 'message' => $msg], 422);
+                }
+                return redirect()->back()->with('error_presensi', $msg);
             }
 
             if ($isLewatWaktu) {
+                $msg = 'Presensi ditutup karena batas toleransi 15 menit setelah rapat selesai telah berakhir. Silakan hubungi PJ untuk verifikasi manual.';
                 if ($request->expectsJson() || $request->ajax()) {
-                    return response()->json(['success' => false, 'message' => 'Presensi ditutup karena jadwal pelaksanaan rapat telah berakhir.'], 422);
+                    return response()->json(['success' => false, 'message' => $msg], 422);
                 }
-                return redirect()->back()->with('error_presensi', 'Presensi ditutup karena jadwal pelaksanaan rapat telah berakhir.');
+                return redirect()->back()->with('error_presensi', $msg);
             }
         }
 
@@ -734,7 +758,9 @@ class KegiatanController extends Controller
         if ($tipePeserta === 'eksternal' || (!$currentUser && $request->filled('nama_eksternal'))) {
             $namaEksternal = trim($request->input('nama_eksternal', ''));
             $instansi      = trim($request->input('instansi', ''));
+            $noWaEksternal = trim($request->input('no_wa_eksternal', $request->input('no_wa', '')));
             $keteranganEks = trim($request->input('keterangan_eksternal', ''));
+            $tandaTangan   = $request->input('tanda_tangan', '');
 
             if (empty($namaEksternal) || empty($instansi)) {
                 if ($request->expectsJson() || $request->ajax()) {
@@ -756,9 +782,21 @@ class KegiatanController extends Controller
                 $penugasan->niplama     = 'EKSTERNAL';
             }
 
+            $ketLines = [];
+            $ketLines[] = 'Tamu Eksternal - Instansi: ' . $instansi;
+            if ($noWaEksternal) {
+                $ketLines[] = 'No WA: ' . $noWaEksternal;
+            }
+            if ($keteranganEks) {
+                $ketLines[] = 'Jabatan: ' . $keteranganEks;
+            }
+            if (!empty($tandaTangan)) {
+                $ketLines[] = '[TTD Digital Terlampir]';
+            }
+
             $penugasan->peserta          = $namaFormatted;
             $penugasan->status_kehadiran = 'Hadir'; // Tamu eksternal otomatis Hadir
-            $penugasan->keterangan       = 'Tamu Eksternal - Instansi: ' . $instansi . ($keteranganEks ? ' (' . $keteranganEks . ')' : '');
+            $penugasan->keterangan       = implode(' | ', $ketLines);
             $penugasan->waktu_kehadiran  = now();
             $penugasan->save();
 
@@ -775,6 +813,7 @@ class KegiatanController extends Controller
                 ->with('eksternal_success', true)
                 ->with('eksternal_nama', $namaEksternal)
                 ->with('eksternal_instansi', $instansi)
+                ->with('eksternal_wa', $noWaEksternal)
                 ->with('success_presensi', 'Selamat Datang! Kehadiran Anda sebagai Tamu Eksternal (' . $namaEksternal . ' - ' . $instansi . ') telah berhasil dicatat sebagai HADIR.');
         }
 
@@ -1408,19 +1447,34 @@ class KegiatanController extends Controller
             return redirect('/daftarkegiatan/' . $task->id)->with('error_access', $pesan);
         }
 
-        // Hitung apakah rapat telah melewati batas waktu (expired)
-        $isLewatWaktu = false;
+        // Hitung jendela waktu aktif presensi (15 menit sebelum mulai s.d. 15 menit setelah selesai)
+        $isBelumMulai   = false;
+        $isLewatWaktu   = false;
+        $activeFromText = '';
+
+        $startDate = $task->start_date ?: date('Y-m-d');
+        $jamMulai  = $task->start_jam ?: '08:00';
         $dateAkhir = $task->date_akhir ?: ($task->end_date ?: $task->start_date);
         $jamAkhir  = $task->end_jam ?: '23:59';
-        if (!empty($dateAkhir)) {
-            try {
-                $endDateTimeStr = date('Y-m-d', strtotime($dateAkhir)) . ' ' . (strlen($jamAkhir) <= 5 ? ($jamAkhir . ':00') : $jamAkhir);
-                $endCarbon = \Carbon\Carbon::parse($endDateTimeStr, 'Asia/Makassar');
-                if (now('Asia/Makassar')->gt($endCarbon) && ($task->status ?? '') !== 'Selesai') {
-                    $isLewatWaktu = true;
-                }
-            } catch (\Exception $e) {}
-        }
+
+        try {
+            $startDateTimeStr = date('Y-m-d', strtotime($startDate)) . ' ' . (strlen($jamMulai) <= 5 ? ($jamMulai . ':00') : $jamMulai);
+            $startCarbon      = \Carbon\Carbon::parse($startDateTimeStr, 'Asia/Makassar');
+            $activeFrom       = $startCarbon->copy()->subMinutes(15);
+            $activeFromText   = $activeFrom->format('H:i');
+
+            $endDateTimeStr = date('Y-m-d', strtotime($dateAkhir)) . ' ' . (strlen($jamAkhir) <= 5 ? ($jamAkhir . ':00') : $jamAkhir);
+            $endCarbon      = \Carbon\Carbon::parse($endDateTimeStr, 'Asia/Makassar');
+            $activeUntil    = $endCarbon->copy()->addMinutes(15);
+
+            $now = now('Asia/Makassar');
+            if ($now->lt($activeFrom)) {
+                $isBelumMulai = true;
+            }
+            if ($now->gt($activeUntil) && ($task->status ?? '') !== 'Selesai') {
+                $isLewatWaktu = true;
+            }
+        } catch (\Exception $e) {}
 
         // Cari record penugasan peserta untuk rapat ini
         $penugasan = penugasan::where('id_kegiatan', $task->id)
@@ -1460,7 +1514,9 @@ class KegiatanController extends Controller
             'qrSvg',
             'verifyUrl',
             'urlPresensiRuangan',
-            'isLewatWaktu'
+            'isLewatWaktu',
+            'isBelumMulai',
+            'activeFromText'
         ));
     }
 
@@ -1477,19 +1533,34 @@ class KegiatanController extends Controller
             abort(404, 'Rapat tidak ditemukan.');
         }
 
-        // Cek apakah rapat sudah lewat batas waktu (kunci presensi)
-        $isLewatWaktu = false;
-        $dateAkhir = $task->date_akhir ?: ($task->end_date ?: $task->start_date);
+        // Cek jendela waktu aktif presensi (15 menit sebelum mulai s.d. 15 menit setelah selesai)
+        $isBelumMulai   = false;
+        $isLewatWaktu   = false;
+        $activeFromText = '';
+
+        $startDate = $task->start_date ?: date('Y-m-d');
+        $jamMulai  = $task->start_jam ?: '08:00';
+        $dateAkhir = $task->date_akhir ?: ($task->end_date ?: $startDate);
         $jamAkhir  = $task->end_jam ?: '23:59';
-        if (!empty($dateAkhir)) {
-            try {
-                $endDateTimeStr = date('Y-m-d', strtotime($dateAkhir)) . ' ' . (strlen($jamAkhir) <= 5 ? ($jamAkhir . ':00') : $jamAkhir);
-                $endCarbon = \Carbon\Carbon::parse($endDateTimeStr, 'Asia/Makassar');
-                if (now('Asia/Makassar')->gt($endCarbon) && ($task->status ?? '') !== 'Selesai') {
-                    $isLewatWaktu = true;
-                }
-            } catch (\Exception $e) {}
-        }
+
+        try {
+            $startDateTimeStr = date('Y-m-d', strtotime($startDate)) . ' ' . (strlen($jamMulai) <= 5 ? ($jamMulai . ':00') : $jamMulai);
+            $startCarbon      = \Carbon\Carbon::parse($startDateTimeStr, 'Asia/Makassar');
+            $activeFrom       = $startCarbon->copy()->subMinutes(15);
+            $activeFromText   = $activeFrom->format('H:i');
+
+            $endDateTimeStr = date('Y-m-d', strtotime($dateAkhir)) . ' ' . (strlen($jamAkhir) <= 5 ? ($jamAkhir . ':00') : $jamAkhir);
+            $endCarbon      = \Carbon\Carbon::parse($endDateTimeStr, 'Asia/Makassar');
+            $activeUntil    = $endCarbon->copy()->addMinutes(15);
+
+            $now = now('Asia/Makassar');
+            if ($now->lt($activeFrom)) {
+                $isBelumMulai = true;
+            }
+            if ($now->gt($activeUntil) && ($task->status ?? '') !== 'Selesai') {
+                $isLewatWaktu = true;
+            }
+        } catch (\Exception $e) {}
 
         $rawNip = trim($request->query('nip', ''));
         $token = $request->query('token');
@@ -1617,16 +1688,33 @@ class KegiatanController extends Controller
             ]);
         }
 
-        if ($isLewatWaktu) {
+        if ($isBelumMulai) {
+            $msg = 'Presensi QR belum dibuka. Presensi dibuka mulai 15 menit sebelum rapat (pukul ' . $activeFromText . ' WITA).';
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Presensi ditolak. Waktu pelaksanaan rapat telah berakhir (Melewati Batas Waktu / Batal).'
+                    'message' => $msg
                 ], 422);
             }
             return view('rapat.verifikasi_hasil', [
                 'success' => false,
-                'message' => 'Presensi ditolak. Waktu pelaksanaan rapat telah berakhir (Melewati Batas Waktu / Batal).',
+                'message' => $msg,
+                'task'    => $task,
+                'peserta' => $targetUser
+            ]);
+        }
+
+        if ($isLewatWaktu) {
+            $msg = 'Presensi ditolak. Waktu pelaksanaan rapat telah berakhir lebih dari 15 menit. Silakan lakukan verifikasi manual melalui menu daftar peserta.';
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $msg
+                ], 422);
+            }
+            return view('rapat.verifikasi_hasil', [
+                'success' => false,
+                'message' => $msg,
                 'task'    => $task,
                 'peserta' => $targetUser
             ]);

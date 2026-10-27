@@ -236,6 +236,75 @@ class KetuaTimController extends Controller
             }
         }
 
+        // Simpan Petugas Upacara / Apel jika diisi
+        if ($request->has('petugas_upacara') && is_array($request->petugas_upacara)) {
+            $roleLabels = [
+                'pembina'    => 'Pembina Upacara',
+                'pemimpin'   => 'Pemimpin Upacara',
+                'perwira'    => 'Pengatur Upacara / Perwira',
+                'uud'        => 'Pembaca Teks UUD 1945',
+                'doa'        => 'Pembaca Doa',
+                'dirigen'    => 'Dirigen / Konduktor',
+                'mc'         => 'Pembawa Acara (MC)',
+                'pengibar_1' => 'Pengibar Bendera (1)',
+                'pengibar_2' => 'Pengibar Bendera (2)',
+                'pengibar_3' => 'Pengibar Bendera (3)',
+            ];
+
+            foreach ($request->petugas_upacara as $key => $namaPetugas) {
+                $namaPetugas = trim($namaPetugas ?? '');
+                if (empty($namaPetugas)) continue;
+
+                $roleTitle = $roleLabels[$key] ?? 'Petugas Upacara';
+
+                $pUser = User::where('nama_lengkap', $namaPetugas)
+                    ->orWhere('niplama', $namaPetugas)
+                    ->orWhere('username', $namaPetugas)
+                    ->first();
+
+                // Cek apakah sudah ada di penugasan
+                $existing = \App\penugasan::where('id_kegiatan', $task->id)
+                    ->where(function ($q) use ($namaPetugas, $pUser) {
+                        $q->where('peserta', $namaPetugas);
+                        if ($pUser) {
+                            $q->orWhere('niplama', $pUser->niplama)
+                              ->orWhere('peserta', $pUser->nama_lengkap);
+                        }
+                    })
+                    ->first();
+
+                if ($existing) {
+                    $existing->keterangan = $existing->keterangan ? ($existing->keterangan . ' | ' . $roleTitle) : $roleTitle;
+                    $existing->save();
+                } else {
+                    \App\penugasan::create([
+                        'id_kegiatan' => $task->id,
+                        'niplama'     => $pUser ? $pUser->niplama : 'UPACARA',
+                        'peserta'     => $pUser ? $pUser->nama_lengkap : $namaPetugas,
+                        'keterangan'  => $roleTitle,
+                    ]);
+                }
+
+                // Kirim notifikasi peran upacara
+                if ($pUser && $pUser->id !== Auth::id()) {
+                    DB::table('notifications')->insert([
+                        'id'              => (string) \Illuminate\Support\Str::uuid(),
+                        'type'            => 'App\Notifications\PetugasUpacaraNotification',
+                        'notifiable_type' => 'App\User',
+                        'notifiable_id'   => $pUser->id,
+                        'data'            => json_encode([
+                            'judul' => 'Penugasan ' . $roleTitle . ': ' . $request->agenda,
+                            'pesan' => 'Anda ditugaskan sebagai "' . $roleTitle . '" untuk upacara/kegiatan "' . $request->agenda . '" pada ' . date('d M Y', strtotime($startDate)) . '.',
+                            'url'   => '/daftarkegiatan/' . $task->id,
+                        ]),
+                        'read_at'         => null,
+                        'created_at'      => now(),
+                        'updated_at'      => now(),
+                    ]);
+                }
+            }
+        }
+
         // Notifikasi khusus untuk PJ jika ditugaskan orang lain
         if (!empty($request->pj)) {
             $userPj = User::where('nama_lengkap', $request->pj)->orWhere('username', $request->pj)->first();
@@ -274,7 +343,19 @@ class KetuaTimController extends Controller
             'updated_at'   => now(),
         ]);
 
-        return redirect()->route('kegiatan.daftar')->with('success', 'Kegiatan baru berhasil dibuat dan diterbitkan!');
+        $countPeserta = count($anggotaList);
+        if ($countPeserta > 0) {
+            $previewPeserta = array_slice($anggotaList, 0, 5);
+            $namaStr = implode(', ', $previewPeserta);
+            if ($countPeserta > 5) {
+                $namaStr .= ' dan ' . ($countPeserta - 5) . ' orang lainnya';
+            }
+            $pesanSuccess = "Kegiatan '{$request->agenda}' berhasil dibuat! Daftar peserta ({$countPeserta} orang): {$namaStr}. Notifikasi telah dikirimkan ke seluruh anggota tim.";
+        } else {
+            $pesanSuccess = "Kegiatan '{$request->agenda}' berhasil dibuat dan diterbitkan!";
+        }
+
+        return redirect()->route('kegiatan.daftar')->with('success', $pesanSuccess);
     }
 
     /**

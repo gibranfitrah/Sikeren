@@ -57,4 +57,40 @@ class NotificationController extends Controller
         }
         return redirect()->back()->with('success', 'Semua notifikasi telah ditandai sudah dibaca.');
     }
+
+    /**
+     * Broadcast pengumuman / informasi resmi ke seluruh pegawai BPS
+     */
+    public function broadcast(Request $request)
+    {
+        $request->validate([
+            'judul' => 'required|string|max:255',
+            'pesan' => 'required|string',
+            'url'   => 'nullable|string',
+        ]);
+
+        $users = \App\User::all();
+        $targetUrl = $request->url ?: '/dashboard';
+        $sender = Auth::user() ? Auth::user()->nama_lengkap : 'Admin SIKEREN';
+
+        foreach ($users as $u) {
+            DB::table('notifications')->insert([
+                'id'              => (string) \Illuminate\Support\Str::uuid(),
+                'type'            => 'App\Notifications\PengumumanInformasiNotification',
+                'notifiable_type' => 'App\User',
+                'notifiable_id'   => $u->id,
+                'data'            => json_encode([
+                    'judul'    => $request->judul,
+                    'pesan'    => $request->pesan,
+                    'pengirim' => $sender,
+                    'url'      => $targetUrl,
+                ]),
+                'read_at'         => null,
+                'created_at'      => now(),
+                'updated_at'      => now(),
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Pengumuman informasi berhasil disiarkan ke seluruh pegawai BPS (' . $users->count() . ' orang).');
+    }
 }

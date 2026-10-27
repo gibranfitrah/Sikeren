@@ -336,10 +336,10 @@
                         </div>
                         <div class="flex items-center gap-2 shrink-0">
                             <button type="button" onclick="selectAllAnggota(true)" class="text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1 rounded-lg border border-emerald-200 transition">
-                                Select All Filter
+                                Pilih Semua
                             </button>
                             <button type="button" onclick="selectAllAnggota(false)" class="text-[11px] font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg transition">
-                                Clear All
+                                Batalkan Pilihan
                             </button>
                         </div>
                     </div>
@@ -398,15 +398,133 @@
 
         </div>
 
+        {{-- PENGATURAN PETUGAS UPACARA / APEL (OPSIONAL) --}}
+        <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs space-y-4">
+            <div class="flex items-center justify-between cursor-pointer" onclick="toggleUpacaraSection()">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/></svg>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Pengaturan Petugas Upacara / Apel (Opsional)</h4>
+                        <p class="text-[11px] text-slate-500">Kelola dan tentukan susunan petugas jika kegiatan ini merupakan upacara atau apel kedinasan.</p>
+                    </div>
+                </div>
+                <span id="upacaraToggleText" class="text-xs font-bold text-blue-600 hover:text-blue-700 transition select-none">Tampilkan ▼</span>
+            </div>
+
+            <div id="upacaraFieldsContainer" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-3 border-t border-slate-100">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Pembina Upacara</label>
+                    <select name="petugas_upacara[pembina]" class="w-full text-xs rounded-xl border border-slate-200 p-2 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Pilih Pegawai --</option>
+                        @foreach($allUsers as $u)
+                            <option value="{{ $u->nama_lengkap }}">{{ $u->nama_lengkap }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Pemimpin Upacara</label>
+                    <select name="petugas_upacara[pemimpin]" class="w-full text-xs rounded-xl border border-slate-200 p-2 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Pilih Pegawai --</option>
+                        @foreach($allUsers as $u)
+                            <option value="{{ $u->nama_lengkap }}">{{ $u->nama_lengkap }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Pengatur Upacara / Perwira</label>
+                    <select name="petugas_upacara[perwira]" class="w-full text-xs rounded-xl border border-slate-200 p-2 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Pilih Pegawai --</option>
+                        @foreach($allUsers as $u)
+                            <option value="{{ $u->nama_lengkap }}">{{ $u->nama_lengkap }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Pembaca Teks UUD 1945</label>
+                    <select name="petugas_upacara[uud]" class="w-full text-xs rounded-xl border border-slate-200 p-2 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Pilih Pegawai --</option>
+                        @foreach($allUsers as $u)
+                            <option value="{{ $u->nama_lengkap }}">{{ $u->nama_lengkap }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Pembaca Doa</label>
+                    <select name="petugas_upacara[doa]" class="w-full text-xs rounded-xl border border-slate-200 p-2 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Pilih Pegawai --</option>
+                        @foreach($allUsers as $u)
+                            <option value="{{ $u->nama_lengkap }}">{{ $u->nama_lengkap }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Dirigen / Konduktor</label>
+                    <select name="petugas_upacara[dirigen]" class="w-full text-xs rounded-xl border border-slate-200 p-2 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Pilih Pegawai --</option>
+                        @foreach($allUsers as $u)
+                            <option value="{{ $u->nama_lengkap }}">{{ $u->nama_lengkap }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Pembawa Acara (MC)</label>
+                    <select name="petugas_upacara[mc]" class="w-full text-xs rounded-xl border border-slate-200 p-2 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Pilih Pegawai --</option>
+                        @foreach($allUsers as $u)
+                            <option value="{{ $u->nama_lengkap }}">{{ $u->nama_lengkap }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Pengibar Bendera (Pilih s.d. 3 Orang)</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <select name="petugas_upacara[pengibar_1]" class="w-full text-xs rounded-xl border border-slate-200 p-2 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500">
+                            <option value="">-- Pengibar 1 --</option>
+                            @foreach($allUsers as $u)
+                                <option value="{{ $u->nama_lengkap }}">{{ $u->nama_lengkap }}</option>
+                            @endforeach
+                        </select>
+                        <select name="petugas_upacara[pengibar_2]" class="w-full text-xs rounded-xl border border-slate-200 p-2 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500">
+                            <option value="">-- Pengibar 2 --</option>
+                            @foreach($allUsers as $u)
+                                <option value="{{ $u->nama_lengkap }}">{{ $u->nama_lengkap }}</option>
+                            @endforeach
+                        </select>
+                        <select name="petugas_upacara[pengibar_3]" class="w-full text-xs rounded-xl border border-slate-200 p-2 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500">
+                            <option value="">-- Pengibar 3 --</option>
+                            @foreach($allUsers as $u)
+                                <option value="{{ $u->nama_lengkap }}">{{ $u->nama_lengkap }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- BOTTOM ACTION BAR --}}
         <div class="pt-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p class="text-xs text-gray-400">
                 Pastikan informasi agenda, jadwal, dan penugasan tim sudah sesuai sebelum menerbitkan kegiatan.
             </p>
-            <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
-                <x-button variant="secondary" href="{{ route('kegiatan.daftar') }}">
-                    Batal
-                </x-button>
+            <div class="flex items-center gap-2.5 w-full sm:w-auto justify-end flex-wrap">
+                {{-- Tombol Reset Formulir dengan Konfirmasi --}}
+                <button type="button" 
+                        onclick="openResetModal()" 
+                        class="px-4 py-2.5 rounded-xl border border-rose-200 text-rose-700 bg-rose-50/70 hover:bg-rose-100 text-xs font-bold transition flex items-center gap-1.5 active:scale-95 shadow-2xs">
+                    <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    <span>Reset Formulir</span>
+                </button>
+
+                {{-- Tombol Batal dengan Konfirmasi --}}
+                <button type="button" 
+                        onclick="openBatalModal()" 
+                        class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 text-xs font-bold transition flex items-center gap-1.5 active:scale-95 shadow-2xs">
+                    <span>Batal</span>
+                </button>
+
+                {{-- Tombol Terbitkan Kegiatan --}}
                 <x-button type="submit" variant="primary" size="lg">
                     <x-slot name="icon">
                         <svg class="w-4 h-4 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -417,6 +535,55 @@
                 </x-button>
             </div>
         </div>
+
+    </form>
+</div>
+
+{{-- MODAL KONFIRMASI RESET FORMULIR --}}
+<div id="modalResetConfirm" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs hidden transition-opacity">
+    <div class="bg-white rounded-3xl max-w-sm w-full shadow-2xl p-6 border border-slate-200 text-center space-y-4 animate-in fade-in zoom-in-95 duration-150">
+        <div class="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </div>
+        <div>
+            <h3 class="text-base font-bold text-slate-900">Reset Formulir Kegiatan?</h3>
+            <p class="text-xs text-slate-500 mt-1">
+                Semua isian formulir yang telah Anda ketik dan pilihan peserta akan dikosongkan kembali.
+            </p>
+        </div>
+        <div class="grid grid-cols-2 gap-2.5 pt-2">
+            <button type="button" onclick="closeResetModal()" class="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+                Tidak, Kembali
+            </button>
+            <button type="button" onclick="executeResetForm()" class="w-full py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition shadow-sm">
+                Ya, Reset
+            </button>
+        </div>
+    </div>
+</div>
+
+{{-- MODAL KONFIRMASI BATAL PEMBUATAN KEGIATAN --}}
+<div id="modalBatalConfirm" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs hidden transition-opacity">
+    <div class="bg-white rounded-3xl max-w-sm w-full shadow-2xl p-6 border border-slate-200 text-center space-y-4 animate-in fade-in zoom-in-95 duration-150">
+        <div class="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+        <div>
+            <h3 class="text-base font-bold text-slate-900">Batalkan Pembuatan Kegiatan?</h3>
+            <p class="text-xs text-slate-500 mt-1">
+                Perubahan formulir belum tersimpan. Anda akan diarahkan kembali ke halaman daftar kegiatan.
+            </p>
+        </div>
+        <div class="grid grid-cols-2 gap-2.5 pt-2">
+            <button type="button" onclick="closeBatalModal()" class="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+                Tidak, Lanjutkan
+            </button>
+            <a href="{{ route('kegiatan.daftar') }}" class="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs transition shadow-sm flex items-center justify-center">
+                Ya, Batalkan
+            </a>
+        </div>
+    </div>
+</div>
 
     </form>
 </div>
@@ -486,11 +653,53 @@
 </div>
 
 <script>
+function toggleUpacaraSection() {
+    const container = document.getElementById('upacaraFieldsContainer');
+    const toggleText = document.getElementById('upacaraToggleText');
+    if (container.classList.contains('hidden')) {
+        container.classList.remove('hidden');
+        toggleText.textContent = 'Sembunyikan ▲';
+    } else {
+        container.classList.add('hidden');
+        toggleText.textContent = 'Tampilkan ▼';
+    }
+}
+
+function openResetModal() {
+    document.getElementById('modalResetConfirm').classList.remove('hidden');
+}
+
+function closeResetModal() {
+    document.getElementById('modalResetConfirm').classList.add('hidden');
+}
+
+function executeResetForm() {
+    const form = document.querySelector('form[action*="ketua-tim"]');
+    if (form) {
+        form.reset();
+        document.querySelectorAll('.anggota-checkbox').forEach(cb => cb.checked = false);
+        updateAnggotaCounter();
+    }
+    closeResetModal();
+}
+
+function openBatalModal() {
+    document.getElementById('modalBatalConfirm').classList.remove('hidden');
+}
+
+function closeBatalModal() {
+    document.getElementById('modalBatalConfirm').classList.add('hidden');
+}
+
 function selectAllAnggota(checked) {
     document.querySelectorAll('.pegawai-card').forEach(card => {
-        if (card.style.display !== 'none') {
-            const cb = card.querySelector('.anggota-checkbox');
-            if (cb) cb.checked = checked;
+        const cb = card.querySelector('.anggota-checkbox');
+        if (cb) {
+            if (!checked) {
+                cb.checked = false;
+            } else if (card.style.display !== 'none') {
+                cb.checked = true;
+            }
         }
     });
     updateAnggotaCounter();

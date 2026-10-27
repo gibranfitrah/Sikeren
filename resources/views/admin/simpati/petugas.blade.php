@@ -177,6 +177,7 @@
                             <th class="px-6 py-3 font-bold">Nama Petugas</th>
                             <th class="px-6 py-3 font-bold">NIP Lama</th>
                             <th class="px-6 py-3 font-bold">Jabatan</th>
+                            <th class="px-6 py-3 font-bold">No WhatsApp</th>
                             <th class="px-6 py-3 font-bold">Status</th>
                             <th class="px-6 py-3 font-bold">Catatan</th>
                             <th class="px-6 py-3 font-bold text-right">Aksi</th>
@@ -196,6 +197,23 @@
                                 </td>
                                 <td class="px-6 py-3.5 text-gray-600 text-xs">{{ $petugas->niplama ?: ($petugas->nipbaru ?: '-') }}</td>
                                 <td class="px-6 py-3.5 text-gray-600 text-xs max-w-[220px]">{{ $petugas->jabatan ?: '-' }}</td>
+                                <td class="px-6 py-3.5 text-xs">
+                                    @if(!empty($petugas->no_wa))
+                                        @php
+                                            $cleanWa = preg_replace('/[^0-9]/', '', $petugas->no_wa);
+                                            if (str_starts_with($cleanWa, '0')) {
+                                                $cleanWa = '62' . substr($cleanWa, 1);
+                                            }
+                                        @endphp
+                                        <a href="https://wa.me/{{ $cleanWa }}" target="_blank"
+                                           class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 font-semibold transition" title="Hubungi via WhatsApp">
+                                            <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.588-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.007c.101.005.237-.038.37.28.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.087-.179.182-.077.357.101.174.449.741.964 1.2.664.593 1.224.776 1.397.863.173.087.275.072.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.044.073.044.419-.1.824z"/></svg>
+                                            <span>{{ $petugas->no_wa }}</span>
+                                        </a>
+                                    @else
+                                        <span class="text-gray-400 italic">-</span>
+                                    @endif
+                                </td>
                                 <td class="px-6 py-3.5">
                                     @if($petugas->is_aktif)
                                         <x-badge variant="success" size="sm">Aktif</x-badge>
@@ -223,7 +241,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="6" class="px-6 py-12 text-center">
+                            <tr><td colspan="7" class="px-6 py-12 text-center">
                                 <p class="text-sm font-bold text-gray-500">Belum ada petugas {{ \App\Support\SimpatiRoles::grupLabel($tab) }}</p>
                                 <p class="text-xs text-gray-400 mt-1">Klik "Tambah Petugas" untuk menugaskan pegawai ke grup ini.</p>
                             </td></tr>
@@ -424,6 +442,12 @@
                 </div>
 
                 <div class="mt-4">
+                    <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1.5">Nomor WhatsApp (opsional)</label>
+                    <input type="text" name="no_wa" placeholder="Contoh: 08123456789 atau 628123456789" maxlength="30"
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div class="mt-4">
                     <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1.5">Catatan (opsional)</label>
                     <input type="text" name="catatan" maxlength="500"
                            class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-blue-500">
@@ -458,6 +482,7 @@
                         <div><dt class="text-[11px] font-bold text-gray-400 uppercase">Status</dt><dd class="font-semibold" x-text="detailPetugas.is_aktif ? 'Aktif' : 'Nonaktif'"></dd></div>
                         <div><dt class="text-[11px] font-bold text-gray-400 uppercase">NIP Lama</dt><dd class="font-semibold text-gray-800" x-text="detailPetugas.niplama || '-'"></dd></div>
                         <div><dt class="text-[11px] font-bold text-gray-400 uppercase">NIP Baru</dt><dd class="font-semibold text-gray-800" x-text="detailPetugas.nipbaru || '-'"></dd></div>
+                        <div><dt class="text-[11px] font-bold text-gray-400 uppercase">WhatsApp</dt><dd class="font-semibold text-gray-800" x-text="detailPetugas.no_wa || '-'"></dd></div>
                         <div class="col-span-2"><dt class="text-[11px] font-bold text-gray-400 uppercase">Jabatan</dt><dd class="font-semibold text-gray-800" x-text="detailPetugas.jabatan || '-'"></dd></div>
                         <div class="col-span-2"><dt class="text-[11px] font-bold text-gray-400 uppercase">Email</dt><dd class="font-semibold text-gray-800" x-text="(detailPetugas.user && detailPetugas.user.email) || '-'"></dd></div>
                         <div class="col-span-2"><dt class="text-[11px] font-bold text-gray-400 uppercase">Catatan</dt><dd class="text-gray-700" x-text="detailPetugas.catatan || '-'"></dd></div>
@@ -500,6 +525,11 @@
                                     </template>
                                 </select>
                             </div>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1.5">Nomor WhatsApp</label>
+                            <input type="text" name="no_wa" x-model="managePetugas.no_wa" placeholder="Contoh: 08123456789 atau 628123456789" maxlength="30"
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1.5">Catatan</label>
