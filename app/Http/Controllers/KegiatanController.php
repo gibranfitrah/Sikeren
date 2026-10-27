@@ -264,6 +264,28 @@ class KegiatanController extends Controller
             })->values();
         }
 
+        // Auto-seed Semua Kegiatan & Penugasan Lengkap jika belum ada di database local device lain
+        if ($allKegiatans2->count() < 80) {
+            if (file_exists(database_path('seeders/KegiatanPenugasanLengkapSeeder.php'))) {
+                require_once database_path('seeders/KegiatanPenugasanLengkapSeeder.php');
+                $seeder = new \Database\Seeders\KegiatanPenugasanLengkapSeeder();
+                $seeder->run();
+            } elseif (file_exists(database_path('seeds/KegiatanPenugasanLengkapSeeder.php'))) {
+                require_once database_path('seeds/KegiatanPenugasanLengkapSeeder.php');
+                $seeder = new \KegiatanPenugasanLengkapSeeder();
+                $seeder->run();
+            }
+
+            $allKegiatans2 = Task::with(['subKegiatans', 'penugasans'])
+                ->where('tasks.jenis', 'Kegiatan')
+                ->orderBy('tasks.id', 'desc')
+                ->get();
+
+            $pstTasks = $allKegiatans2->filter(function($k) {
+                return $k->is_pst;
+            })->values();
+        }
+
         $nonPstTasks = $allKegiatans2->reject(function($k) {
             return $k->is_pst;
         })->values();

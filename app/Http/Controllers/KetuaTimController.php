@@ -56,6 +56,32 @@ class KetuaTimController extends Controller
             })->values();
         }
 
+        // Auto-seed Semua Kegiatan & Penugasan Lengkap jika belum ada di database lokal
+        if ($allKegiatans->count() < 80) {
+            if (file_exists(database_path('seeders/KegiatanPenugasanLengkapSeeder.php'))) {
+                require_once database_path('seeders/KegiatanPenugasanLengkapSeeder.php');
+                $seeder = new \Database\Seeders\KegiatanPenugasanLengkapSeeder();
+                $seeder->run();
+            } elseif (file_exists(database_path('seeds/KegiatanPenugasanLengkapSeeder.php'))) {
+                require_once database_path('seeds/KegiatanPenugasanLengkapSeeder.php');
+                $seeder = new \KegiatanPenugasanLengkapSeeder();
+                $seeder->run();
+            }
+
+            $allKegiatans = Task::with(['subKegiatans', 'penugasans'])
+                ->where('tasks.jenis', 'Kegiatan')
+                ->orderBy('tasks.id', 'desc')
+                ->get();
+
+            $pstTasks = $allKegiatans->filter(function($k) {
+                return $k->is_pst;
+            })->values();
+
+            $nonPstTasks = $allKegiatans->reject(function($k) {
+                return $k->is_pst;
+            })->values();
+        }
+
         $totalKegiatan = $allKegiatans->count();
         $berjalan = 0;
         $selesai = 0;

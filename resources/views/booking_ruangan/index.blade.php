@@ -1757,7 +1757,7 @@ $isToday = $isToday ?? ($selectedDate === \Carbon\Carbon::today()->format('Y-m-d
                                     <span>Pasang Spanduk / Backdrop</span>
                                 </label>
                                 <p x-show="pasangSpanduk" class="text-[10px] text-blue-600 font-semibold">
-                                    🧹 Penugasan persiapan spanduk otomatis diteruskan ke Cleaning Service (CS).
+                                    Penugasan persiapan spanduk otomatis diteruskan ke Cleaning Service (CS).
                                 </p>
                                 <div x-show="pasangSpanduk">
                                     <input type="text"
