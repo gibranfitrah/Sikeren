@@ -267,5 +267,94 @@ class NotificationApiController extends Controller
                 ]);
             }
         }
+
+        // C. Cek Penugasan untuk Ketua Tim (Konfirmasi & Penerimaan Penugasan)
+        if (method_exists($user, 'isKetuaTimOrPj') && $user->isKetuaTimOrPj()) {
+            $assignedAsLeader = Task::where(function ($q) use ($user) {
+                    $q->where('pemimpin', 'like', "%{$user->nama_lengkap}%")
+                      ->orWhere('penanggung_jawab', 'like', "%{$user->nama_lengkap}%");
+                })
+                ->where('start_date', '>=', $today)
+                ->where('setuju_rapat', '!=', 1)
+                ->take(5)
+                ->get();
+
+            foreach ($assignedAsLeader as $leaderTask) {
+                $identifier = "action:terima_penugasan:{$leaderTask->id}";
+                $exists = Notification::where('niplama', $user->niplama)
+                    ->where('link', $identifier)
+                    ->exists();
+
+                if (!$exists) {
+                    $tgl = Carbon::parse($leaderTask->start_date)->translatedFormat('d F Y');
+                    $jam = $leaderTask->start_jam ? substr($leaderTask->start_jam, 0, 5) : '08:30';
+                    Notification::create([
+                        'niplama'    => $user->niplama,
+                        'judul'      => "Penugasan Ketua Tim: {$leaderTask->text}",
+                        'pesan'      => "Anda ditugaskan memimpin agenda '{$leaderTask->text}' pada {$tgl} pukul {$jam} WITA di {$leaderTask->tempat}. Silakan klik untuk menerima penugasan.",
+                        'link'       => $identifier,
+                        'tipe'       => 'penugasan_ketua_tim',
+                        'is_read'    => 0,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
+     * POST /api/v1/penugasan/terima
+     * Menerima penugasan untuk Ketua Tim
+     */
+    public function terimaPenugasan(Request $request)
+    {
+        $user = $this->getAuthenticatedUser($request);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User tidak ditemukan.'], 401);
+        }
+
+        $taskId = $request->input('task_id');
+        $notifId = $request->input('notification_id');
+
+        if (!$taskId && $notifId) {
+            $notif = Notification::find($notifId);
+            if ($notif && preg_match('/(?:action:terima_penugasan:)(\d+)/', $notif->link, $matches)) {
+                $taskId = (int)$matches[1];
+            }
+        }
+
+        if (!$taskId) {
+            return response()->json(['success' => false, 'message' => 'ID Agenda / Tugas diperlukan.'], 422);
+        }
+
+        $task = Task::find($taskId);
+        if (!$task) {
+            return response()->json(['success' => false, 'message' => 'Data agenda tidak ditemukan.'], 404);
+        }
+
+        $task->setuju_rapat = 1;
+        $task->status = 'Diterima';
+        $task->save();
+
+        // Tandai notifikasi terkait sebagai dibaca
+        Notification::where('niplama', $user->niplama)
+            ->where(function ($q) use ($task, $notifId) {
+                $q->where('link', "action:terima_penugasan:{$task->id}");
+                if ($notifId) {
+                    $q->orWhere('id', $notifId);
+                }
+            })
+            ->update(['is_read' => 1]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Penugasan '{$task->text}' berhasil diterima oleh Ketua Tim {$user->nama_lengkap}.",
+            'data'    => [
+                'task_id' => $task->id,
+                'judul'   => $task->text,
+                'status'  => 'Diterima'
+            ]
+        ]);
     }
 }

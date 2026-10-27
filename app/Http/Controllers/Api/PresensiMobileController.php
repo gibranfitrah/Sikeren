@@ -352,6 +352,103 @@ class PresensiMobileController extends Controller
     }
 
     /**
+     * Presensi Kehadiran Kegiatan atau Lapor Berhalangan
+     * Memungkinkan pegawai mengisi daftar hadir kegiatan atau melapor berhalangan jauh-jauh hari
+     */
+    public function presensiKehadiranKegiatan(Request $request)
+    {
+        $user = $this->getAuthenticatedUser($request);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Sesi tidak valid.'], 401);
+        }
+
+        $taskId = $request->input('task_id');
+        $status = $request->input('status', 'Hadir'); // 'Hadir' atau 'Berhalangan'
+        $alasan = $request->input('alasan');
+
+        if (!$taskId) {
+            return response()->json(['success' => false, 'message' => 'ID Kegiatan diperlukan.'], 422);
+        }
+
+        $task = Task::find($taskId);
+        if (!$task) {
+            return response()->json(['success' => false, 'message' => 'Kegiatan tidak ditemukan.'], 404);
+        }
+
+        // Cari atau buat record di tabel penugasans
+        $penugasan = penugasan::where('id_kegiatan', $task->id)
+            ->where(function($q) use ($user) {
+                $q->where('niplama', $user->niplama)
+                  ->orWhere('peserta', 'like', '%' . $user->nama_lengkap . '%');
+            })->first();
+
+        if (!$penugasan) {
+            $penugasan = new penugasan();
+            $penugasan->id_kegiatan = $task->id;
+            $penugasan->niplama     = $user->niplama;
+            $penugasan->peserta     = $user->nama_lengkap;
+        }
+
+        $now = Carbon::now('Asia/Singapore');
+
+        if ($status === 'Berhalangan') {
+            $penugasan->status_kehadiran = 'Berhalangan';
+            $penugasan->keterangan = $alasan ?: 'Berhalangan hadir (memerlukan pengganti)';
+            $penugasan->save();
+
+            // Kirim notifikasi ke Ketua Tim / Pimpinan bahwa ada peserta yang berhalangan
+            if ($task->pemimpin) {
+                $pemimpinUser = User::where('nama_lengkap', 'like', '%' . $task->pemimpin . '%')->first();
+                if ($pemimpinUser) {
+                    \App\Notification::create([
+                        'niplama'    => $pemimpinUser->niplama,
+                        'judul'      => "Peserta Berhalangan: {$task->text}",
+                        'pesan'      => "{$user->nama_lengkap} melaporkan berhalangan hadir pada agenda '{$task->text}' dengan alasan: " . ($alasan ?: 'Tidak dapat hadir') . ". Slot peserta dapat digantikan.",
+                        'link'       => "task:{$task->id}:pengganti",
+                        'tipe'       => 'pergantian_peserta',
+                        'is_read'    => 0,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]);
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Laporan berhalangan pada '{$task->text}' berhasil disimpan. Penyelenggara telah diberi tahu untuk menyiapkan pengganti.",
+                'data'    => [
+                    'id_kegiatan'      => $task->id,
+                    'status_kehadiran' => 'Berhalangan',
+                    'keterangan'       => $penugasan->keterangan
+                ]
+            ]);
+        } else {
+            // Status Hadir
+            $penugasan->status_kehadiran = 'Hadir';
+            $penugasan->waktu_kehadiran = $now->format('H:i') . ' WITA';
+            $penugasan->save();
+
+            // Insert log presensi
+            DB::table('presensis')->insert([
+                'niplama'    => $user->niplama,
+                'status'     => 1,
+                'ket_dinas'  => 'Hadir ' . ($task->jenis ?: 'Kegiatan') . ': ' . $task->text,
+                'created_at' => $now
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Kehadiran pada '{$task->text}' berhasil dicatat sebagai HADIR!",
+                'data'    => [
+                    'id_kegiatan'      => $task->id,
+                    'status_kehadiran' => 'Hadir',
+                    'waktu_presensi'   => $now->format('H:i') . ' WITA'
+                ]
+            ]);
+        }
+    }
+
+    /**
      * Submit attendance directly for a specific Kegiatan / Rapat
      */
     public function presensiKegiatan(Request $request, $id)

@@ -51,11 +51,13 @@ Route::prefix('v1')->group(function () {
     Route::post('/logout', [\App\Http\Controllers\Api\AuthController::class, 'logout']);
     Route::get('/me', [\App\Http\Controllers\Api\AuthController::class, 'me']);
 
-    // Kegiatan & Daily Summary
+    // Kegiatan & Daily Summary & Full Dashboard
+    Route::get('/dashboard-summary', [\App\Http\Controllers\Api\DashboardApiController::class, 'getDashboardSummary']);
     Route::get('/kegiatan', [\App\Http\Controllers\Api\KegiatanApiController::class, 'index']);
     Route::get('/kegiatan/{id}', [\App\Http\Controllers\Api\KegiatanApiController::class, 'show']);
     Route::post('/kegiatan/{id}/presensi', [\App\Http\Controllers\Api\PresensiMobileController::class, 'presensiKegiatan']);
-    Route::get('/daily-summary', [\App\Http\Controllers\Api\KegiatanApiController::class, 'dailySummary']);
+    Route::post('/kegiatan/presensi-kehadiran', [\App\Http\Controllers\Api\PresensiMobileController::class, 'presensiKehadiranKegiatan']);
+    Route::get('/daily-summary', [\App\Http\Controllers\Api\DashboardApiController::class, 'getDashboardSummary']);
 
     // Presensi & QR Absensi
     Route::get('/presensi/today-status', [\App\Http\Controllers\Api\PresensiMobileController::class, 'todayStatus']);
@@ -63,11 +65,12 @@ Route::prefix('v1')->group(function () {
     Route::get('/presensi/active-qr', [\App\Http\Controllers\Api\PresensiMobileController::class, 'getActiveQr']);
     Route::get('/presensi/history', [\App\Http\Controllers\Api\PresensiMobileController::class, 'history']);
 
-    // Notifications & Ruangan
+    // Notifications & Ruangan & Penugasan Ketua Tim
     Route::get('/notifications', [\App\Http\Controllers\Api\NotificationApiController::class, 'index']);
     Route::post('/notifications/{id}/read', [\App\Http\Controllers\Api\NotificationApiController::class, 'markAsRead']);
     Route::post('/notifications/read-all', [\App\Http\Controllers\Api\NotificationApiController::class, 'markAllAsRead']);
     Route::post('/ruangan/lepas', [\App\Http\Controllers\Api\NotificationApiController::class, 'lepasRuangan']);
+    Route::post('/penugasan/terima', [\App\Http\Controllers\Api\NotificationApiController::class, 'terimaPenugasan']);
 
     // PST Duty Roster & Substitutions
     Route::get('/pst/jadwal', [\App\Http\Controllers\Api\PstApiController::class, 'getJadwal']);
