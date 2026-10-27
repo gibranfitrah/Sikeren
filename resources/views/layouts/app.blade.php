@@ -742,14 +742,6 @@
             </svg>
             <span class="text-[10px] mt-0.5">Ruangan</span>
         </a>
-
-        <!-- 5. Layanan SIMPATI -->
-        <a href="{{ route('simpati.dashboard') }}" class="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition {{ request()->is('simpati*') ? 'text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-900 font-medium' }}">
-            <svg class="w-5 h-5 {{ request()->is('simpati*') ? 'text-blue-600' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-            </svg>
-            <span class="text-[10px] mt-0.5">SIMPATI</span>
-        </a>
     </nav>
 
     @stack('scripts')
