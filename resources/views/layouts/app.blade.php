@@ -700,49 +700,12 @@
         </header>
 
         <!-- Main Content (Padding responsif dan luas) -->
-        <main id="main-content" class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-4 sm:p-6 lg:p-8 pb-24 md:pb-8">
+        <main id="main-content" class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-4 sm:p-6 lg:p-8">
             <div class="max-w-7xl mx-auto">
                 @yield('content')
             </div>
         </main>
     </div>
-
-    <!-- =====================================================
-        MOBILE NATIVE-STYLE BOTTOM NAVIGATION BAR (md:hidden)
-    ====================================================== -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-lg px-2 py-1.5 flex items-center justify-around safe-bottom">
-        <!-- 1. Beranda / Dashboard -->
-        <a href="{{ url('/dashboard') }}" class="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition {{ (request()->is('dashboard*') || request()->is('/')) ? 'text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-900 font-medium' }}">
-            <svg class="w-5 h-5 {{ (request()->is('dashboard*') || request()->is('/')) ? 'text-blue-600' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-            </svg>
-            <span class="text-[10px] mt-0.5">Beranda</span>
-        </a>
-
-        <!-- 2. Tugas Saya -->
-        <a href="{{ url('/tugas-saya') }}" class="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition {{ request()->is('tugas-saya*') ? 'text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-900 font-medium' }}">
-            <svg class="w-5 h-5 {{ request()->is('tugas-saya*') ? 'text-blue-600' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-            </svg>
-            <span class="text-[10px] mt-0.5">Tugas Saya</span>
-        </a>
-
-        <!-- 3. Agenda Kegiatan / Rapat -->
-        <a href="{{ route('kegiatan.daftar') }}" class="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition {{ request()->is('daftar_kegiatan*') || request()->is('daftarkegiatan*') ? 'text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-900 font-medium' }}">
-            <svg class="w-5 h-5 {{ request()->is('daftar_kegiatan*') || request()->is('daftarkegiatan*') ? 'text-blue-600' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-            </svg>
-            <span class="text-[10px] mt-0.5">Agenda</span>
-        </a>
-
-        <!-- 4. Booking Ruangan -->
-        <a href="{{ route('booking-ruangan.index') }}" class="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition {{ request()->is('booking-ruangan*') ? 'text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-900 font-medium' }}">
-            <svg class="w-5 h-5 {{ request()->is('booking-ruangan*') ? 'text-blue-600' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-            </svg>
-            <span class="text-[10px] mt-0.5">Ruangan</span>
-        </a>
-    </nav>
 
     @stack('scripts')
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
