@@ -14,7 +14,9 @@ class KegiatanPenugasanLengkapSeeder extends Seeder
             if (file_exists($altPath)) {
                 $jsonPath = $altPath;
             } else {
-                $this->command->error("File data tidak ditemukan: " . $jsonPath);
+                if (isset($this->command)) {
+                    $this->command->error("File data tidak ditemukan: " . $jsonPath);
+                }
                 return;
             }
         }
@@ -23,7 +25,9 @@ class KegiatanPenugasanLengkapSeeder extends Seeder
         $data = json_decode($raw, true);
 
         if (!$data || !isset($data['tasks'])) {
-            $this->command->error("Format JSON data tidak valid!");
+            if (isset($this->command)) {
+                $this->command->error("Format JSON data tidak valid!");
+            }
             return;
         }
 
@@ -31,11 +35,15 @@ class KegiatanPenugasanLengkapSeeder extends Seeder
 
         // 1. Seed Tasks (100 kegiatan & rapat)
         if (Schema::hasTable('tasks') && !empty($data['tasks'])) {
+            $taskColumns = array_flip(Schema::getColumnListing('tasks'));
             foreach ($data['tasks'] as $task) {
-                DB::table('tasks')->updateOrInsert(
-                    ['id' => $task['id']],
-                    $task
-                );
+                $filteredTask = array_intersect_key($task, $taskColumns);
+                if (!empty($filteredTask['id'])) {
+                    DB::table('tasks')->updateOrInsert(
+                        ['id' => $filteredTask['id']],
+                        $filteredTask
+                    );
+                }
             }
             if (isset($this->command)) {
                 $this->command->info("✓ " . count($data['tasks']) . " data tasks berhasil disinkronkan.");
@@ -44,11 +52,15 @@ class KegiatanPenugasanLengkapSeeder extends Seeder
 
         // 2. Seed Sub Kegiatan
         if (Schema::hasTable('sub_kegiatans') && !empty($data['sub_kegiatans'])) {
+            $subColumns = array_flip(Schema::getColumnListing('sub_kegiatans'));
             foreach ($data['sub_kegiatans'] as $sub) {
-                DB::table('sub_kegiatans')->updateOrInsert(
-                    ['id' => $sub['id']],
-                    $sub
-                );
+                $filteredSub = array_intersect_key($sub, $subColumns);
+                if (!empty($filteredSub['id'])) {
+                    DB::table('sub_kegiatans')->updateOrInsert(
+                        ['id' => $filteredSub['id']],
+                        $filteredSub
+                    );
+                }
             }
             if (isset($this->command)) {
                 $this->command->info("✓ " . count($data['sub_kegiatans']) . " data sub_kegiatans berhasil disinkronkan.");
@@ -57,11 +69,15 @@ class KegiatanPenugasanLengkapSeeder extends Seeder
 
         // 3. Seed Agenda Ketua Tim
         if (Schema::hasTable('agenda_ketua_tim') && !empty($data['agenda_ketua_tim'])) {
+            $agendaColumns = array_flip(Schema::getColumnListing('agenda_ketua_tim'));
             foreach ($data['agenda_ketua_tim'] as $agenda) {
-                DB::table('agenda_ketua_tim')->updateOrInsert(
-                    ['id' => $agenda['id']],
-                    $agenda
-                );
+                $filteredAgenda = array_intersect_key($agenda, $agendaColumns);
+                if (!empty($filteredAgenda['id'])) {
+                    DB::table('agenda_ketua_tim')->updateOrInsert(
+                        ['id' => $filteredAgenda['id']],
+                        $filteredAgenda
+                    );
+                }
             }
             if (isset($this->command)) {
                 $this->command->info("✓ " . count($data['agenda_ketua_tim']) . " data agenda_ketua_tim berhasil disinkronkan.");
@@ -70,8 +86,12 @@ class KegiatanPenugasanLengkapSeeder extends Seeder
 
         // 4. Seed Penugasans (2962 penugasan pegawai)
         if (Schema::hasTable('penugasans') && !empty($data['penugasans'])) {
-            $updateColumns = ['id_kegiatan', 'niplama', 'peserta', 'status_kehadiran', 'keterangan', 'waktu_kehadiran', 'updated_at'];
-            $chunks = array_chunk($data['penugasans'], 250);
+            $penugasanColumns = array_flip(Schema::getColumnListing('penugasans'));
+            $allUpdateCols = ['id_kegiatan', 'niplama', 'peserta', 'status_kehadiran', 'keterangan', 'waktu_kehadiran', 'updated_at'];
+            $updateColumns = array_values(array_filter($allUpdateCols, fn($col) => isset($penugasanColumns[$col])));
+            
+            $filteredPenugasans = array_map(fn($row) => array_intersect_key($row, $penugasanColumns), $data['penugasans']);
+            $chunks = array_chunk($filteredPenugasans, 250);
             foreach ($chunks as $chunk) {
                 DB::table('penugasans')->upsert($chunk, ['id'], $updateColumns);
             }
