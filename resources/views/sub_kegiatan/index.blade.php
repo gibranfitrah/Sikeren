@@ -594,9 +594,13 @@
 <script>
 function selectAllModalAnggota(checked) {
     document.querySelectorAll('.modal-pegawai-card').forEach(card => {
-        if (card.style.display !== 'none') {
-            const cb = card.querySelector('.modal-anggota-cb');
-            if (cb) cb.checked = checked;
+        const cb = card.querySelector('.modal-anggota-cb');
+        if (cb) {
+            if (!checked) {
+                cb.checked = false;
+            } else if (card.style.display !== 'none') {
+                cb.checked = true;
+            }
         }
     });
 }

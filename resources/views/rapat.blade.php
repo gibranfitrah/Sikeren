@@ -732,9 +732,20 @@
                     </div>
                 </div>
 
-                {{-- Live Search Filter --}}
-                <div class="relative max-w-md">
-                    <input type="text" id="filterPesertaNama" placeholder="Cari nama peserta rapat..." class="w-full text-xs pl-9 border-gray-300 rounded-lg p-2.5 bg-gray-50 focus:bg-white text-gray-800 shadow-xs focus:ring-blue-500 focus:border-blue-500 border">
+                {{-- Live Search Filter & Global Select All --}}
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="relative max-w-md flex-1">
+                        <input type="text" id="filterPesertaNama" placeholder="Cari nama peserta rapat..." class="w-full text-xs pl-9 border-gray-300 rounded-lg p-2.5 bg-gray-50 focus:bg-white text-gray-800 shadow-xs focus:ring-blue-500 focus:border-blue-500 border">
+                        <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button type="button" onclick="selectAllGlobalPeserta(true)" class="text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-xl border border-blue-200 transition shadow-2xs">
+                            Pilih Semua
+                        </button>
+                        <button type="button" onclick="selectAllGlobalPeserta(false)" class="text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl transition">
+                            Batalkan Pilihan
+                        </button>
+                    </div>
                 </div>
 
                 {{-- Daftar Kelompok & Peserta --}}
@@ -1102,6 +1113,20 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     };
 
+    // Sinkronisasi status checkbox "Pilih Semua" pada setiap grup
+    window.syncAllGroupCheckboxes = function () {
+        document.querySelectorAll('.cb-select-group').forEach(function (groupCheckbox) {
+            const targetId = groupCheckbox.getAttribute('data-target');
+            const targetBox = document.getElementById(targetId);
+            if (targetBox) {
+                const total = targetBox.querySelectorAll('.cb-peserta').length;
+                const checked = targetBox.querySelectorAll('.cb-peserta:checked').length;
+                // Jika semua dicentang, centang groupCheckbox. Jika ada 1 saja yang tidak dicentang, matikan centang groupCheckbox!
+                groupCheckbox.checked = (total > 0 && checked === total);
+            }
+        });
+    };
+
     // 4. Hitung Total Peserta Terpilih
     window.updateTotalPeserta = function () {
         const count = document.querySelectorAll('.cb-peserta:checked').length;
@@ -1109,6 +1134,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (badge) {
             badge.textContent = count + ' Peserta Dipilih';
         }
+        syncAllGroupCheckboxes();
     };
 
     // 5. Checkbox Pilih Semua per Grup
@@ -1125,6 +1151,24 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
+
+    // Event listener untuk setiap checkbox peserta agar otomatis mematikan "Pilih Semua" jika salah satu dilepas
+    document.querySelectorAll('.cb-peserta').forEach(function (cb) {
+        cb.addEventListener('change', function () {
+            updateTotalPeserta();
+        });
+    });
+
+    // Global Pilih Semua & Batalkan Pilihan
+    window.selectAllGlobalPeserta = function (checked) {
+        document.querySelectorAll('.cb-peserta').forEach(function (cb) {
+            cb.checked = checked;
+        });
+        document.querySelectorAll('.cb-select-group').forEach(function (gcb) {
+            gcb.checked = checked;
+        });
+        updateTotalPeserta();
+    };
 
     // 6. Pencarian Peserta Live
     const filterInput = document.getElementById('filterPesertaNama');
