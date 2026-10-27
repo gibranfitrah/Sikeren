@@ -102,6 +102,74 @@ class KegiatanPenugasanLengkapSeeder extends Seeder
             }
         }
 
+        // 5. Seed Petugas Layanan (SIMPATI)
+        if (Schema::hasTable('petugas_layanans') && !empty($data['petugas_layanans'])) {
+            $plColumns = array_flip(Schema::getColumnListing('petugas_layanans'));
+            foreach ($data['petugas_layanans'] as $pl) {
+                $filteredPl = array_intersect_key($pl, $plColumns);
+                if (!empty($filteredPl['id'])) {
+                    DB::table('petugas_layanans')->updateOrInsert(
+                        ['id' => $filteredPl['id']],
+                        $filteredPl
+                    );
+                }
+            }
+            if (isset($this->command)) {
+                $this->command->info("✓ " . count($data['petugas_layanans']) . " data petugas_layanans berhasil disinkronkan.");
+            }
+        }
+
+        // 6. Seed SIMPATI Admin Roles
+        if (Schema::hasTable('simpati_admin_roles') && !empty($data['simpati_admin_roles'])) {
+            $arColumns = array_flip(Schema::getColumnListing('simpati_admin_roles'));
+            foreach ($data['simpati_admin_roles'] as $ar) {
+                $filteredAr = array_intersect_key($ar, $arColumns);
+                if (!empty($filteredAr['id'])) {
+                    DB::table('simpati_admin_roles')->updateOrInsert(
+                        ['id' => $filteredAr['id']],
+                        $filteredAr
+                    );
+                }
+            }
+            if (isset($this->command)) {
+                $this->command->info("✓ " . count($data['simpati_admin_roles']) . " data simpati_admin_roles berhasil disinkronkan.");
+            }
+        }
+
+        // 7. Seed Jadwal Layanan (PST 8 orang per hari)
+        if (Schema::hasTable('jadwal_layanans') && !empty($data['jadwal_layanans'])) {
+            $jlColumns = array_flip(Schema::getColumnListing('jadwal_layanans'));
+            foreach ($data['jadwal_layanans'] as $jl) {
+                $filteredJl = array_intersect_key($jl, $jlColumns);
+                if (!empty($filteredJl['id'])) {
+                    DB::table('jadwal_layanans')->updateOrInsert(
+                        ['id' => $filteredJl['id']],
+                        $filteredJl
+                    );
+                }
+            }
+            if (isset($this->command)) {
+                $this->command->info("✓ " . count($data['jadwal_layanans']) . " data jadwal_layanans berhasil disinkronkan.");
+            }
+        }
+
+        // 8. Seed Jadwal PST
+        if (Schema::hasTable('jadwal_psts') && !empty($data['jadwal_psts'])) {
+            $jpColumns = array_flip(Schema::getColumnListing('jadwal_psts'));
+            foreach ($data['jadwal_psts'] as $jp) {
+                $filteredJp = array_intersect_key($jp, $jpColumns);
+                if (!empty($filteredJp['id'])) {
+                    DB::table('jadwal_psts')->updateOrInsert(
+                        ['id' => $filteredJp['id']],
+                        $filteredJp
+                    );
+                }
+            }
+            if (isset($this->command)) {
+                $this->command->info("✓ " . count($data['jadwal_psts']) . " data jadwal_psts berhasil disinkronkan.");
+            }
+        }
+
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
     }
 }

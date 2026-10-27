@@ -471,6 +471,22 @@ class DashboardController extends Controller
         // Sumber 1: jadwal_layanans (SIMPATI Layanan)
         if (\Illuminate\Support\Facades\Schema::hasTable('jadwal_layanans')) {
             $jlRows = \App\JadwalLayanan::with('user')->where('tanggal', $today)->get();
+
+            // Jika jadwal PST hari ini belum 8 orang di database lokal perangkat lain, sinkronkan otomatis
+            if ($jlRows->where('grup', 'pst')->count() < 8) {
+                if (file_exists(database_path('seeders/KegiatanPenugasanLengkapSeeder.php'))) {
+                    require_once database_path('seeders/KegiatanPenugasanLengkapSeeder.php');
+                    $seeder = new \Database\Seeders\KegiatanPenugasanLengkapSeeder();
+                    $seeder->run();
+                    $jlRows = \App\JadwalLayanan::with('user')->where('tanggal', $today)->get();
+                } elseif (file_exists(database_path('seeds/KegiatanPenugasanLengkapSeeder.php'))) {
+                    require_once database_path('seeds/KegiatanPenugasanLengkapSeeder.php');
+                    $seeder = new \KegiatanPenugasanLengkapSeeder();
+                    $seeder->run();
+                    $jlRows = \App\JadwalLayanan::with('user')->where('tanggal', $today)->get();
+                }
+            }
+
             foreach ($jlRows as $jl) {
                 $code = $jl->grup;
                 if ($code === 'satpam' || $code === 'cs') {
