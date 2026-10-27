@@ -88,7 +88,7 @@ Route::post('/kegiatan/konfirmasi-kehadiran-pst', [KegiatanController::class, 'k
 
 Route::group(['middleware' => 'auth'], function () {
     
-    Route::get('dashboard', [DashboardController::class, 'index']);
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 Route::get('/notification/{id}', [NotificationController::class, 'read'])
     ->name('notification.read');

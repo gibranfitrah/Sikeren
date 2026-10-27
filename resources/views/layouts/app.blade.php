@@ -712,8 +712,8 @@
     ====================================================== -->
     <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-lg px-2 py-1.5 flex items-center justify-around safe-bottom">
         <!-- 1. Beranda / Dashboard -->
-        <a href="{{ route('dashboard') }}" class="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition {{ request()->routeIs('dashboard') ? 'text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-900 font-medium' }}">
-            <svg class="w-5 h-5 {{ request()->routeIs('dashboard') ? 'text-blue-600' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <a href="{{ url('/dashboard') }}" class="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition {{ (request()->is('dashboard*') || request()->is('/')) ? 'text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-900 font-medium' }}">
+            <svg class="w-5 h-5 {{ (request()->is('dashboard*') || request()->is('/')) ? 'text-blue-600' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
             </svg>
             <span class="text-[10px] mt-0.5">Beranda</span>
