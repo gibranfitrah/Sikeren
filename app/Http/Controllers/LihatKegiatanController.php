@@ -118,6 +118,7 @@ class LihatKegiatanController extends Controller
                 'users.niplama as def',
                 'users.nipbaru',
                 'penugasans.id as id_penugasan',
+                'penugasans.niplama as penugasan_niplama',
                 'penugasans.peserta as custom_peserta',
                 'penugasans.status_kehadiran',
                 'penugasans.keterangan',
@@ -145,19 +146,45 @@ class LihatKegiatanController extends Controller
         $seen = [];
 
         foreach ($existingPenugasans as $p) {
-            $nama = $p->abc ?: ($p->custom_peserta ?: $p->def);
-            $nip  = $p->def ?: ($p->nipbaru ?: '-');
+            $isTamu = false;
+            $instansi = '';
+            $jabatan = '';
+
+            $rawKet = $p->keterangan ?? '';
+            $nipLamaP = $p->penugasan_niplama ?? $p->def;
+            if ($nipLamaP === 'EKSTERNAL' || str_contains($rawKet, 'Tamu Eksternal') || str_contains($rawKet, 'Instansi:')) {
+                $isTamu = true;
+                if (preg_match('/Instansi:\s*([^|]+)/i', $rawKet, $m)) {
+                    $instansi = trim($m[1]);
+                }
+                if (preg_match('/Jabatan:\s*([^|]+)/i', $rawKet, $m)) {
+                    $jabatan = trim($m[1]);
+                }
+            }
+
+            $nama = $isTamu ? ($p->custom_peserta ?: ($p->abc ?: 'Tamu Eksternal')) : ($p->abc ?: ($p->custom_peserta ?: $p->def));
+            $nip  = $p->def ?: ($nipLamaP ?: ($p->nipbaru ?: '-'));
+            if ($isTamu && $nip === 'EKSTERNAL') {
+                $nip = '-';
+            }
             $status = $p->status_kehadiran ?: 'Belum Hadir';
 
-            $seen[] = $nip;
-            $seen[] = $nama;
+            if (!$isTamu) {
+                $seen[] = $nip;
+                $seen[] = $nama;
+            } else {
+                $seen[] = 'TAMU_' . $p->id_penugasan;
+            }
 
             $kegiatans->push((object)[
                 'text'             => $task ? $task->text : '',
                 'abc'              => $nama,
                 'def'              => $nip,
-                'nipbaru'          => $p->nipbaru ?: '-',
+                'nipbaru'          => ($isTamu && $nip !== '-') ? $nip : ($p->nipbaru ?: '-'),
                 'id_penugasan'     => $p->id_penugasan,
+                'is_tamu'          => $isTamu,
+                'instansi'         => $instansi,
+                'jabatan'          => $jabatan,
                 'agenda'           => $task ? $task->agenda : '',
                 'tempat'           => $task ? $task->tempat : '',
                 'start_date'       => $task ? $task->start_date : '',

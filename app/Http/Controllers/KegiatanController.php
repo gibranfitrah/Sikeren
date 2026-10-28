@@ -188,9 +188,11 @@ class KegiatanController extends Controller
         // 3. Simpan URL tujuan ke session intended agar setelah login langsung diarahkan ke form presensi
         $targetUrl = url('daftarhadir/' . $realId);
         session()->put('url.intended', $targetUrl);
+        session()->put('presensi_rapat_id', $realId);
 
         // 4. Arahkan ke halaman login dengan pesan notifikasi
-        return redirect()->route('login')->with('info', 'Silakan masuk ke akun Anda terlebih dahulu untuk mengisi kehadiran rapat.');
+        return redirect()->route('login', ['rapat_id' => $realId])
+            ->with('info', 'Silakan masuk ke akun BPS Anda untuk mengisi kehadiran rapat. Bagi peserta undangan dari luar kantor BPS, silakan pilih tombol "Masuk sebagai Tamu" di bawah.');
     }
 
     public function generate($id)
@@ -778,45 +780,48 @@ class KegiatanController extends Controller
 
         // PENANGANAN TAMU EKSTERNAL (Bukan Pegawai BPS / Instansi Lain)
         if ($tipePeserta === 'eksternal' || (!$currentUser && $request->filled('nama_eksternal'))) {
-            $namaEksternal = trim($request->input('nama_eksternal', ''));
-            $instansi      = trim($request->input('instansi', ''));
-            $noWaEksternal = trim($request->input('no_wa_eksternal', $request->input('no_wa', '')));
-            $keteranganEks = trim($request->input('keterangan_eksternal', ''));
-            $tandaTangan   = $request->input('tanda_tangan', '');
+            $namaEksternal    = trim($request->input('nama_eksternal', ''));
+            $nipEksternal     = trim($request->input('nip_eksternal', ''));
+            $jabatanEksternal = trim($request->input('jabatan_eksternal', $request->input('keterangan_eksternal', '')));
+            $instansi         = trim($request->input('instansi', ''));
+            $noWaEksternal    = trim($request->input('no_wa_eksternal', $request->input('no_wa', '')));
+            $tandaTangan      = $request->input('tanda_tangan', '');
 
-            if (empty($namaEksternal) || empty($instansi)) {
+            if (empty($namaEksternal) || empty($instansi) || empty($jabatanEksternal)) {
                 if ($request->expectsJson() || $request->ajax()) {
-                    return response()->json(['success' => false, 'message' => 'Nama lengkap dan Instansi wajib diisi.'], 422);
+                    return response()->json(['success' => false, 'message' => 'Nama lengkap, Jabatan, dan Asal Instansi wajib diisi.'], 422);
                 }
-                return redirect()->back()->with('error_presensi', 'Nama Lengkap dan Asal Instansi wajib diisi untuk tamu eksternal.');
+                return redirect()->back()->with('error_presensi', 'Nama Lengkap, Jabatan, dan Asal Instansi wajib diisi untuk tamu luar.');
             }
 
             $realId = $task ? $task->id : $idKegiatan;
-            $namaFormatted = $namaEksternal . ' (' . $instansi . ')';
 
             $penugasan = penugasan::where('id_kegiatan', $realId)
-                ->where('peserta', $namaFormatted)
+                ->where(function($q) use ($namaEksternal) {
+                    $q->where('peserta', $namaEksternal)
+                      ->orWhere('peserta', 'LIKE', $namaEksternal . ' (%');
+                })
                 ->first();
 
             if (!$penugasan) {
                 $penugasan = new penugasan();
                 $penugasan->id_kegiatan = $realId;
-                $penugasan->niplama     = 'EKSTERNAL';
             }
 
+            $penugasan->niplama = !empty($nipEksternal) ? $nipEksternal : 'EKSTERNAL';
+
             $ketLines = [];
-            $ketLines[] = 'Tamu Eksternal - Instansi: ' . $instansi;
+            $ketLines[] = 'Tamu Eksternal';
+            $ketLines[] = 'Instansi: ' . $instansi;
+            $ketLines[] = 'Jabatan: ' . $jabatanEksternal;
             if ($noWaEksternal) {
                 $ketLines[] = 'No WA: ' . $noWaEksternal;
-            }
-            if ($keteranganEks) {
-                $ketLines[] = 'Jabatan: ' . $keteranganEks;
             }
             if (!empty($tandaTangan)) {
                 $ketLines[] = '[TTD Digital Terlampir]';
             }
 
-            $penugasan->peserta          = $namaFormatted;
+            $penugasan->peserta          = $namaEksternal;
             $penugasan->status_kehadiran = 'Hadir'; // Tamu eksternal otomatis Hadir
             $penugasan->keterangan       = implode(' | ', $ketLines);
             $penugasan->waktu_kehadiran  = now();
@@ -826,17 +831,20 @@ class KegiatanController extends Controller
                 return response()->json([
                     'success'  => true,
                     'message'  => 'Kehadiran tamu eksternal berhasil dicatat sebagai Hadir.',
-                    'peserta'  => $namaFormatted,
-                    'instansi' => $instansi
+                    'peserta'  => $namaEksternal,
+                    'instansi' => $instansi,
+                    'jabatan'  => $jabatanEksternal
                 ]);
             }
 
-            return redirect()->route('daftarhadir', ['id' => $realId])
+            return redirect()->route('daftarhadir', ['id' => $realId, 'tipe' => 'eksternal'])
                 ->with('eksternal_success', true)
                 ->with('eksternal_nama', $namaEksternal)
+                ->with('eksternal_nip', $nipEksternal)
+                ->with('eksternal_jabatan', $jabatanEksternal)
                 ->with('eksternal_instansi', $instansi)
                 ->with('eksternal_wa', $noWaEksternal)
-                ->with('success_presensi', 'Selamat Datang! Kehadiran Anda sebagai Tamu Eksternal (' . $namaEksternal . ' - ' . $instansi . ') telah berhasil dicatat sebagai HADIR.');
+                ->with('success_presensi', 'Selamat Datang! Kehadiran Anda sebagai Tamu (' . $namaEksternal . ' - ' . $instansi . ') telah berhasil dicatat sebagai HADIR.');
         }
 
         // PENANGANAN PEGAWAI BPS (Wajib Login)
@@ -1020,24 +1028,48 @@ class KegiatanController extends Controller
         $seen = [];
 
         foreach ($existing as $p) {
-            $nama = $p->nama_user ?: ($p->custom_peserta ?: $p->custom_nip);
+            $isTamu = false;
+            $instansi = '';
+            $jabatan = '';
+
+            $rawKet = $p->keterangan ?? '';
+            $nipVal = $p->custom_nip ?? $p->nip_user;
+            if ($nipVal === 'EKSTERNAL' || str_contains($rawKet, 'Tamu Eksternal') || str_contains($rawKet, 'Instansi:')) {
+                $isTamu = true;
+                if (preg_match('/Instansi:\s*([^|]+)/i', $rawKet, $m)) {
+                    $instansi = trim($m[1]);
+                }
+                if (preg_match('/Jabatan:\s*([^|]+)/i', $rawKet, $m)) {
+                    $jabatan = trim($m[1]);
+                }
+            }
+
+            $nama = $isTamu ? ($p->custom_peserta ?: ($p->nama_user ?: 'Tamu Eksternal')) : ($p->nama_user ?: ($p->custom_peserta ?: $p->custom_nip));
             $nip = $p->nip_user ?: ($p->custom_nip ?: '-');
+            if ($isTamu && $nip === 'EKSTERNAL') {
+                $nip = '-';
+            }
             $nipbaru = $p->nipbaru ?: '-';
             $status = $p->status_kehadiran ?: 'Belum Hadir';
             $waktu = ($status !== 'Belum Hadir' && !empty($p->waktu_kehadiran)) 
                 ? \Carbon\Carbon::parse($p->waktu_kehadiran)->format('H:i') . ' WITA' 
                 : null;
 
-            $seen[] = $nip;
-            $seen[] = $nama;
+            if (!$isTamu) {
+                $seen[] = $nip;
+                $seen[] = $nama;
+            }
 
             $list->push([
                 'nama'             => $nama,
                 'nip'              => $nip,
-                'nipbaru'          => $nipbaru,
+                'nipbaru'          => ($isTamu && $nip !== '-') ? $nip : $nipbaru,
                 'status_kehadiran' => $status,
                 'keterangan'       => $p->keterangan,
                 'waktu'            => $waktu,
+                'is_tamu'          => $isTamu,
+                'instansi'         => $instansi,
+                'jabatan'          => $jabatan,
             ]);
         }
 

@@ -892,14 +892,42 @@
                             <tr class="hover:bg-gray-50/50 transition-colors">
                                 <td class="px-5 py-3 text-gray-400 font-medium">{{ $idx + 1 }}</td>
                                 <td class="px-5 py-3">
-                                    <span class="font-bold text-gray-900 block text-xs">{{ $pesertaItem->abc }}</span>
-                                    @if(!empty($pesertaItem->keterangan))
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="font-bold text-gray-900 block text-xs">{{ $pesertaItem->abc }}</span>
+                                        @if(!empty($pesertaItem->is_tamu))
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-purple-100 text-purple-800 border border-purple-200 uppercase tracking-wider">
+                                                <svg class="w-2.5 h-2.5 text-purple-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                                                <span>Tamu / Instansi Lain</span>
+                                            </span>
+                                        @endif
+                                    </div>
+                                    @if(!empty($pesertaItem->is_tamu) && (!empty($pesertaItem->instansi) || !empty($pesertaItem->jabatan)))
+                                        <span class="text-[10px] text-purple-700 font-semibold block mt-0.5">
+                                            {{ $pesertaItem->instansi }}{{ !empty($pesertaItem->jabatan) ? ' • ' . $pesertaItem->jabatan : '' }}
+                                        </span>
+                                    @endif
+                                    @if(!empty($pesertaItem->keterangan) && empty($pesertaItem->is_tamu))
                                         <span class="text-[10px] text-amber-700 font-medium block truncate max-w-xs">Ket: {{ $pesertaItem->keterangan }}</span>
                                     @endif
                                 </td>
-                                <td class="px-5 py-3 text-gray-500 font-mono text-xs">{{ $pesertaItem->nipbaru ?? $pesertaItem->def }}</td>
+                                <td class="px-5 py-3 text-gray-500 font-mono text-xs">
+                                    @if(!empty($pesertaItem->is_tamu))
+                                        @if($pesertaItem->def && $pesertaItem->def !== '-' && $pesertaItem->def !== 'EKSTERNAL')
+                                            {{ $pesertaItem->def }}
+                                        @else
+                                            <span class="text-gray-400 italic text-[11px]">Tamu Luar (Non-NIP)</span>
+                                        @endif
+                                    @else
+                                        {{ $pesertaItem->nipbaru ?? $pesertaItem->def }}
+                                    @endif
+                                </td>
                                 <td class="px-5 py-3 text-center">
-                                    @if($isThisRowPj)
+                                    @if(!empty($pesertaItem->is_tamu))
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold" title="Tamu Undangan Luar Kantor BPS">
+                                            <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                            <span>Tamu Luar</span>
+                                        </span>
+                                    @elseif($isThisRowPj)
                                         <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold" title="Ketua Tim / Penanggung Jawab Penyelenggara">
                                             <svg class="w-3.5 h-3.5 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
                                             <span>Ketua Tim / PJ</span>
@@ -1136,8 +1164,39 @@ function refreshPresensi() {
 
                         const targetNip = (p.nipbaru && p.nipbaru !== '-') ? p.nipbaru : p.nip;
                         const tiketUrl = `{{ url('/rapat/tiket-qr/' . $rapatId) }}?nip=${encodeURIComponent(targetNip)}`;
+                        
+                        let nipDisplay = p.nipbaru || p.nip;
+                        if (p.is_tamu) {
+                            if (p.nip && p.nip !== '-' && p.nip !== 'EKSTERNAL') {
+                                nipDisplay = p.nip;
+                            } else {
+                                nipDisplay = '<span class="text-gray-400 italic text-[11px]">Tamu Luar (Non-NIP)</span>';
+                            }
+                        }
+
+                        let namaCellHtml = `<div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="font-bold text-gray-900 block text-xs">${p.nama}</span>
+                            ${p.is_tamu ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-purple-100 text-purple-800 border border-purple-200 uppercase tracking-wider">
+                                <svg class="w-2.5 h-2.5 text-purple-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                                <span>Tamu / Instansi Lain</span>
+                            </span>` : ''}
+                        </div>`;
+
+                        if (p.is_tamu && (p.instansi || p.jabatan)) {
+                            namaCellHtml += `<span class="text-[10px] text-purple-700 font-semibold block mt-0.5">${p.instansi || ''}${p.jabatan ? ' • ' + p.jabatan : ''}</span>`;
+                        } else if (p.keterangan && !p.is_tamu) {
+                            namaCellHtml += `<span class="text-[10px] text-amber-700 font-medium block truncate max-w-xs">Ket: ${p.keterangan}</span>`;
+                        }
+
                         let tiketCell = '';
-                        if (isPj) {
+                        if (p.is_tamu) {
+                            tiketCell = `<td class="px-5 py-3 text-center">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold" title="Tamu Undangan Luar Kantor BPS">
+                                    <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                    <span>Tamu Luar</span>
+                                </span>
+                            </td>`;
+                        } else if (isPj) {
                             tiketCell = `<td class="px-5 py-3 text-center">
                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold" title="Ketua Tim / Penanggung Jawab Penyelenggara">
                                     <svg class="w-3.5 h-3.5 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
@@ -1155,11 +1214,8 @@ function refreshPresensi() {
 
                         html += `<tr class="hover:bg-gray-50/50 transition-colors">
                             <td class="px-5 py-3 text-gray-400 font-medium">${idx + 1}</td>
-                            <td class="px-5 py-3">
-                                <span class="font-bold text-gray-900 block text-xs">${p.nama}</span>
-                                ${p.keterangan ? `<span class="text-[10px] text-amber-700 font-medium block truncate max-w-xs">Ket: ${p.keterangan}</span>` : ''}
-                            </td>
-                            <td class="px-5 py-3 text-gray-500 font-mono text-xs">${p.nipbaru || p.nip}</td>
+                            <td class="px-5 py-3">${namaCellHtml}</td>
+                            <td class="px-5 py-3 text-gray-500 font-mono text-xs">${nipDisplay}</td>
                             ${tiketCell}
                             <td class="px-5 py-3 text-right">${statusBadge}</td>
                         </tr>`;

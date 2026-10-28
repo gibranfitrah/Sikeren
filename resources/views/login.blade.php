@@ -97,6 +97,40 @@
                 </div>
             </form>
 
+            @php
+                $rapatPresensiId = request('rapat_id') ?? session('presensi_rapat_id');
+                if (!$rapatPresensiId && session('url.intended')) {
+                    if (preg_match('/(?:scan-qr|daftarhadir|qrcode)\/(\d+)/', session('url.intended'), $matches)) {
+                        $rapatPresensiId = $matches[1];
+                    }
+                }
+            @endphp
+
+            <div class="mt-6 pt-5 border-t border-gray-100 text-center">
+                <p class="text-xs text-gray-500 mb-2.5 font-medium">Bukan pegawai BPS? (Peserta / Tamu Undangan Luar)</p>
+                @if($rapatPresensiId)
+                    <a href="{{ url('daftarhadir/' . $rapatPresensiId . '?tipe=eksternal') }}" 
+                       class="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 font-bold text-sm transition-all shadow-xs">
+                        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        <span>Masuk sebagai Tamu</span>
+                    </a>
+                @else
+                    <button type="button" onclick="promptTamuRapat()" 
+                       class="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 font-bold text-sm transition-all shadow-xs">
+                        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        <span>Masuk sebagai Tamu</span>
+                    </button>
+                    <script>
+                        function promptTamuRapat() {
+                            const rapatId = prompt('Silakan masukkan ID Rapat atau Scan Lembar QR Rapat terlebih dahulu:');
+                            if (rapatId && rapatId.trim()) {
+                                window.location.href = "{{ url('daftarhadir') }}/" + encodeURIComponent(rapatId.trim()) + "?tipe=eksternal";
+                            }
+                        }
+                    </script>
+                @endif
+            </div>
+
             <!-- Quick Testing Account Shortcuts -->
         </div>
 

@@ -186,6 +186,18 @@
                     <span class="text-slate-500">Nama Tamu:</span>
                     <span class="font-bold text-slate-900">{{ session('eksternal_nama') }}</span>
                 </div>
+                @if(session('eksternal_nip'))
+                <div class="flex justify-between py-1 border-b border-slate-100">
+                    <span class="text-slate-500">NIP:</span>
+                    <span class="font-bold text-slate-900 font-mono">{{ session('eksternal_nip') }}</span>
+                </div>
+                @endif
+                @if(session('eksternal_jabatan'))
+                <div class="flex justify-between py-1 border-b border-slate-100">
+                    <span class="text-slate-500">Jabatan:</span>
+                    <span class="font-bold text-slate-900">{{ session('eksternal_jabatan') }}</span>
+                </div>
+                @endif
                 <div class="flex justify-between py-1 border-b border-slate-100">
                     <span class="text-slate-500">Asal Instansi:</span>
                     <span class="font-bold text-slate-900">{{ session('eksternal_instansi') }}</span>
@@ -287,13 +299,13 @@
 
             {{-- PANEL TAMU EKSTERNAL (LANGSUNG HADIR TANPA LOGIN) --}}
             <div id="panel-eksternal" class="hidden space-y-4 pt-1">
-                <div class="p-3.5 rounded-xl bg-indigo-50/80 border border-indigo-100 text-xs text-indigo-950 space-y-1">
-                    <span class="font-extrabold text-[11px] uppercase tracking-wider text-indigo-800 flex items-center gap-1.5">
-                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span>Presensi Peserta / Tamu Eksternal</span>
+                <div class="p-3.5 rounded-xl bg-purple-50/80 border border-purple-200 text-xs text-purple-950 space-y-1">
+                    <span class="font-extrabold text-[11px] uppercase tracking-wider text-purple-800 flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        <span>Presensi Tamu Undangan / Instansi Luar</span>
                     </span>
-                    <p class="text-[11px] text-indigo-800 leading-relaxed">
-                        Tamu dari instansi atau lembaga luar BPS cukup mengisi Nama dan Asal Instansi di bawah ini. Anda akan <strong>langsung tercatat Hadir</strong> tanpa perlu akun Sikeren Mobile.
+                    <p class="text-[11px] text-purple-800 leading-relaxed">
+                        Bagi peserta / tamu dari instansi luar BPS, silakan lengkapi identitas Anda di bawah ini lalu tekan tombol <strong>Hadir</strong>. Kehadiran Anda langsung tercatat resmi.
                     </p>
                 </div>
 
@@ -311,7 +323,28 @@
                                name="nama_eksternal" 
                                required
                                placeholder="Contoh: Dr. Ir. Rahmat Hidayat, M.Si" 
-                               class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                               class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">
+                            NIP <span class="text-slate-400 font-normal">(Opsional)</span>
+                        </label>
+                        <input type="text" 
+                               name="nip_eksternal" 
+                               placeholder="Masukkan NIP (kosongkan jika bukan ASN)" 
+                               class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">
+                            Jabatan <span class="text-rose-500">*</span>
+                        </label>
+                        <input type="text" 
+                               name="jabatan_eksternal" 
+                               required
+                               placeholder="Contoh: Kepala Bidang Perencanaan / Dosen / Staf" 
+                               class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
                     </div>
 
                     <div>
@@ -322,28 +355,17 @@
                                name="instansi" 
                                required
                                placeholder="Contoh: Bappeda Prov. Sultra / Dinas Kominfo" 
-                               class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                               class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">
-                            Nomor WhatsApp <span class="text-rose-500">*</span>
+                            Nomor WhatsApp <span class="text-slate-400 font-normal">(Opsional)</span>
                         </label>
                         <input type="tel" 
                                name="no_wa_eksternal" 
-                               required
                                placeholder="Contoh: 081234567890" 
-                               class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">
-                            Keterangan / Jabatan (Opsional)
-                        </label>
-                        <input type="text" 
-                               name="keterangan_eksternal" 
-                               placeholder="Contoh: Kepala Bidang Perencanaan" 
-                               class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                               class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
                     </div>
 
                     {{-- Tanda Tangan Digital --}}
@@ -366,9 +388,9 @@
                     </div>
 
                     <button type="submit" 
-                            class="w-full py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 active:scale-98">
+                            class="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 active:scale-98">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                        <span>Konfirmasi Kehadiran Tamu (Langsung Hadir)</span>
+                        <span>Hadir</span>
                     </button>
                 </form>
             </div>
@@ -712,6 +734,14 @@
         let currentStatus = 'Hadir';
         let isManualMode = false;
 
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const isGuestRequested = urlParams.get('tipe') === 'eksternal' || urlParams.get('tamu') === '1' || {{ !Auth::check() ? 'true' : 'false' }};
+            if (isGuestRequested) {
+                switchTipePeserta('eksternal');
+            }
+        });
+
         function switchTipePeserta(tipe) {
             const btnBps = document.getElementById('tab-btn-bps');
             const btnEks = document.getElementById('tab-btn-eksternal');
@@ -719,7 +749,7 @@
             const panelEks = document.getElementById('panel-eksternal');
 
             if (tipe === 'eksternal') {
-                btnEks.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-indigo-700 shadow-xs';
+                btnEks.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-purple-700 shadow-xs';
                 btnBps.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900';
                 panelEks.classList.remove('hidden');
                 panelBps.classList.add('hidden');
