@@ -70,7 +70,8 @@ Route::post('/store_surat', [TaskController::class, 'store_surat']);
 
 Route::post('/setuju_rapat', [LihatKegiatanController::class, 'setuju_rapat']);
 
-Route::get('/', [LoginController::class, 'login'])->name('login');
+Route::get('/', [LoginController::class, 'login']);
+Route::get('/login', [LoginController::class, 'login'])->name('login');
 Route::post('/actionlogin', [LoginController::class, 'actionlogin'])->name('/actionlogin');
 Route::get('actionlogout', [LoginController::class, 'actionlogout'])->name('actionlogout');
 Route::get('/scan-qr/{id}', [KegiatanController::class, 'scanQr'])->where('id','(.*)')->name('rapat.scanQr');

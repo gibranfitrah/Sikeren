@@ -31,8 +31,16 @@
                 <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                     <h3 class="text-lg font-bold text-gray-800">Kamera Scanner</h3>
                 </div>
-                <div class="p-6">
+                <div class="p-6 space-y-4">
                     <div id="reader" class="w-full h-auto overflow-hidden rounded-lg border-2 border-dashed border-gray-300"></div>
+                    <div class="text-center pt-2">
+                        <label for="absen-qr-file-input" class="inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-bold text-xs cursor-pointer shadow-xs transition w-full">
+                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>
+                            <span>Ambil Foto / Pilih Gambar QR</span>
+                        </label>
+                        <input type="file" id="absen-qr-file-input" accept="image/*" capture="environment" class="hidden" onchange="handleAbsenFileScan(this)">
+                        <p class="text-[11px] text-gray-500 mt-2">Gunakan tombol ini jika layar kamera hitam atau izin kamera tidak muncul di HP.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -122,6 +130,19 @@
             
             // html5QRCodeScanner.clear(); // Uncomment to stop scanning after 1 success
         }
+
+        window.handleAbsenFileScan = function(input) {
+            if (!input.files || input.files.length === 0) return;
+            const file = input.files[0];
+            const html5Qr = new Html5Qrcode("reader");
+            html5Qr.scanFile(file, true)
+                .then(decodedText => {
+                    onScanSuccess(decodedText);
+                })
+                .catch(err => {
+                    alert('QR Code tidak terdeteksi dari foto. Pastikan foto QR terlihat jelas.');
+                });
+        };
 
         html5QRCodeScanner.render(onScanSuccess);
 

@@ -46,17 +46,20 @@
 <body class="min-h-screen py-8 px-4 flex flex-col items-center justify-start">
 
     {{-- TOP ACTION BAR (HIDDEN IN PRINT) --}}
-    <div class="no-print w-full max-w-2xl mb-6 flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-        <a href="{{ url('/daftarkegiatan/' . $task->id) }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition">
+    <div class="no-print w-full max-w-2xl mb-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+        <a href="{{ url('/daftarkegiatan/' . $task->id) }}" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             <span>Kembali ke Detail Rapat</span>
         </a>
 
-        <div class="flex items-center gap-2">
-            <span class="text-xs text-slate-500 hidden sm:inline">Ukuran disarankan: <strong>A4 Portrait</strong></span>
+        <div class="flex items-center justify-end gap-2 flex-wrap">
+            <button type="button" onclick="copyPresensiUrl('{{ $urlHadir }}')" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition" id="btn-copy-url">
+                <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                <span id="copy-url-text">Salin Link Presensi</span>
+            </button>
             <button type="button" onclick="window.print()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition active:scale-95 cursor-pointer">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                <span>Cetak Lembar QR (Print)</span>
+                <span>Cetak Lembar QR</span>
             </button>
         </div>
     </div>
@@ -127,7 +130,7 @@
                 </div>
             </div>
             
-            <div class="mt-4 space-y-1">
+            <div class="mt-4 space-y-2">
                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-900 font-extrabold text-xs">
                     <svg class="w-3.5 h-3.5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
                     <span>PINDAI (SCAN) UNTUK MENGISI DAFTAR HADIR</span>
@@ -135,6 +138,19 @@
                 <p class="text-xs text-slate-600 font-medium max-w-md mx-auto pt-1">
                     Gunakan kamera ponsel Anda untuk memindai kode QR di atas untuk mencatat kehadiran resmi Anda pada kegiatan ini.
                 </p>
+
+                {{-- Direct URL Link if camera is not opening or has trouble --}}
+                <div class="pt-2 pb-1 text-center">
+                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Atau buka link presensi langsung pada browser HP:</span>
+                    <a href="{{ $urlHadir }}" target="_blank" class="text-xs font-mono font-bold text-blue-700 hover:text-blue-900 underline break-all inline-block mt-0.5">
+                        {{ $urlHadir }}
+                    </a>
+                </div>
+
+                <div class="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] text-left leading-relaxed mt-2 flex items-start gap-2">
+                    <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span><strong>Tips Akses HP:</strong> Pastikan ponsel terhubung ke jaringan Wi-Fi yang sama ({{ gethostbyname(gethostname()) }}). Jika kamera ponsel tidak langsung mengarahkan, salin atau ketik alamat link biru di atas di browser ponsel (Chrome/Safari).</span>
+                </div>
             </div>
         </div>
 
@@ -146,11 +162,11 @@
             </div>
             <div class="flex items-start gap-2">
                 <span class="w-5 h-5 rounded-full bg-slate-900 text-white font-bold flex items-center justify-center shrink-0 text-[10px]">2</span>
-                <span>Arahkan kamera ke kode QR di atas.</span>
+                <span>Arahkan kamera ke kode QR di atas atau buka tautan presensi.</span>
             </div>
             <div class="flex items-start gap-2">
                 <span class="w-5 h-5 rounded-full bg-slate-900 text-white font-bold flex items-center justify-center shrink-0 text-[10px]">3</span>
-                <span>Masuk dengan akun BPS dan konfirmasi kehadiran.</span>
+                <span>Masuk dengan akun BPS atau pilih "Masuk sebagai Tamu" dan konfirmasi hadir.</span>
             </div>
         </div>
 
@@ -159,6 +175,26 @@
             <span>Sistem Kegiatan Terencana (Sikeren) &bull; BPS Sultra</span>
             <span>Dicetak otomatis pada: {{ \Carbon\Carbon::now('Asia/Makassar')->translatedFormat('d F Y, H:i') }} WITA</span>
         </div>
+
+    </div>
+
+    <script>
+        function copyPresensiUrl(url) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(() => {
+                    const text = document.getElementById('copy-url-text');
+                    if (text) {
+                        text.innerText = 'Link Tersalin!';
+                        setTimeout(() => { text.innerText = 'Salin Link Presensi'; }, 2500);
+                    }
+                }).catch(() => {
+                    prompt('Salin link berikut:', url);
+                });
+            } else {
+                prompt('Salin link berikut:', url);
+            }
+        }
+    </script>
 
     </div>
 

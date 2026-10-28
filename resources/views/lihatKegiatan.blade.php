@@ -1361,13 +1361,23 @@ setInterval(refreshPresensi, 5000);
             <div id="scanner-result-banner" class="hidden p-3 rounded-2xl text-xs font-bold transition"></div>
 
             {{-- Camera viewport --}}
-            <div class="bg-slate-900 rounded-2xl overflow-hidden relative border border-slate-300">
+            <div class="bg-slate-900 rounded-2xl overflow-hidden relative border border-slate-300 min-h-[220px] flex items-center justify-center">
                 <div id="reader-scanner-petugas" class="w-full"></div>
             </div>
 
-            <p class="text-[11px] text-slate-500 text-center leading-relaxed">
-                Arahkan kamera ke <strong>Tiket QR Presensi</strong> yang ada di HP peserta rapat untuk memverifikasi kehadiran.
-            </p>
+            {{-- Fallback jika kamera bermasalah / layar hitam pada browser HP non-HTTPS --}}
+            <div id="camera-trouble-alert" class="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-2">
+                <p class="text-[11px] text-slate-600 font-medium">
+                    Arahkan kamera ke <strong>Tiket QR</strong> peserta. Jika kamera browser HP hitam atau tidak muncul, gunakan tombol foto di bawah:
+                </p>
+                <div class="flex items-center gap-2">
+                    <label for="camera-fallback-file-input" class="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-98 text-white font-bold text-xs cursor-pointer shadow-xs transition">
+                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>
+                        <span>Ambil Foto / Upload QR</span>
+                    </label>
+                    <input type="file" id="camera-fallback-file-input" accept="image/*" capture="environment" class="hidden" onchange="handleFallbackImageScan(this)">
+                </div>
+            </div>
 
             <div class="p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-[11px] leading-relaxed flex items-center gap-2">
                 <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -1573,6 +1583,31 @@ function closeScannerPetugas() {
 
 function onParticipantScanFailure(error) {
     // Abaikan frame scan yang belum mendeteksi QR
+}
+
+function handleFallbackImageScan(input) {
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    const banner = document.getElementById('scanner-result-banner');
+    if (banner) {
+        banner.className = "p-3 rounded-2xl text-xs font-bold bg-blue-50 border border-blue-200 text-blue-800 flex items-center gap-2";
+        banner.innerHTML = `<span class="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full inline-block"></span> Memindai QR dari foto...`;
+        banner.classList.remove('hidden');
+    }
+
+    const html5QrCode = new Html5Qrcode("reader-scanner-petugas");
+    html5QrCode.scanFile(file, true)
+        .then(decodedText => {
+            playSuccessBeep();
+            processVerificationUrl(decodedText);
+        })
+        .catch(err => {
+            if (banner) {
+                banner.className = "p-3.5 rounded-2xl text-xs font-bold bg-rose-50 border border-rose-300 text-rose-800 text-left";
+                banner.innerHTML = `<strong>QR Code tidak terdeteksi:</strong> Pastikan foto QR peserta cukup jelas dan tidak buram, lalu coba lagi.`;
+                banner.classList.remove('hidden');
+            }
+        });
 }
 
 function onParticipantScanSuccess(decodedText, decodedResult) {

@@ -61,8 +61,11 @@
             <p class="text-xs sm:text-sm text-slate-300 font-medium">
                 Gunakan kamera HP untuk memindai kode QR di atas atau buka tautan di bawah:
             </p>
-            <div class="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/80 rounded-xl border border-slate-700 text-xs font-mono text-blue-300">
+            <div class="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/80 rounded-xl border border-slate-700 text-xs font-mono text-blue-300 flex-wrap justify-center">
                 <span>{{ $urlHadir }}</span>
+                <button type="button" onclick="navigator.clipboard.writeText('{{ $urlHadir }}'); alert('Link berhasil disalin!');" class="px-2 py-0.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-sans font-bold cursor-pointer">
+                    Salin
+                </button>
             </div>
             <div>
                 <a href="{{ $urlHadir }}" target="_blank" class="inline-block mt-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-lg transition-colors">

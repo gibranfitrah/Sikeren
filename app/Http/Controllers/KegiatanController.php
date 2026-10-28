@@ -142,21 +142,25 @@ class KegiatanController extends Controller
 
     public static function getQrUrl($path = '')
     {
-        // 1. Dukung PUBLIC_URL atau domain publik (misal tunnel/ngrok/domain server BPS)
+        // 1. Dukung query param host/ip/port untuk dynamic preview di halaman cetak
+        $customHost = request()->query('host') ?: request()->query('ip');
+        $customPort = request()->query('port');
+
+        // 2. Dukung PUBLIC_URL atau domain publik (misal tunnel/ngrok/domain server BPS)
         // agar presensi via QR dapat diakses dari jaringan manapun (seluler 4G/5G)
         $publicUrl = env('PUBLIC_URL');
-        if (!empty($publicUrl)) {
+        if (!empty($publicUrl) && empty($customHost)) {
             return rtrim($publicUrl, '/') . '/' . ltrim($path, '/');
         }
 
         $appUrl = env('APP_URL');
-        if (!empty($appUrl) && !str_contains($appUrl, 'localhost') && !str_contains($appUrl, '127.0.0.1')) {
+        if (!empty($appUrl) && !str_contains($appUrl, 'localhost') && !str_contains($appUrl, '127.0.0.1') && empty($customHost)) {
             return rtrim($appUrl, '/') . '/' . ltrim($path, '/');
         }
 
-        $override = env('LOCAL_IP');
+        $override = $customHost ?: env('LOCAL_IP');
         $host   = request()->getHost();
-        $port   = request()->getPort();
+        $port   = $customPort ?: request()->getPort();
         $scheme = request()->getScheme();
 
         if ($override) {
@@ -168,7 +172,7 @@ class KegiatanController extends Controller
             }
         }
 
-        $portStr = ($port && !in_array($port, [80, 443])) ? ':' . $port : '';
+        $portStr = ($port && !in_array((int)$port, [80, 443])) ? ':' . $port : '';
         return $scheme . '://' . $host . $portStr . '/' . ltrim($path, '/');
     }
 
@@ -182,8 +186,15 @@ class KegiatanController extends Controller
         }
 
         // 2. Dapatkan record task / rapat
-        $task = is_numeric($id) ? Task::find($id) : (Task::where('id', $id)->orWhere('text', $id)->first() ?? kegiatan::find($id));
-        $realId = $task ? $task->id : $id;
+        $task = is_numeric($id) ? Task::find($id) : null;
+        if (!$task) {
+            $task = Task::where('id', $id)
+                ->orWhere('text', $id)
+                ->orWhere('text', urldecode($id))
+                ->first();
+        }
+
+        $realId = $task ? $task->id : (is_numeric($id) ? $id : 0);
 
         // 3. Simpan URL tujuan ke session intended agar setelah login langsung diarahkan ke form presensi
         $targetUrl = url('daftarhadir/' . $realId);
@@ -197,15 +208,22 @@ class KegiatanController extends Controller
 
     public function generate($id)
     {
-        $task = is_numeric($id) ? Task::find($id) : (Task::where('id', $id)->orWhere('text', $id)->first() ?? kegiatan::find($id));
-        $urlHadir = self::getQrUrl('scan-qr/' . ($task ? $task->id : $id));
+        $task = is_numeric($id) ? Task::find($id) : null;
+        if (!$task) {
+            $task = Task::where('id', $id)->orWhere('text', $id)->orWhere('text', urldecode($id))->first();
+        }
+        $realId = $task ? $task->id : $id;
+        $urlHadir = self::getQrUrl('scan-qr/' . $realId);
         $qrcode = QrCode::size(340)->margin(2)->errorCorrection('M')->generate($urlHadir);
         return view('qrcode', compact('qrcode', 'task', 'id', 'urlHadir'));
     }
 
     public function cetakQr($id)
     {
-        $task = is_numeric($id) ? Task::find($id) : (Task::where('id', $id)->orWhere('text', $id)->first() ?? kegiatan::find($id));
+        $task = is_numeric($id) ? Task::find($id) : null;
+        if (!$task) {
+            $task = Task::where('id', $id)->orWhere('text', $id)->orWhere('text', urldecode($id))->first();
+        }
         if (!$task) {
             abort(404, 'Rapat / Kegiatan tidak ditemukan.');
         }
@@ -617,7 +635,7 @@ class KegiatanController extends Controller
             $task = Task::where('id', $id)
                 ->orWhere('text', $id)
                 ->orWhere('text', urldecode($id))
-                ->first() ?? kegiatan::find($id);
+                ->first();
         }
 
         $realId = $task ? $task->id : $id;

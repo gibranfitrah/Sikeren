@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class kegiatan extends Model
 {
-    //
+    protected $table = 'tasks';
    
-      protected $fillable = [
+    protected $fillable = [
         'nomor','title', 'agenda', 'tempat', 'pemimpin', 'notulis',  'start', 'end', 'start_jam', 'end_jam','notulen','jenis'
     ];
 
