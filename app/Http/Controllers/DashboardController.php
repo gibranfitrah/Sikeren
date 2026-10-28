@@ -472,18 +472,76 @@ class DashboardController extends Controller
         if (\Illuminate\Support\Facades\Schema::hasTable('jadwal_layanans')) {
             $jlRows = \App\JadwalLayanan::with('user')->where('tanggal', $today)->get();
 
-            // Jika jadwal PST hari ini belum 8 orang di database lokal perangkat lain, sinkronkan otomatis
-            if ($jlRows->where('grup', 'pst')->count() < 8) {
+            // Jika jadwal PST hari ini belum 8 orang (4 Sesi 1 dan 4 Sesi 2) di database lokal perangkat lain, sinkronkan otomatis
+            $pstSesi1Count = $jlRows->where('grup', 'pst')->where('sesi', 1)->count();
+            $pstSesi2Count = $jlRows->where('grup', 'pst')->where('sesi', 2)->count();
+
+            if ($pstSesi1Count < 4 || $pstSesi2Count < 4) {
                 if (file_exists(database_path('seeders/KegiatanPenugasanLengkapSeeder.php'))) {
                     require_once database_path('seeders/KegiatanPenugasanLengkapSeeder.php');
                     $seeder = new \Database\Seeders\KegiatanPenugasanLengkapSeeder();
                     $seeder->run();
                     $jlRows = \App\JadwalLayanan::with('user')->where('tanggal', $today)->get();
+                    $pstSesi1Count = $jlRows->where('grup', 'pst')->where('sesi', 1)->count();
+                    $pstSesi2Count = $jlRows->where('grup', 'pst')->where('sesi', 2)->count();
                 } elseif (file_exists(database_path('seeds/KegiatanPenugasanLengkapSeeder.php'))) {
                     require_once database_path('seeds/KegiatanPenugasanLengkapSeeder.php');
                     $seeder = new \KegiatanPenugasanLengkapSeeder();
                     $seeder->run();
                     $jlRows = \App\JadwalLayanan::with('user')->where('tanggal', $today)->get();
+                    $pstSesi1Count = $jlRows->where('grup', 'pst')->where('sesi', 1)->count();
+                    $pstSesi2Count = $jlRows->where('grup', 'pst')->where('sesi', 2)->count();
+                }
+
+                // Jika masih kurang dari 4 per sesi (misal tanggal di luar seeder), lengkapi dari PetugasLayanan
+                if (($pstSesi1Count < 4 || $pstSesi2Count < 4) && class_exists(\App\PetugasLayanan::class)) {
+                    $availablePst = \App\PetugasLayanan::where('grup', 'pst')->where('is_aktif', 1)->get();
+                    if ($availablePst->isNotEmpty()) {
+                        $existingUsers = $jlRows->where('grup', 'pst')->pluck('user_id')->filter()->toArray();
+                        $candidateOfficers = $availablePst->whereNotIn('user_id', $existingUsers)->values();
+                        $cIdx = 0;
+
+                        // Lengkapi Sesi 1 sampai 4 orang
+                        for ($s = $pstSesi1Count; $s < 4; $s++) {
+                            if (isset($candidateOfficers[$cIdx])) {
+                                $cOff = $candidateOfficers[$cIdx++];
+                                \App\JadwalLayanan::create([
+                                    'grup'        => 'pst',
+                                    'tanggal'     => $today,
+                                    'sesi'        => 1,
+                                    'jam_mulai'   => '08:00:00',
+                                    'jam_selesai' => '12:00:00',
+                                    'user_id'     => $cOff->user_id,
+                                    'niplama'     => $cOff->niplama,
+                                    'nama'        => $cOff->nama,
+                                    'status'      => 'Bertugas',
+                                    'sumber'      => 'sistem',
+                                    'keterangan'  => 'Jadwal PST Sesi 1 (Pagi)',
+                                ]);
+                            }
+                        }
+
+                        // Lengkapi Sesi 2 sampai 4 orang
+                        for ($s = $pstSesi2Count; $s < 4; $s++) {
+                            if (isset($candidateOfficers[$cIdx])) {
+                                $cOff = $candidateOfficers[$cIdx++];
+                                \App\JadwalLayanan::create([
+                                    'grup'        => 'pst',
+                                    'tanggal'     => $today,
+                                    'sesi'        => 2,
+                                    'jam_mulai'   => '13:00:00',
+                                    'jam_selesai' => '16:00:00',
+                                    'user_id'     => $cOff->user_id,
+                                    'niplama'     => $cOff->niplama,
+                                    'nama'        => $cOff->nama,
+                                    'status'      => 'Bertugas',
+                                    'sumber'      => 'sistem',
+                                    'keterangan'  => 'Jadwal PST Sesi 2 (Siang)',
+                                ]);
+                            }
+                        }
+                        $jlRows = \App\JadwalLayanan::with('user')->where('tanggal', $today)->get();
+                    }
                 }
             }
 

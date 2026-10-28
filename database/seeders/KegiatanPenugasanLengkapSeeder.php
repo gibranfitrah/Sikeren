@@ -139,6 +139,7 @@ class KegiatanPenugasanLengkapSeeder extends Seeder
         // 7. Seed Jadwal Layanan (PST 8 orang per hari)
         if (Schema::hasTable('jadwal_layanans') && !empty($data['jadwal_layanans'])) {
             $jlColumns = array_flip(Schema::getColumnListing('jadwal_layanans'));
+            DB::table('jadwal_layanans')->where('grup', 'pst')->delete();
             foreach ($data['jadwal_layanans'] as $jl) {
                 $filteredJl = array_intersect_key($jl, $jlColumns);
                 if (!empty($filteredJl['id'])) {
@@ -156,6 +157,7 @@ class KegiatanPenugasanLengkapSeeder extends Seeder
         // 8. Seed Jadwal PST
         if (Schema::hasTable('jadwal_psts') && !empty($data['jadwal_psts'])) {
             $jpColumns = array_flip(Schema::getColumnListing('jadwal_psts'));
+            DB::table('jadwal_psts')->delete();
             foreach ($data['jadwal_psts'] as $jp) {
                 $filteredJp = array_intersect_key($jp, $jpColumns);
                 if (!empty($filteredJp['id'])) {
