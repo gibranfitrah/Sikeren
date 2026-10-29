@@ -62,45 +62,46 @@
 }" @close-sub.window="expandedSub = null">
 
     {{-- HEADER SECTION & ACTION BUTTONS --}}
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-200/80 shadow-xs">
-        <div>
-            <div class="flex items-center gap-2">
-                <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-100">
+    <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div class="min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-100 whitespace-nowrap">
                     Pengelolaan Tim
                 </span>
-                <span class="text-xs text-gray-400">•</span>
-                <span class="text-xs text-gray-500 font-medium">BPS Kabupaten/Kota</span>
+                <span class="text-xs text-slate-300">•</span>
+                <span class="text-xs text-slate-500 font-medium whitespace-nowrap">BPS Sultra</span>
             </div>
-            <h2 class="text-xl font-bold text-gray-900 mt-1">Kelola Kegiatan & Sub Kegiatan</h2>
+            <h2 class="text-lg sm:text-xl font-black text-slate-800 tracking-tight leading-tight">
+                Kelola Kegiatan & Sub Kegiatan
+            </h2>
         </div>
-        <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
-            <a href="{{ route('agenda.downloadWord') }}" class="inline-flex items-center justify-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs hover:shadow transition-all duration-150">
-                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                Download Agenda (.docx)
-            </a>
-
+        <div class="flex items-center gap-2 flex-wrap shrink-0">
             @if($isPjUser)
-                <a href="{{ route('ketua-tim.create') }}" class="inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs hover:shadow transition-all duration-150">
-                    <svg class="w-4 h-4 mr-1.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <a href="{{ route('ketua-tim.create') }}" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all duration-150 whitespace-nowrap">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
-                    Buat Kegiatan Baru
+                    <span>Buat Kegiatan Baru</span>
                 </a>
-                <a href="{{ url('/rapat') }}" class="inline-flex items-center justify-center px-4 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl shadow-xs hover:border-gray-300 transition-all duration-150">
-                    <svg class="w-4 h-4 mr-1.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <a href="{{ url('/rapat') }}" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl shadow-2xs hover:border-slate-300 transition-all duration-150 whitespace-nowrap">
+                    <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>
-                    Buat Rapat
+                    <span>Buat Rapat</span>
                 </a>
-                <a href="{{ route('sub-kegiatan.index') }}" class="inline-flex items-center justify-center px-4 py-2.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold rounded-xl shadow-xs transition-all duration-150">
-                    <svg class="w-4 h-4 mr-1.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <a href="{{ route('sub-kegiatan.index') }}" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl shadow-2xs hover:border-slate-300 transition-all duration-150 whitespace-nowrap">
+                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                     </svg>
-                    Sub Kegiatan
+                    <span>Sub Kegiatan</span>
                 </a>
             @endif
+            <a href="{{ route('agenda.downloadWord') }}" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-semibold rounded-xl transition-all duration-150 whitespace-nowrap">
+                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span>Unduh Agenda (.docx)</span>
+            </a>
         </div>
     </div>
 
@@ -136,54 +137,48 @@
     @endif
 
     {{-- KPI STATS SUMMARY CARDS --}}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex items-center justify-between">
-            <div>
-                <p class="text-xs font-medium text-gray-500">Total Kegiatan</p>
-                <h3 class="text-2xl font-bold text-gray-900 mt-1">{{ $totalKegiatan }}</h3>
-                <span class="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md mt-1 inline-block">Semua Agenda</span>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition flex items-center justify-between">
+            <div class="min-w-0">
+                <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Total Kegiatan</p>
+                <h3 class="text-2xl font-black text-slate-800 tracking-tight mt-0.5">{{ $totalKegiatan }}</h3>
+                <span class="text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md mt-1 inline-block border border-blue-100">Semua Agenda</span>
             </div>
-            <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-            </div>
-        </div>
-
-        <div class="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex items-center justify-between">
-            <div>
-                <p class="text-xs font-medium text-gray-500">Sedang Berjalan</p>
-                <h3 class="text-2xl font-bold text-sky-600 mt-1">{{ $berjalan }}</h3>
-                <span class="text-[10px] font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md mt-1 inline-block">Proses</span>
-            </div>
-            <div class="w-11 h-11 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
+            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
             </div>
         </div>
 
-        <div class="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex items-center justify-between">
-            <div>
-                <p class="text-xs font-medium text-gray-500">Menunggu Approve</p>
-                <h3 class="text-2xl font-bold text-amber-600 mt-1">{{ $menungguApprove }}</h3>
-                <span class="text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md mt-1 inline-block">Persetujuan</span>
+        <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition flex items-center justify-between">
+            <div class="min-w-0">
+                <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Sedang Berjalan</p>
+                <h3 class="text-2xl font-black text-sky-600 tracking-tight mt-0.5">{{ $berjalan }}</h3>
+                <span class="text-[10px] font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md mt-1 inline-block border border-sky-100">Proses</span>
             </div>
-            <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                </svg>
+            <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 border border-sky-100">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
         </div>
 
-        <div class="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex items-center justify-between">
-            <div>
-                <p class="text-xs font-medium text-gray-500">Kegiatan Selesai</p>
-                <h3 class="text-2xl font-bold text-emerald-600 mt-1">{{ $selesai }}</h3>
-                <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md mt-1 inline-block">Tuntas</span>
+        <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition flex items-center justify-between">
+            <div class="min-w-0">
+                <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Menunggu Persetujuan</p>
+                <h3 class="text-2xl font-black text-amber-600 tracking-tight mt-0.5">{{ $menungguApprove }}</h3>
+                <span class="text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md mt-1 inline-block border border-amber-100">Review</span>
             </div>
-            <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
+            <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition flex items-center justify-between">
+            <div class="min-w-0">
+                <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Kegiatan Selesai</p>
+                <h3 class="text-2xl font-black text-emerald-600 tracking-tight mt-0.5">{{ $selesai }}</h3>
+                <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md mt-1 inline-block border border-emerald-100">Tuntas</span>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
         </div>
     </div>
@@ -231,12 +226,12 @@
                 <table class="min-w-full divide-y divide-gray-200 text-left" id="kegiatanTable">
                     <thead class="bg-gray-50/80 text-[11px] font-bold text-gray-600 uppercase tracking-wider">
                         <tr>
-                            <th scope="col" class="px-6 py-4">Nama Kegiatan & Tim</th>
-                            <th scope="col" class="px-6 py-4">Rentang Waktu</th>
-                            <th scope="col" class="px-6 py-4">Wilayah / Lokasi</th>
-                            <th scope="col" class="px-6 py-4">PJ & Sub Kegiatan</th>
-                            <th scope="col" class="px-6 py-4">Status Persetujuan</th>
-                            <th scope="col" class="px-6 py-4 text-right">Aksi</th>
+                            <th scope="col" class="px-4 sm:px-5 py-3">Nama Kegiatan & Tim</th>
+                            <th scope="col" class="px-4 sm:px-5 py-3">Rentang Waktu</th>
+                            <th scope="col" class="px-4 sm:px-5 py-3">Wilayah / Lokasi</th>
+                            <th scope="col" class="px-4 sm:px-5 py-3">PJ & Sub Kegiatan</th>
+                            <th scope="col" class="px-4 sm:px-5 py-3">Status Persetujuan</th>
+                            <th scope="col" class="px-4 sm:px-5 py-3 text-right">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-100 text-xs">
@@ -251,7 +246,7 @@
                             $pstLatest = $pstLast ? \Carbon\Carbon::parse($pstLast->start_date)->translatedFormat('d M Y') : '30 Sep 2026';
                         @endphp
                         <tr class="hover:bg-blue-50/50 transition-colors kegiatan-row bg-blue-50/20 border-l-4 border-l-blue-600">
-                            <td class="px-6 py-4">
+                            <td class="px-4 sm:px-5 py-3">
                                 <div class="space-y-1.5 max-w-md">
                                     <div class="flex items-center gap-2">
                                         <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
@@ -266,7 +261,7 @@
                                 </div>
                             </td>
 
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+                            <td class="px-4 sm:px-5 py-3 whitespace-nowrap text-gray-600">
                                 <div class="font-semibold text-gray-800">
                                     {{ $pstEarliest }}
                                 </div>
@@ -275,11 +270,11 @@
                                 </div>
                             </td>
 
-                            <td class="px-6 py-4">
+                            <td class="px-4 sm:px-5 py-3">
                                 <span class="meta-chip">Ruang PST BPS Prov. Sultra</span>
                             </td>
 
-                            <td class="px-6 py-4">
+                            <td class="px-4 sm:px-5 py-3">
                                 <div class="space-y-2">
                                     <div class="font-medium text-gray-800">
                                         PJ: <span class="font-bold">Ketua Tim PST</span>
@@ -295,14 +290,14 @@
                                 </div>
                             </td>
 
-                            <td class="px-6 py-4">
+                            <td class="px-4 sm:px-5 py-3">
                                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                     <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                                     <span>Operasional Berjalan</span>
                                 </span>
                             </td>
 
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-xs">
+                            <td class="px-4 sm:px-5 py-3 whitespace-nowrap text-right text-xs">
                                 <div class="flex items-center justify-end gap-1.5">
                                     <a href="{{ url('daftarkegiatan/' . ($pstFirst ? $pstFirst->id : '')) }}" 
                                        class="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl border border-blue-200 text-xs transition inline-flex items-center gap-1 shadow-2xs">
@@ -383,7 +378,7 @@
                             }
                         @endphp
                         <tr class="hover:bg-slate-50/60 transition-colors kegiatan-row">
-                            <td class="px-6 py-4">
+                            <td class="px-4 sm:px-5 py-3">
                                 <div class="space-y-1 max-w-md">
                                     <div class="flex items-center gap-2">
                                         <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
@@ -403,7 +398,7 @@
                                 </div>
                             </td>
 
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+                            <td class="px-4 sm:px-5 py-3 whitespace-nowrap text-gray-600">
                                 <div class="font-semibold text-gray-800">
                                     {{ $item->start_date ? \Carbon\Carbon::parse($item->start_date)->translatedFormat('d M Y') : '-' }}
                                 </div>
@@ -414,7 +409,7 @@
                                 @endif
                             </td>
 
-                            <td class="px-6 py-4">
+                            <td class="px-4 sm:px-5 py-3">
                                 @if(!empty($wilayahList))
                                     <div class="flex flex-wrap gap-1 max-w-[220px]">
                                         @foreach(array_slice($wilayahList, 0, 3) as $w)
@@ -425,12 +420,12 @@
                                         @endif
                                     </div>
                                 @else
-                                    <span class="text-gray-400 italic">{{ $item->tempat ?: '-' }}</span>
+                                    <span class="text-slate-600 font-medium text-xs">{{ $item->tempat ?: '-' }}</span>
                                 @endif
                             </td>
 
                             {{-- PJ & Dropdown Sub Kegiatan Button --}}
-                            <td class="px-6 py-4">
+                            <td class="px-4 sm:px-5 py-3">
                                 <div class="space-y-2">
                                     <div class="font-medium text-gray-800">
                                         PJ: <span class="font-bold">{{ $item->penanggung_jawab ?: ($isPst ? 'Ketua Tim PST' : '-') }}</span>
@@ -449,7 +444,7 @@
                             </td>
 
                             {{-- Status Persetujuan & Pelaksanaan --}}
-                            <td class="px-6 py-4">
+                            <td class="px-4 sm:px-5 py-3">
                                 @if($isDone)
                                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -503,7 +498,7 @@
                                 @endif
                             </td>
 
-                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <td class="px-4 sm:px-5 py-3 whitespace-nowrap text-right">
                                 <div class="flex items-center justify-end gap-1.5">
                                     {{-- Tombol Persetujuan Cepat untuk PJ (Saat Menunggu) --}}
                                     @if($isPjOfThis && $isPending)
@@ -671,10 +666,10 @@
                 <table class="min-w-full divide-y divide-gray-200 text-left" id="rapatTable">
                     <thead class="bg-gray-50/80 text-[11px] font-bold text-gray-600 uppercase tracking-wider">
                         <tr>
-                            <th scope="col" class="px-6 py-4">Topik & Informasi Rapat</th>
-                            <th scope="col" class="px-6 py-4">Petugas Rapat</th>
-                            <th scope="col" class="px-6 py-4">Tahapan Alur Rapat</th>
-                            <th scope="col" class="px-6 py-4 text-right">Aksi</th>
+                            <th scope="col" class="px-4 sm:px-5 py-3">Topik & Informasi Rapat</th>
+                            <th scope="col" class="px-4 sm:px-5 py-3">Petugas Rapat</th>
+                            <th scope="col" class="px-4 sm:px-5 py-3">Tahapan Alur Rapat</th>
+                            <th scope="col" class="px-4 sm:px-5 py-3 text-right">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-100 text-xs">
@@ -698,7 +693,7 @@
                             );
                         @endphp
                         <tr class="hover:bg-slate-50/60 transition-colors rapat-row">
-                            <td class="px-6 py-4">
+                            <td class="px-4 sm:px-5 py-3">
                                 <div class="space-y-2 max-w-lg">
                                     <div class="flex items-center gap-2">
                                         <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
@@ -740,7 +735,7 @@
                                 </div>
                             </td>
 
-                            <td class="px-6 py-4 whitespace-nowrap text-xs">
+                            <td class="px-4 sm:px-5 py-3 whitespace-nowrap text-xs">
                                 <div class="space-y-1.5">
                                     <div class="flex items-center gap-2">
                                         <span class="w-5 h-5 rounded-md bg-blue-100 text-blue-700 text-[10px] font-bold flex items-center justify-center shrink-0" title="Pemimpin Rapat">P</span>
@@ -753,7 +748,7 @@
                                 </div>
                             </td>
 
-                            <td class="px-6 py-4">
+                            <td class="px-4 sm:px-5 py-3">
                                 @if($post->setuju_rapat == 1 && (!empty($post->notulen) || ($post->notulen_selesai ?? 0) == 1))
                                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -777,7 +772,7 @@
                                 @endif
                             </td>
 
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-xs">
+                            <td class="px-4 sm:px-5 py-3 whitespace-nowrap text-right text-xs">
                                 <div class="flex items-center justify-end gap-2">
                                     {{-- Tombol Persetujuan Cepat untuk Pemimpin Rapat --}}
                                     @if($isPemimpinThisRapat && $post->setuju_rapat == 0)

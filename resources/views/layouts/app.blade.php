@@ -715,7 +715,7 @@
         </header>
 
         <!-- Main Content (Padding responsif dan luas) -->
-        <main id="main-content" class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-4 sm:p-6 lg:p-8">
+        <main id="main-content" class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-4 sm:p-6">
             <div class="max-w-7xl mx-auto">
                 @yield('content')
             </div>
