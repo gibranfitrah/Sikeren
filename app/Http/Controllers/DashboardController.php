@@ -620,6 +620,8 @@ class DashboardController extends Controller
             ? \App\JadwalPst::where('tanggal', $today)->orderBy('sesi')->get()
             : collect();
 
+        $dressCode = \App\Support\DressCodeHelper::getTodayDressCode($today);
+
         return view('dashboard', compact(
             'userArr',
             'allTasks',
@@ -642,7 +644,8 @@ class DashboardController extends Controller
             'ganttDays',
             'todayGanttIndex',
             'petugasHariIni',
-            'todayPstOfficers'
+            'todayPstOfficers',
+            'dressCode'
         ));
     }   
 }

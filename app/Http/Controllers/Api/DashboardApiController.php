@@ -435,7 +435,8 @@ class DashboardApiController extends Controller
             ],
             'undangan_rapat'       => $undanganRapatList,
             'presensi_kegiatan'    => $myPresensiKegiatan,
-            'unread_notifications' => $user ? DB::table('notifications')->where('niplama', $user->niplama)->where('is_read', 0)->count() : 0,
+            'pakaian_hari_ini'     => class_exists(\App\Support\DressCodeHelper::class) ? \App\Support\DressCodeHelper::getTodayDressCode($today) : null,
+            'unread_notifications' => $user && method_exists($user, 'unreadNotifications') ? $user->unreadNotifications()->count() : 0,
         ]);
     }
 }

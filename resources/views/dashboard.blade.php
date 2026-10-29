@@ -368,6 +368,280 @@
     </div>
 
     {{-- ========================================================
+        0.1. PEMBERITAHUAN PAKAIAN DINAS HARI INI (DRESS CODE BPS)
+    ========================================================= --}}
+    @php
+        $dressCode = $dressCode ?? (class_exists(\App\Support\DressCodeHelper::class) 
+            ? \App\Support\DressCodeHelper::getTodayDressCode($today ?? null) 
+            : null);
+        $todayDc = $dressCode['today'] ?? null;
+    @endphp
+
+    @if($todayDc)
+    <div x-data="{ showModalWeekly: false }" class="w-full">
+        <div class="relative overflow-hidden rounded-2xl border transition-all duration-300 shadow-xs {{ $todayDc['is_korpri'] ? 'bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-950 border-amber-400/40 text-white' : 'bg-white border-blue-100/90 text-gray-800' }}">
+            {{-- Top Accent Line --}}
+            <div class="h-1.5 w-full {{ $todayDc['is_korpri'] ? 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500' : ($todayDc['is_jumat'] ? 'bg-gradient-to-r from-emerald-500 via-teal-400 to-blue-500' : 'bg-gradient-to-r from-blue-600 via-indigo-500 to-orange-500') }}"></div>
+
+            <div class="p-4 sm:p-5">
+                {{-- Header Row --}}
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b {{ $todayDc['is_korpri'] ? 'border-white/10' : 'border-gray-100' }}">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-2xs {{ $todayDc['is_korpri'] ? 'bg-amber-400/20 text-yellow-300 border border-yellow-400/30' : ($todayDc['is_jumat'] ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-blue-50 text-blue-600 border border-blue-100') }}">
+                            @if($todayDc['is_korpri'])
+                                {{-- KORPRI Emblem Icon --}}
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21l-8-4.5v-9L12 3l8 4.5v9l-8 4.5zM12 8v8m-4-4h8" />
+                                </svg>
+                            @elseif($todayDc['is_olahraga_now'])
+                                {{-- Running / Sports Icon --}}
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                            @else
+                                {{-- Shirt Icon --}}
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 4.5v2.25M15 4.5v2.25M3.75 8.25L7.5 4.5h9l3.75 3.75-2.25 3.75-2.25-1.5v9.75H8.25v-9.75l-2.25 1.5L3.75 8.25z" />
+                                </svg>
+                            @endif
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h3 class="text-sm sm:text-base font-bold tracking-tight {{ $todayDc['is_korpri'] ? 'text-white' : 'text-gray-900' }}">
+                                    Pemberitahuan Pakaian Dinas Hari Ini
+                                </h3>
+                                @if($todayDc['is_korpri'])
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-400 text-blue-950 border border-amber-300 shadow-2xs">
+                                        Wajib Batik KORPRI
+                                    </span>
+                                @elseif($todayDc['is_olahraga_now'])
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300 animate-pulse">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                                        Jam Olahraga Bebas
+                                    </span>
+                                @else
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ $todayDc['badge_bg'] ?? 'bg-blue-100 text-blue-800' }}">
+                                        {{ $todayDc['badge_label'] }}
+                                    </span>
+                                @endif
+                            </div>
+                            <p class="text-[11px] {{ $todayDc['is_korpri'] ? 'text-blue-200' : 'text-gray-500' }} font-medium">
+                                {{ $todayDc['tanggal_formatted'] }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                        <button type="button" 
+                                @click="showModalWeekly = true" 
+                                class="px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-2xs {{ $todayDc['is_korpri'] ? 'bg-white/10 hover:bg-white/20 text-yellow-300 border border-white/20' : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/80' }}">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span>Jadwal Lengkap Sepekan</span>
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Dress Code Cards Grid --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3.5">
+                    {{-- 1. Kartu Atasan --}}
+                    <div class="p-3.5 rounded-xl border transition {{ $todayDc['is_korpri'] ? 'bg-white/5 border-white/15' : 'bg-gradient-to-br from-blue-50/50 to-white border-blue-100' }}">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full {{ $todayDc['is_korpri'] ? 'bg-yellow-400' : 'bg-blue-600' }}"></span>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider {{ $todayDc['is_korpri'] ? 'text-blue-200' : 'text-gray-500' }}">
+                                        Baju / Atasan
+                                    </span>
+                                </div>
+                                <h4 class="text-base sm:text-lg font-extrabold tracking-tight {{ $todayDc['is_korpri'] ? 'text-yellow-300' : 'text-gray-900' }}">
+                                    {{ $todayDc['atasan'] }}
+                                </h4>
+                            </div>
+                            <span class="px-2 py-1 rounded-lg text-[10px] font-bold shrink-0 {{ $todayDc['is_korpri'] ? 'bg-yellow-400/20 text-yellow-300 border border-yellow-400/30' : 'bg-blue-100 text-blue-800' }}">
+                                Atasan
+                            </span>
+                        </div>
+                    </div>
+
+                    {{-- 2. Kartu Celana / Bawahan --}}
+                    <div class="p-3.5 rounded-xl border transition {{ $todayDc['is_korpri'] ? 'bg-white/5 border-white/15' : 'bg-gradient-to-br from-slate-50/70 to-white border-slate-200/80' }}">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full {{ $todayDc['is_korpri'] ? 'bg-amber-300' : 'bg-slate-700' }}"></span>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider {{ $todayDc['is_korpri'] ? 'text-blue-200' : 'text-gray-500' }}">
+                                        Celana / Bawahan
+                                    </span>
+                                </div>
+                                <h4 class="text-base sm:text-lg font-extrabold tracking-tight {{ $todayDc['is_korpri'] ? 'text-white' : 'text-gray-900' }}">
+                                    {{ $todayDc['bawahan'] }}
+                                </h4>
+                            </div>
+                            <span class="px-2 py-1 rounded-lg text-[10px] font-bold shrink-0 {{ $todayDc['is_korpri'] ? 'bg-white/10 text-blue-100 border border-white/20' : 'bg-slate-100 text-slate-800' }}">
+                                Bawahan
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Special Condition Notes --}}
+                <div class="mt-3.5 space-y-2">
+                    {{-- Alert Khusus Hari Jumat --}}
+                    @if($todayDc['is_jumat'])
+                        <div class="p-3 rounded-xl border flex items-start gap-2.5 text-xs {{ $todayDc['is_olahraga_now'] ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50/80 border-amber-200 text-amber-900' }}">
+                            <div class="w-5 h-5 rounded-md flex items-center justify-center shrink-0 mt-0.5 {{ $todayDc['is_olahraga_now'] ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white' }}">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="space-y-0.5 flex-1">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <strong class="font-bold">Ketentuan Khusus Hari Jumat:</strong>
+                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-white/80 border border-current">
+                                        Pagi 07.30 - 10.00 WITA
+                                    </span>
+                                </div>
+                                <p class="text-[11px] leading-relaxed">
+                                    Pada pagi hari pukul <strong>07.30 s.d. 10.00 WITA</strong> bebas berolahraga (mengenakan pakaian olahraga). Setelah pukul 10.00 WITA berganti mengenakan seragam kerja <strong>atasan batik dan celana hitam</strong>.
+                                </p>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- Alert Peringatan Tanggal 17 --}}
+                    @if($todayDc['is_korpri'])
+                        <div class="p-3 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-200 text-xs flex items-start gap-2.5">
+                            <span class="text-base shrink-0">🏛️</span>
+                            <div class="space-y-0.5">
+                                <strong class="font-bold text-amber-300">Peringatan Hari KORPRI (Tanggal 17):</strong>
+                                <p class="text-[11px] leading-relaxed text-blue-100">
+                                    {{ $todayDc['catatan'] }}
+                                </p>
+                            </div>
+                        </div>
+                    @else
+                        {{-- Info Pengingat Tanggal 17 jika hari ini bukan tanggal 17 --}}
+                        <div class="flex items-center gap-2 text-[11px] px-3 py-2 rounded-xl {{ $todayDc['is_korpri'] ? 'bg-white/5 text-blue-200' : 'bg-gray-50 text-gray-600 border border-gray-100' }}">
+                            <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>
+                                <strong>Pengingat Seragam:</strong> Di setiap <strong>tanggal 17</strong> seluruh pegawai mengenakan seragam <strong>Baju Batik KORPRI</strong> lengkap.
+                            </span>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        {{-- ========================================================
+            MODAL JADWAL LENGKAP SERAGAM SEPEKAN
+        ========================================================= --}}
+        <div x-show="showModalWeekly" 
+             x-cloak 
+             class="fixed inset-0 z-50 overflow-y-auto" 
+             style="display: none;">
+            {{-- Backdrop --}}
+            <div x-show="showModalWeekly"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 @click="showModalWeekly = false"
+                 class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"></div>
+
+            {{-- Dialog Panel --}}
+            <div class="flex min-h-full items-center justify-center p-4 text-center">
+                <div x-show="showModalWeekly"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-end="opacity-0 scale-95"
+                     @click.stop
+                     class="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all border border-gray-100">
+                    
+                    {{-- Modal Header --}}
+                    <div class="px-6 py-4 bg-gradient-to-r from-blue-900 to-indigo-900 text-white flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-white">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-sm sm:text-base font-bold">Panduan Ketentuan Pakaian Dinas BPS</h3>
+                                <p class="text-[11px] text-blue-200">Jadwal seragam kerja harian Senin s.d. Jumat & Peringatan Tanggal 17</p>
+                            </div>
+                        </div>
+                        <button type="button" @click="showModalWeekly = false" class="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+
+                    {{-- Modal Body: List of Days --}}
+                    <div class="p-6 space-y-3 max-h-[70vh] overflow-y-auto">
+                        @foreach($dressCode['weekly_rules'] ?? [] as $rule)
+                            @php
+                                $isCurrentDay = ($todayDc['is_korpri'] && $rule['hari_kode'] === 17) || (!$todayDc['is_korpri'] && isset($rule['hari']) && $rule['hari'] === $todayDc['hari']);
+                            @endphp
+                            <div class="p-3.5 rounded-xl border transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 {{ $isCurrentDay ? 'bg-blue-50/70 border-blue-300 ring-2 ring-blue-500/20' : 'bg-gray-50/60 border-gray-200/80 hover:bg-gray-50' }}">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold {{ $rule['badge_class'] ?? 'bg-blue-900 text-white' }}">
+                                        {{ substr($rule['hari'], 0, 1) }}
+                                    </div>
+                                    <div class="space-y-0.5">
+                                        <div class="flex items-center gap-2">
+                                            <h4 class="text-xs sm:text-sm font-bold text-gray-900">
+                                                {{ $rule['hari'] }}
+                                            </h4>
+                                            @if($isCurrentDay)
+                                                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-600 text-white">
+                                                    Hari Ini
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <p class="text-xs font-medium text-gray-700">
+                                            <span class="font-bold text-blue-950">Atasan:</span> {{ $rule['atasan'] }} &bull; <span class="font-bold text-blue-950">Celana:</span> {{ $rule['bawahan'] }}
+                                        </p>
+                                        @if(!empty($rule['keterangan']) && $rule['hari_kode'] === 5)
+                                            <p class="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md inline-block mt-0.5">
+                                                🏃 07.30 - 10.00 WITA: Bebas berolahraga (pakaian olahraga)
+                                            </p>
+                                        @elseif($rule['hari_kode'] === 17)
+                                            <p class="text-[10px] text-amber-800 font-semibold bg-amber-50 px-2 py-0.5 rounded-md inline-block mt-0.5">
+                                                🏛️ Setiap tanggal 17 seluruh pegawai mengenakan seragam Batik KORPRI
+                                            </p>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    {{-- Modal Footer --}}
+                    <div class="px-6 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                        <span class="text-[11px] text-gray-500">
+                            Ketentuan berpakaian dinas BPS Provinsi Sulawesi Tenggara
+                        </span>
+                        <button type="button" 
+                                @click="showModalWeekly = false" 
+                                class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs">
+                            Mengerti & Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- ========================================================
         1. STATS METRICS (4 COMPACT SLEEK CARDS)
     ========================================================= --}}
     <div class="stat-cards-grid">
