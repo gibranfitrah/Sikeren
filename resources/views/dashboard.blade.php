@@ -378,14 +378,14 @@
     @endphp
 
     @if($todayDc)
-    <div x-data="{ showModalWeekly: false }" class="w-full">
+    <div x-data="{ showModalWeekly: false }" class="w-full mt-1">
         <div class="relative overflow-hidden rounded-2xl border transition-all duration-300 shadow-xs {{ $todayDc['is_korpri'] ? 'bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-950 border-amber-400/40 text-white' : 'bg-white border-blue-100/90 text-gray-800' }}">
             {{-- Top Accent Line --}}
             <div class="h-1.5 w-full {{ $todayDc['is_korpri'] ? 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500' : ($todayDc['is_jumat'] ? 'bg-gradient-to-r from-emerald-500 via-teal-400 to-blue-500' : 'bg-gradient-to-r from-blue-600 via-indigo-500 to-orange-500') }}"></div>
 
             <div class="p-4 sm:p-5">
                 {{-- Header Row --}}
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b {{ $todayDc['is_korpri'] ? 'border-white/10' : 'border-gray-100' }}">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b {{ $todayDc['is_korpri'] ? 'border-white/10' : 'border-gray-100' }}">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-2xs {{ $todayDc['is_korpri'] ? 'bg-amber-400/20 text-yellow-300 border border-yellow-400/30' : ($todayDc['is_jumat'] ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-blue-50 text-blue-600 border border-blue-100') }}">
                             @if($todayDc['is_korpri'])
@@ -444,9 +444,9 @@
                 </div>
 
                 {{-- Dress Code Cards Grid --}}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3.5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-4">
                     {{-- 1. Kartu Atasan --}}
-                    <div class="p-3.5 rounded-xl border transition {{ $todayDc['is_korpri'] ? 'bg-white/5 border-white/15' : 'bg-gradient-to-br from-blue-50/50 to-white border-blue-100' }}">
+                    <div class="p-3.5 sm:p-4 rounded-xl border transition {{ $todayDc['is_korpri'] ? 'bg-white/5 border-white/15' : 'bg-gradient-to-br from-blue-50/50 to-white border-blue-100' }}">
                         <div class="flex items-start justify-between gap-2">
                             <div class="space-y-1">
                                 <div class="flex items-center gap-1.5">
@@ -466,7 +466,7 @@
                     </div>
 
                     {{-- 2. Kartu Celana / Bawahan --}}
-                    <div class="p-3.5 rounded-xl border transition {{ $todayDc['is_korpri'] ? 'bg-white/5 border-white/15' : 'bg-gradient-to-br from-slate-50/70 to-white border-slate-200/80' }}">
+                    <div class="p-3.5 sm:p-4 rounded-xl border transition {{ $todayDc['is_korpri'] ? 'bg-white/5 border-white/15' : 'bg-gradient-to-br from-slate-50/70 to-white border-slate-200/80' }}">
                         <div class="flex items-start justify-between gap-2">
                             <div class="space-y-1">
                                 <div class="flex items-center gap-1.5">
@@ -486,24 +486,24 @@
                     </div>
                 </div>
 
-                {{-- Special Condition Notes --}}
-                <div class="mt-3.5 space-y-2">
+                {{-- Special Condition Notes (diberi margin lebih longgar agar tidak mepet) --}}
+                <div class="mt-5 sm:mt-6 space-y-3 pt-1">
                     {{-- Alert Khusus Hari Jumat --}}
                     @if($todayDc['is_jumat'])
-                        <div class="p-3 rounded-xl border flex items-start gap-2.5 text-xs {{ $todayDc['is_olahraga_now'] ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50/80 border-amber-200 text-amber-900' }}">
+                        <div class="p-3.5 sm:p-4 rounded-xl border flex items-start gap-3 text-xs shadow-2xs {{ $todayDc['is_olahraga_now'] ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50/90 border-amber-200 text-amber-900' }}">
                             <div class="w-5 h-5 rounded-md flex items-center justify-center shrink-0 mt-0.5 {{ $todayDc['is_olahraga_now'] ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white' }}">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
-                            <div class="space-y-0.5 flex-1">
+                            <div class="space-y-1 flex-1">
                                 <div class="flex items-center gap-2 flex-wrap">
-                                    <strong class="font-bold">Ketentuan Khusus Hari Jumat:</strong>
-                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-white/80 border border-current">
+                                    <strong class="font-bold text-xs sm:text-sm">Ketentuan Khusus Hari Jumat:</strong>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-white/90 border border-amber-300 shadow-2xs">
                                         Pagi 07.30 - 10.00 WITA
                                     </span>
                                 </div>
-                                <p class="text-[11px] leading-relaxed">
+                                <p class="text-[11.5px] leading-relaxed">
                                     Pada pagi hari pukul <strong>07.30 s.d. 10.00 WITA</strong> bebas berolahraga (mengenakan pakaian olahraga). Setelah pukul 10.00 WITA berganti mengenakan seragam kerja <strong>atasan batik dan celana hitam</strong>.
                                 </p>
                             </div>
@@ -512,19 +512,19 @@
 
                     {{-- Alert Peringatan Tanggal 17 --}}
                     @if($todayDc['is_korpri'])
-                        <div class="p-3 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-200 text-xs flex items-start gap-2.5">
-                            <span class="text-base shrink-0">🏛️</span>
-                            <div class="space-y-0.5">
-                                <strong class="font-bold text-amber-300">Peringatan Hari KORPRI (Tanggal 17):</strong>
-                                <p class="text-[11px] leading-relaxed text-blue-100">
+                        <div class="p-3.5 sm:p-4 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-200 text-xs flex items-start gap-3 shadow-2xs">
+                            <span class="text-lg shrink-0">🏛️</span>
+                            <div class="space-y-1 flex-1">
+                                <strong class="font-bold text-amber-300 text-xs sm:text-sm">Peringatan Hari KORPRI (Tanggal 17):</strong>
+                                <p class="text-[11.5px] leading-relaxed text-blue-100">
                                     {{ $todayDc['catatan'] }}
                                 </p>
                             </div>
                         </div>
                     @else
                         {{-- Info Pengingat Tanggal 17 jika hari ini bukan tanggal 17 --}}
-                        <div class="flex items-center gap-2 text-[11px] px-3 py-2 rounded-xl {{ $todayDc['is_korpri'] ? 'bg-white/5 text-blue-200' : 'bg-gray-50 text-gray-600 border border-gray-100' }}">
-                            <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="flex items-center gap-2.5 text-[11px] px-3.5 py-2.5 rounded-xl {{ $todayDc['is_korpri'] ? 'bg-white/5 text-blue-200' : 'bg-gray-50 text-gray-600 border border-gray-100' }}">
+                            <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span>
