@@ -74,6 +74,7 @@ Route::get('/', [LoginController::class, 'login']);
 Route::get('/login', [LoginController::class, 'login'])->name('login');
 Route::post('/actionlogin', [LoginController::class, 'actionlogin'])->name('/actionlogin');
 Route::get('actionlogout', [LoginController::class, 'actionlogout'])->name('actionlogout');
+Route::match(['get', 'post'], 'logout', [LoginController::class, 'actionlogout'])->name('logout');
 Route::get('/scan-qr/{id}', [KegiatanController::class, 'scanQr'])->where('id','(.*)')->name('rapat.scanQr');
 
 Route::get('/color6/{id}/edit6/',  [BMNController::class, 'update6'])->name('color.update6');

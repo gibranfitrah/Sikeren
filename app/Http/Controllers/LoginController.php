@@ -56,10 +56,16 @@ class LoginController extends Controller
                 ->withCookie($cookie);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Login page error: ' . $e->getMessage());
-            return view('login');
+            return response()->view('login')
+                ->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+                ->header('Pragma', 'no-cache')
+                ->header('Expires', 'Sun, 02 Jan 1990 00:00:00 GMT');
         }
 
-        return view('login');
+        return response()->view('login')
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', 'Sun, 02 Jan 1990 00:00:00 GMT');
     }
 
     public function actionlogin(Request $request)
@@ -214,6 +220,6 @@ class LoginController extends Controller
             session()->put('url.intended', $redirect);
             return redirect()->route('login')->with('info', 'Silakan masuk ke akun Anda terlebih dahulu.');
         }
-        return redirect('/');
+        return redirect()->route('login')->with('info', 'Anda telah berhasil keluar dari akun.');
     }
 }

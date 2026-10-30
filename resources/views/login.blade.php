@@ -156,6 +156,13 @@
             document.getElementById('password').value = password;
             document.getElementById('loginForm').submit();
         }
+
+        // Cegah CSRF 419 Page Expired akibat Browser Cache / Tombol Back setelah logout
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
     </script>
 </body>
 </html>
