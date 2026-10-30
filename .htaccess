@@ -32,8 +32,23 @@
 
     RewriteEngine On
 
-    # Redirect assets to public folder
+    # Redirect assets to public folder (Vite build, assets, storage, documents, etc.)
+    RewriteRule ^build/(.*)$ public/build/$1 [L]
     RewriteRule ^assets/(.*)$ public/assets/$1 [L]
+    RewriteRule ^storage/(.*)$ public/storage/$1 [L]
+    RewriteRule ^documents/(.*)$ public/documents/$1 [L]
+    RewriteRule ^admin/(.*)$ public/admin/$1 [L]
+    RewriteRule ^css/(.*)$ public/css/$1 [L]
+    RewriteRule ^js/(.*)$ public/js/$1 [L]
+    RewriteRule ^favicon\.(.*)$ public/favicon.$1 [L]
+    RewriteRule ^favicon\.ico$ public/favicon.ico [L]
+    RewriteRule ^robots\.txt$ public/robots.txt [L]
+    RewriteRule ^sikeren\.apk$ public/sikeren.apk [L]
+
+    # If the requested file or folder exists in public/, serve it directly
+    RewriteCond %{DOCUMENT_ROOT}/public/$1 -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/public/$1 -d
+    RewriteRule ^(.*)$ public/$1 [L]
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
